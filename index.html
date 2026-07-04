@@ -74,7 +74,7 @@
         import { getFirestore, collection, addDoc, query, where, getDocs, setDoc, doc, onSnapshot, updateDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
-          apiKey: "AIzaSyDZhV6G0D-fTrH2auEqgtz72DGrBHpgFDU",
+            apiKey: "AIzaSyDZhV6G0D-fTrH2auEqgtz72DGrBHpgFDU",
             authDomain: "lease-management-c7c35.firebaseapp.com",
             projectId: "lease-management-c7c35",
             storageBucket: "lease-management-c7c35.firebasestorage.app",
@@ -95,7 +95,65 @@
 
         const fmt = (val) => (parseFloat(val) || 0).toFixed(2);
 
+        // Sound Generator for Notifications
+        let audioCtx;
+        function playSound(type) {
+            try {
+                audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                if (type === 'error' || type === 'delete') {
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+                } else if (type === 'success') {
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+                } else {
+                    oscillator.type = 'triangle';
+                    oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
+                }
+                
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.5);
+            } catch(e) { console.error("Audio error", e); }
+        }
+
+        // Custom Confirm Modal (No URL, Colored, Sound)
+        function customConfirm(message, type = 'warning') {
+            return new Promise((resolve) => {
+                playSound(type === 'delete' ? 'error' : 'success');
+                const colors = { delete: { bg: 'bg-red-50', border: 'border-red-500', btn: 'bg-red-500 hover:bg-red-600', icon: 'text-red-500' }, warning: { bg: 'bg-yellow-50', border: 'border-yellow-500', btn: 'bg-yellow-500 hover:bg-yellow-600', icon: 'text-yellow-500' }, info: { bg: 'bg-blue-50', border: 'border-blue-500', btn: 'bg-blue-500 hover:bg-blue-600', icon: 'text-blue-500' } };
+                const c = colors[type] || colors.warning;
+                
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-[200] flex items-center justify-center p-4 fade-in';
+                modal.innerHTML = `
+                    <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm text-center border-t-4 ${c.border}">
+                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full ${c.bg} mb-4">
+                            <svg class="w-6 h-6 ${c.icon}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        </div>
+                        <h3 class="text-lg font-bold mb-2 text-slate-800">নিশ্চিত করুন</h3>
+                        <p class="text-sm text-slate-600 mb-6">${message}</p>
+                        <div class="flex gap-3">
+                            <button id="cancelBtn" class="flex-1 bg-slate-200 text-slate-700 p-2 rounded-lg font-bold hover:bg-slate-300">বাতিল করুন</button>
+                            <button id="confirmBtn" class="flex-1 ${c.btn} text-white p-2 rounded-lg font-bold">নিশ্চিত করুন</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+
+                modal.querySelector('#cancelBtn').onclick = () => { modal.remove(); resolve(false); };
+                modal.querySelector('#confirmBtn').onclick = () => { modal.remove(); resolve(true); };
+            });
+        }
+
         function showToast(msg, type = 'error') {
+            playSound(type);
             const colors = { error: 'bg-red-500', success: 'bg-green-500', info: 'bg-blue-500' };
             const toast = document.createElement('div');
             toast.className = `fixed top-5 right-5 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-xl z-[100] fade-in flex items-center`;
@@ -119,7 +177,6 @@
         }
         ['mousemove', 'keydown', 'click', 'scroll'].forEach(evt => window.addEventListener(evt, resetIdleTimer));
 
-        // URL বাদ দিয়ে ক্লিন এরর মেসেজ
         function cleanError(err) {
             const errors = {
                 'auth/invalid-email': 'ইমেইল ঠিকানাটি সঠিক নয়।',
@@ -134,7 +191,6 @@
             return 'কিছু একটা সমস্যা হয়েছে। আবার চেষ্টা করুন।';
         }
 
-        // মাসের নাম থেকে মাসের নম্বর বের করার ফাংশন (অটো-রোলওভারের জন্য)
         function getMonthNumber(monthStr) {
             if (!monthStr) return 0;
             const m = monthStr.toLowerCase().trim();
@@ -359,7 +415,20 @@
                                 <input type="text" id="farmerName" placeholder="চাষীর নাম" class="p-2 border rounded-lg text-sm col-span-2 md:col-span-1" required>
                                 <input type="number" step="0.01" id="amount" placeholder="জমির পরিমাণ (শতাংশ)" class="p-2 border rounded-lg text-sm" required>
                                 <input type="number" id="ratePer33" placeholder="দর (যেমন: ১৮০০০)" class="p-2 border rounded-lg text-sm" required>
-                                <input type="text" id="cycleType" placeholder="মাস (যেমন: জানুয়ারি)" class="p-2 border rounded-lg text-sm" required>
+                                <select id="cycleType" class="p-2 border rounded-lg text-sm bg-white" required>
+                                    <option value="জানুয়ারি">জানুয়ারি (January)</option>
+                                    <option value="ফেব্রুয়ারি">ফেব্রুয়ারি (February)</option>
+                                    <option value="মার্চ">মার্চ (March)</option>
+                                    <option value="এপ্রিল">এপ্রিল (April)</option>
+                                    <option value="মে">মে (May)</option>
+                                    <option value="জুন">জুন (জ্যৈষ্ঠ)</option>
+                                    <option value="জুলাই">জুলাই (আষাঢ়)</option>
+                                    <option value="আগস্ট">আগস্ট (শ্রাবণ)</option>
+                                    <option value="সেপ্টেম্বর">সেপ্টেম্বর (ভাদ্র)</option>
+                                    <option value="অক্টোবর">অক্টোবর (আশ্বিন)</option>
+                                    <option value="নভেম্বর">নভেম্বর (কার্তিক)</option>
+                                    <option value="ডিসেম্বর">ডিসেম্বর (অগ্রহায়ণ)</option>
+                                </select>
                                 <input type="text" id="year" placeholder="বছর (২০২৪)" class="p-2 border rounded-lg text-sm" required>
                                 <button type="submit" class="bg-indigo-600 text-white p-2 rounded-lg text-sm hover:bg-indigo-700 font-bold">যুক্ত করুন</button>
                             </form>
@@ -455,7 +524,6 @@
             loadLeases();
         }
 
-        // স্বয়ংক্রিয়ভাবে নতুন বছরে বকেয়া ট্রান্সফার (মাস অনুযায়ী)
         async function autoRollover() {
             let currentYear = new Date().getFullYear();
             let currentMonth = new Date().getMonth();
@@ -698,12 +766,13 @@
         }
 
         async function handleDelete(id) {
-            if(confirm("আপনি কি এই হিসাবটি ডিলিট করতে চান?")) {
+            const isConfirmed = await customConfirm("আপনি কি এই হিসাবটি ডিলিট করতে চান?", "delete");
+            if (isConfirmed) {
                 try {
                     await deleteDoc(doc(db, "leases", id));
                     showToast('হিসাব ডিলিট করা হয়েছে!', 'success');
                 } catch(err) {
-                    showToast(cleanError(err));
+                    showToast(cleanError(err), 'error');
                 }
             }
         }
@@ -820,8 +889,6 @@
                 const newFarmerSnap = await getDocs(q2);
 
                 const oldNewAmount = parseFloat(oldData.amount) - tAmount;
-                
-                // পূর্বের বছরের বকেয়া (Carried Due) বের করা এবং হস্তান্তরের পরেও তা ধরে রাখা
                 const oldFullCurrentCost = (parseFloat(oldData.amount) / 33) * parseFloat(oldData.ratePer33);
                 const oldCarriedDue = parseFloat(oldData.totalCost) - oldFullCurrentCost;
                 
@@ -927,7 +994,13 @@
         }
 
         function openAdjustDueModal(id, name, oldYear, due) {
-            const nextYear = (parseInt(oldYear) + 1).toString();
+            // NaN সমস্যা সমাধানের জন্য সেফ পার্সিং
+            let oldYearNum = parseInt(oldYear);
+            if (isNaN(oldYearNum)) {
+                oldYearNum = new Date().getFullYear();
+            }
+            const nextYear = (oldYearNum + 1).toString();
+            
             openModal(`
                 <h3 class="text-lg font-bold mb-2 text-slate-800">${name} - বকেয়া ট্রান্সফার</h3>
                 <div class="bg-slate-50 p-3 rounded-lg mb-4 text-sm">
