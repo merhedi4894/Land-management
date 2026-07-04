@@ -16,17 +16,21 @@
         ::-webkit-scrollbar-thumb { background: #888; border-radius: 5px; }
         .premium-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
         
-        /* Mobile Responsive Table (Clear & Distinct Cards) */
+        /* Mobile Responsive Table (Clear & Distinct Cards for ALL) */
         @media (max-width: 767px) {
             .table-fixed thead { display: none; }
             .table-fixed, .table-fixed tbody, .table-fixed tr, .table-fixed td { display: block; width: 100%; }
-            .table-fixed tr { 
+            .table-fixed tbody tr { 
                 margin-bottom: 0.75rem; 
-                border: 2px solid #475569; /* গাঢ় বর্ডার কালার */
+                border: 2px solid #475569 !important; /* গাঢ় বর্ডার কালার (সবার জন্য) */
                 border-radius: 0.5rem; 
                 background: white; 
                 padding: 0.5rem 0.75rem; 
                 box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* স্পষ্ট শ্যাডো */
+            }
+            .table-fixed tbody tr.bg-red-50 { 
+                background-color: #fef2f2 !important; 
+                border-color: #ef4444 !important; 
             }
             .table-fixed td { 
                 display: flex; 
@@ -50,7 +54,7 @@
             .table-fixed td[data-label="চাষীর নাম ও সাল"] .farmer-name { 
                 font-size: 16px; 
                 font-weight: 800; 
-                color: #1e3a8a; /* উজ্জ্বল গাঢ় নীল কালার */
+                color: #dc2626; /* উজ্জ্বল লাল বোল্ড কালার */
                 margin-bottom: 2px; 
             }
             .table-fixed td[data-label="অ্যাকশন"] { 
@@ -69,7 +73,7 @@
         import { getFirestore, collection, addDoc, query, where, getDocs, setDoc, doc, onSnapshot, updateDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
-             apiKey: "AIzaSyDZhV6G0D-fTrH2auEqgtz72DGrBHpgFDU",
+            apiKey: "AIzaSyDZhV6G0D-fTrH2auEqgtz72DGrBHpgFDU",
             authDomain: "lease-management-c7c35.firebaseapp.com",
             projectId: "lease-management-c7c35",
             storageBucket: "lease-management-c7c35.firebasestorage.app",
@@ -221,13 +225,11 @@
             document.getElementById('forgotBtn').onclick = () => { loginForm.classList.add('hidden'); forgotForm.classList.remove('hidden'); };
             document.getElementById('backToLogin').onclick = () => { forgotForm.classList.add('hidden'); loginForm.classList.remove('hidden'); };
 
-            // Real-time check for Username and Email
             let debounceTimer;
             const checkExistence = async (field, value, msgId) => {
                 clearTimeout(debounceTimer);
                 const msgEl = document.getElementById(msgId);
                 if (value.trim() === '') { msgEl.innerText = ''; return; }
-                
                 debounceTimer = setTimeout(async () => {
                     const q = query(collection(db, "users"), where(field, "==", value));
                     const snap = await getDocs(q);
@@ -259,13 +261,11 @@
                         email = snap.docs[0].data().email;
                     }
                     await signInWithEmailAndPassword(auth, email, password);
-                    
                     let savedIds = JSON.parse(localStorage.getItem('savedIdentifiers') || '[]');
                     if (!savedIds.includes(identifier)) {
                         savedIds.push(identifier);
                         localStorage.setItem('savedIdentifiers', JSON.stringify(savedIds));
                     }
-                    
                     showToast('সফলভাবে লগইন হয়েছে!', 'success');
                 } catch (err) { showToast(cleanError(err.code)); }
                 hideSpinner(btn);
@@ -411,11 +411,89 @@
             loadLeases();
         }
 
+        // স্বয়ংক্রিয়ভাবে নতুন বছরে বকেয়া ট্রান্সফার (Auto-rollover logic)
+        async function autoRollover() {
+            const currentYear = new Date().getFullYear();
+            let updates = [];
+            
+            for (let lease of allLeases) {
+                if (lease.status === 'active') {
+                    let yearVal = parseInt(lease.year);
+                    if (isNaN(yearVal)) continue; 
+                    
+                    if (yearVal < currentYear) {
+                        let year = lease.year;
+                        let yearlyData = lease.yearlyData || {};
+                        let history = lease.history || [];
+                        let due = parseFloat(lease.dueAmount);
+                        let rate = parseFloat(lease.ratePer33);
+                        let amount = parseFloat(lease.amount);
+                        let totalCost = parseFloat(lease.totalCost);
+                        let paidAmount = parseFloat(lease.paidAmount);
+                        let updated = false;
+
+                        while (parseInt(year) < currentYear) {
+                            let nextYear = (parseInt(year) + 1).toString();
+                            
+                            if (yearlyData[nextYear]) {
+                                year = nextYear;
+                                let yData = yearlyData[nextYear];
+                                due = parseFloat(yData.dueAmount);
+                                rate = parseFloat(yData.ratePer33);
+                                totalCost = parseFloat(yData.totalCost);
+                                paidAmount = parseFloat(yData.paidAmount);
+                                continue;
+                            }
+                            
+                            // নতুন বছরের জন্য আগের দর (rate) ব্যবহার করা হবে
+                            let nextRate = rate; 
+                            let nextCost = (amount / 33) * nextRate;
+                            let nextTotal = due + nextCost;
+                            
+                            if (!yearlyData[year]) {
+                                yearlyData[year] = { ratePer33: rate, totalCost: totalCost.toFixed(2), paidAmount: paidAmount.toFixed(2), dueAmount: due.toFixed(2), status: 'transferred' };
+                            } else {
+                                yearlyData[year].status = 'transferred';
+                            }
+                            
+                            yearlyData[nextYear] = { ratePer33: nextRate, totalCost: nextTotal.toFixed(2), paidAmount: 0, dueAmount: nextTotal.toFixed(2), status: 'active' };
+                            history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'auto_rollover', fromYear: year, toYear: nextYear, carriedDue: due.toFixed(2) });
+                            
+                            year = nextYear;
+                            due = nextTotal;
+                            rate = nextRate;
+                            totalCost = nextTotal;
+                            paidAmount = 0;
+                            updated = true;
+                        }
+                        
+                        if (updated) {
+                            updates.push(updateDoc(doc(db, "leases", lease.id), {
+                                year: year,
+                                ratePer33: rate,
+                                totalCost: totalCost.toFixed(2),
+                                paidAmount: 0,
+                                dueAmount: due.toFixed(2),
+                                history: history,
+                                yearlyData: yearlyData
+                            }));
+                        }
+                    }
+                }
+            }
+            
+            if (updates.length > 0) {
+                await Promise.all(updates);
+                showToast(`${updates.length} টি হিসাব স্বয়ংক্রিয়ভাবে নতুন বছরে আপডেট হয়েছে।`, 'info');
+            }
+        }
+
         function loadLeases() {
             const q = collection(db, "leases");
             onSnapshot(q, (snapshot) => {
                 allLeases = [];
                 snapshot.forEach(d => allLeases.push({ id: d.id, ...d.data() }));
+                autoRollover(); // লোড হওয়ার সাথে সাথে অটো রোলওভার চেক করবে
                 renderTable();
             });
         }
@@ -466,7 +544,7 @@
 
                 tr.innerHTML = `
                     <td data-label="চাষীর নাম ও সাল" class="p-3 align-top">
-                        <span class="farmer-name text-blue-800 cursor-pointer hover:text-blue-900 block" data-name="${lease.farmerName}">${lease.farmerName}</span>
+                        <span class="farmer-name text-red-600 hover:text-red-700 cursor-pointer block" data-name="${lease.farmerName}">${lease.farmerName}</span>
                         <div class="flex items-center gap-1 mt-1">
                             <input type="text" value="${lease.year}" data-id="${id}" class="yearInput text-xs text-slate-500 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 w-16 focus:outline-none p-0">
                             <span class="text-xs text-slate-400">(${lease.cycleType})</span>
@@ -503,7 +581,6 @@
                 tbody.appendChild(tr);
             });
 
-            // Render Pagination
             paginationDiv.innerHTML = '';
             if (totalPages > 1) {
                 const prevBtn = document.createElement('button');
@@ -843,6 +920,7 @@
                     else if(h.type === 'transfer_out') historyHTML += `<li class="text-yellow-600 flex justify-between"><span>${h.date}</span> <span>${h.amount} শতাংশ হস্তান্তর (${h.to})</span></li>`;
                     else if(h.type === 'transfer_in') historyHTML += `<li class="text-blue-600 flex justify-between"><span>${h.date}</span> <span>${h.amount} শতাংশ পেয়েছেন (${h.from})</span></li>`;
                     else if(h.type === 'edit') historyHTML += `<li class="text-gray-500 flex justify-between"><span>${h.date}</span> <span>দর/বছর পরিবর্তন: ${h.oldRate}->${h.newRate}</span></li>`;
+                    else if(h.type === 'auto_rollover') historyHTML += `<li class="text-purple-600 flex justify-between"><span>${h.date}</span> <span>${h.fromYear} থেকে ${h.toYear} সালে ${h.carriedDue} টাকা স্বয়ংক্রিয়ভাবে যোগ হয়েছে</span></li>`;
                     else if(h.type === 'new_year') historyHTML += `<li class="text-indigo-600 flex justify-between"><span>${h.date}</span> <span>${h.fromYear} থেকে ${h.toYear} সালে ${h.carriedDue} টাকা যোগ হয়েছে</span></li>`;
                     historyHTML += `</ul></div>`;
                 });
