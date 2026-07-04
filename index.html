@@ -16,17 +16,45 @@
         ::-webkit-scrollbar-thumb { background: #888; border-radius: 5px; }
         .premium-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
         
-        /* Mobile Responsive Table (No Scroll) */
+        /* Mobile Responsive Table (Slim & Clear Cards) */
         @media (max-width: 767px) {
             .table-fixed thead { display: none; }
             .table-fixed, .table-fixed tbody, .table-fixed tr, .table-fixed td { display: block; width: 100%; }
-            .table-fixed tr { margin-bottom: 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; background: white; padding: 0.5rem; }
-            .table-fixed td { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding: 0.5rem; text-align: right; font-size: 12px; }
+            .table-fixed tr { 
+                margin-bottom: 0.5rem; 
+                border: 1px solid #cbd5e1; 
+                border-radius: 0.5rem; 
+                background: white; 
+                padding: 0.25rem 0.75rem; 
+                box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            }
+            .table-fixed td { 
+                display: flex; 
+                justify-content: space-between; 
+                align-items: center; 
+                border-bottom: 1px solid #f1f5f9; 
+                padding: 0.3rem 0; 
+                text-align: right; 
+                font-size: 11px; 
+            }
             .table-fixed td:last-child { border-bottom: none; }
-            .table-fixed td::before { content: attr(data-label); font-weight: bold; margin-right: 1rem; text-align: left; color: #64748b; width: 45%; }
-            .table-fixed td[data-label="চাষীর নাম ও সাল"] { flex-direction: column; align-items: flex-start; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 0.5rem; }
+            .table-fixed td::before { content: attr(data-label); font-weight: 600; margin-right: 1rem; text-align: left; color: #64748b; width: 40%; font-size: 10px; }
+            .table-fixed td[data-label="চাষীর নাম ও সাল"] { 
+                flex-direction: column; 
+                align-items: flex-start; 
+                border-bottom: 2px solid #e2e8f0; 
+                padding-bottom: 0.4rem; 
+                margin-bottom: 0.2rem; 
+            }
             .table-fixed td[data-label="চাষীর নাম ও সাল"]::before { display: none; }
-            .table-fixed td[data-label="অ্যাকশন"] { justify-content: flex-start; gap: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #e2e8f0; margin-top: 0.25rem; }
+            .table-fixed td[data-label="চাষীর নাম ও সাল"] .farmer-name { font-size: 15px; font-weight: 800; color: #0f172a; margin-bottom: 2px; }
+            .table-fixed td[data-label="অ্যাকশন"] { 
+                justify-content: flex-start; 
+                gap: 0.5rem; 
+                padding-top: 0.4rem; 
+                border-top: 1px solid #e2e8f0; 
+                margin-top: 0.2rem; 
+            }
             .table-fixed td[data-label="অ্যাকশন"]::before { display: none; }
         }
     </style>
@@ -36,7 +64,7 @@
         import { getFirestore, collection, addDoc, query, where, getDocs, setDoc, doc, onSnapshot, updateDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyDZhV6G0D-fTrH2auEqgtz72DGrBHpgFDU",
+             apiKey: "AIzaSyDZhV6G0D-fTrH2auEqgtz72DGrBHpgFDU",
             authDomain: "lease-management-c7c35.firebaseapp.com",
             projectId: "lease-management-c7c35",
             storageBucket: "lease-management-c7c35.firebasestorage.app",
@@ -135,10 +163,22 @@
 
                                 <form id="signupForm" class="space-y-5 hidden">
                                     <div class="grid grid-cols-2 gap-4">
-                                        <div><label class="block text-xs font-medium text-slate-600 mb-1">ইউজারনেম</label><input type="text" id="suUsername" name="suUsername" autocomplete="off" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required></div>
-                                        <div><label class="block text-xs font-medium text-slate-600 mb-1">মোবাইল</label><input type="text" id="suMobile" name="suMobile" autocomplete="off" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required></div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-600 mb-1">ইউজারনেম</label>
+                                            <input type="text" id="suUsername" name="suUsername" autocomplete="off" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required>
+                                            <p id="userCheckMsg" class="text-xs mt-1 h-4 font-bold"></p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-600 mb-1">মোবাইল</label>
+                                            <input type="text" id="suMobile" name="suMobile" autocomplete="off" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required>
+                                            <p class="text-xs mt-1 h-4"></p>
+                                        </div>
                                     </div>
-                                    <div><label class="block text-xs font-medium text-slate-600 mb-1">ইমেইল</label><input type="email" id="suEmail" name="suEmail" autocomplete="email" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required></div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-600 mb-1">ইমেইল</label>
+                                        <input type="email" id="suEmail" name="suEmail" autocomplete="email" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required>
+                                        <p id="emailCheckMsg" class="text-xs mt-1 h-4 font-bold"></p>
+                                    </div>
                                     <div><label class="block text-xs font-medium text-slate-600 mb-1">পাসওয়ার্ড</label><input type="password" id="suPassword" name="suPassword" autocomplete="new-password" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required></div>
                                     <button type="submit" id="signupBtn" class="w-full bg-emerald-600 text-white p-3 rounded-xl font-bold hover:bg-emerald-700 transition flex justify-center shadow-md">রেজিস্টার করুন</button>
                                 </form>
@@ -176,6 +216,30 @@
             document.getElementById('forgotBtn').onclick = () => { loginForm.classList.add('hidden'); forgotForm.classList.remove('hidden'); };
             document.getElementById('backToLogin').onclick = () => { forgotForm.classList.add('hidden'); loginForm.classList.remove('hidden'); };
 
+            // Real-time check for Username and Email
+            let debounceTimer;
+            const checkExistence = async (field, value, msgId) => {
+                clearTimeout(debounceTimer);
+                const msgEl = document.getElementById(msgId);
+                if (value.trim() === '') { msgEl.innerText = ''; return; }
+                
+                debounceTimer = setTimeout(async () => {
+                    const q = query(collection(db, "users"), where(field, "==", value));
+                    const snap = await getDocs(q);
+                    if (!snap.empty) {
+                        msgEl.innerText = 'already exist';
+                        msgEl.className = 'text-xs mt-1 h-4 text-red-500 font-bold';
+                    } else {
+                        msgEl.innerText = 'available';
+                        msgEl.className = 'text-xs mt-1 h-4 text-green-500 font-bold';
+                    }
+                }, 500);
+            };
+
+            document.getElementById('suUsername').addEventListener('input', (e) => checkExistence('username', e.target.value, 'userCheckMsg'));
+            document.getElementById('suEmail').addEventListener('input', (e) => checkExistence('email', e.target.value, 'emailCheckMsg'));
+
+
             loginForm.onsubmit = async (e) => {
                 e.preventDefault();
                 const btn = document.getElementById('loginBtn');
@@ -211,12 +275,14 @@
                 const email = document.getElementById('suEmail').value;
                 const mobile = document.getElementById('suMobile').value;
                 const password = document.getElementById('suPassword').value;
+                
+                // Final check before submit
+                const q1 = query(collection(db, "users"), where("username", "==", username));
+                const q2 = query(collection(db, "users"), where("email", "==", email));
+                if (!(await getDocs(q1)).empty) { hideSpinner(btn); return showToast("Username already exist"); }
+                if (!(await getDocs(q2)).empty) { hideSpinner(btn); return showToast("Email already exist"); }
+                
                 try {
-                    const q1 = query(collection(db, "users"), where("username", "==", username));
-                    const q2 = query(collection(db, "users"), where("email", "==", email));
-                    if (!(await getDocs(q1)).empty) { hideSpinner(btn); return showToast("Username already exist"); }
-                    if (!(await getDocs(q2)).empty) { hideSpinner(btn); return showToast("Email already exist"); }
-                    
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     await setDoc(doc(db, "users", userCredential.user.uid), { username, email, mobile });
                     showToast('সাইন আপ সফল হয়েছে!', 'success');
@@ -397,7 +463,7 @@
 
                 tr.innerHTML = `
                     <td data-label="চাষীর নাম ও সাল" class="p-3 align-top">
-                        <span class="font-bold text-slate-800 cursor-pointer hover:text-indigo-600 block" data-name="${lease.farmerName}">${lease.farmerName}</span>
+                        <span class="farmer-name text-slate-800 cursor-pointer hover:text-indigo-600 block" data-name="${lease.farmerName}">${lease.farmerName}</span>
                         <div class="flex items-center gap-1 mt-1">
                             <input type="text" value="${lease.year}" data-id="${id}" class="yearInput text-xs text-slate-500 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 w-16 focus:outline-none p-0">
                             <span class="text-xs text-slate-400">(${lease.cycleType})</span>
