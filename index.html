@@ -16,71 +16,50 @@
         ::-webkit-scrollbar-thumb { background: #888; border-radius: 5px; }
         .premium-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
         
+        /* Desktop & Mobile Helpers */
         .desktop-only { display: flex; }
-        .mobile-amount { display: none; }
+        .collapsed-view { display: none; }
 
-        /* Mobile Responsive Table (Collapsible Cards) */
+        /* Mobile Responsive Table (Slim 3D Collapsible Cards) */
         @media (max-width: 767px) {
+            .desktop-only { display: none !important; }
+            .collapsed-view { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 2px 0; }
+            
             .table-fixed thead { display: none; }
             .table-fixed, .table-fixed tbody, .table-fixed tr, .table-fixed td { display: block; width: 100%; }
             .table-fixed tbody tr { 
-                margin-bottom: 0.75rem; 
-                border: 2px solid #475569 !important; 
+                margin-bottom: 0.5rem; 
+                border: 1px solid #94a3b8; 
                 border-radius: 0.5rem; 
                 background: white; 
-                padding: 0.5rem 0.75rem; 
+                padding: 0.35rem 0.75rem; 
                 box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+                cursor: pointer;
+                transition: all 0.2s;
             }
             .table-fixed tbody tr.bg-red-50 { 
                 background-color: #fef2f2 !important; 
                 border-color: #ef4444 !important; 
             }
-            .table-fixed td { 
-                display: flex; 
-                justify-content: space-between; 
-                align-items: center; 
-                border-bottom: 1px solid #f1f5f9; 
-                padding: 0.4rem 0; 
-                text-align: right; 
-                font-size: 12px; 
-            }
-            .table-fixed td:last-child { border-bottom: none; }
-            .table-fixed td::before { content: attr(data-label); font-weight: 600; margin-right: 1rem; text-align: left; color: #64748b; width: 40%; font-size: 10px; }
+            .table-fixed td { padding: 0; margin: 0; border: none; text-align: right; font-size: 12px; }
+            .table-fixed td::before { display: none; }
             
             /* Collapsed State */
             .table-fixed td.collapsible { display: none; }
-            .table-fixed td[data-label="চাষীর নাম ও সাল"] { 
-                flex-direction: row; 
-                justify-content: space-between;
-                align-items: center;
-                border-bottom: 1px solid #e2e8f0; 
-                padding-bottom: 0.5rem; 
-                margin-bottom: 0.25rem;
-                cursor: pointer;
-            }
-            .table-fixed td[data-label="চাষীর নাম ও সাল"]::before { display: none; }
-            .table-fixed td[data-label="চাষীর নাম ও সাল"] .farmer-name { font-size: 15px; font-weight: 800; color: #dc2626; margin: 0; }
-            .table-fixed td[data-label="চাষীর নাম ও সাল"] .mobile-amount { display: block; font-size: 11px; color: #475569; }
-            .table-fixed td[data-label="চাষীর নাম ও সাল"] .desktop-only { display: none; }
-            .table-fixed td[data-label="বকেয়া"] { cursor: pointer; border-bottom: none; }
-            
+            .table-fixed td[data-label="চাষীর নাম ও সাল"] { padding: 0; cursor: pointer; }
+            .collapsed-name { color: #dc2626; font-weight: 800; font-size: 15px; line-height: 1.1; }
+            .collapsed-year { color: #0891b2; font-weight: 700; font-size: 11px; display: block; margin-top: -2px; }
+            .collapsed-amount { color: #475569; font-size: 11px; font-weight: 600; text-align: center; }
+            .collapsed-due { color: #dc2626; font-weight: 700; font-size: 13px; white-space: nowrap; text-align: right; }
+            .collapsed-paid { color: #16a34a; font-weight: 700; font-size: 13px; }
+            .collapsed-transferred { color: #4f46e5; font-weight: 700; font-size: 13px; }
+
             /* Expanded State */
-            .table-fixed tbody tr.expanded td.collapsible { display: flex; }
-            .table-fixed tbody tr.expanded td[data-label="চাষীর নাম ও সাল"] {
-                flex-direction: column;
-                align-items: flex-start;
-                border-bottom: 2px solid #cbd5e1;
-            }
-            .table-fixed tbody tr.expanded td[data-label="চাষীর নাম ও সাল"] .desktop-only { display: flex; margin-top: 4px; }
-            .table-fixed tbody tr.expanded td[data-label="চাষীর নাম ও সাল"] .mobile-amount { display: none; }
+            .table-fixed tbody tr.expanded { box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+            .table-fixed tbody tr.expanded td.collapsible { display: block; padding-top: 8px; border-top: 1px solid #e2e8f0; margin-top: 8px; }
             .table-fixed tbody tr.expanded td[data-label="অ্যাকশন"] { 
-                justify-content: flex-start; 
-                gap: 0.5rem; 
-                padding-top: 0.5rem; 
-                border-top: 1px solid #e2e8f0; 
-                margin-top: 0.25rem; 
+                justify-content: flex-end; gap: 0.5rem; padding-top: 8px; border-top: 1px solid #e2e8f0; margin-top: 8px; display: flex;
             }
-            .table-fixed tbody tr.expanded td[data-label="অ্যাকশন"]::before { display: none; }
         }
     </style>
     <script type="module">
@@ -95,7 +74,6 @@
             storageBucket: "lease-management-c7c35.firebasestorage.app",
             messagingSenderId: "182624418687",
             appId: "1:182624418687:web:6e5964459b5c2287f5384a"
-        };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -391,13 +369,16 @@
             document.getElementById('leasesTable').addEventListener('click', (e) => {
                 const btn = e.target.closest('button');
                 if (btn) {
-                    e.stopPropagation(); // Prevent row expand when clicking button
+                    e.stopPropagation(); 
                     const id = btn.dataset.id;
                     if (btn.classList.contains('payBtn')) openPaymentModal(id, btn.dataset.name);
                     else if (btn.classList.contains('transferBtn')) openTransferModal(id, btn.dataset.amount);
                     else if (btn.classList.contains('editBtn')) openEditRateModal(id, btn.dataset.year, btn.dataset.rate);
                     else if (btn.classList.contains('delBtn')) handleDelete(id);
                     else if (btn.classList.contains('adjustBtn')) openAdjustDueModal(id, btn.dataset.name, btn.dataset.year, btn.dataset.due);
+                } else if (e.target.closest('.collapsed-name')) {
+                    e.stopPropagation();
+                    openHistoryModal(e.target.closest('.collapsed-name').dataset.name);
                 } else if (e.target.closest('.farmer-name')) {
                     e.stopPropagation();
                     openHistoryModal(e.target.closest('.farmer-name').dataset.name);
@@ -445,11 +426,9 @@
                     let yearVal = parseInt(lease.year);
                     if (isNaN(yearVal)) continue; 
                     
-                    // জ্যৈষ্ঠ শুরু: জুন (মাস ৫), জানুয়ারি শুরু: জানুয়ারি (মাস ০)
                     let cycleMonth = lease.cycleType === 'জ্যৈষ্ঠ' ? 5 : 0; 
                     let activeCycleYear = currentYear;
                     
-                    // যদি বর্তমান মাস সাইকেল শুরুর মাসের আগে থাকে, তবে বর্তমান চলমান সাল হবে আগের বছর
                     if (currentMonth < cycleMonth) {
                         activeCycleYear = currentYear - 1;
                     }
@@ -563,24 +542,38 @@
                 if (lease.status === 'inactive' || isTransferred) tr.className = 'bg-red-50 text-red-400';
                 
                 let dueHtml = '';
+                let collapsedDueHtml = '';
                 if (isPaid && lease.status === 'active' && !isTransferred) {
                     dueHtml = `<span class="font-bold text-green-600 text-base">পরিশোধ</span>`;
+                    collapsedDueHtml = `<span class="collapsed-paid">পরিশোধ</span>`;
                 } else if (isTransferred) {
                     dueHtml = `<span class="text-indigo-600 text-xs font-bold">নতুন বছরে যোগ হয়েছে</span>`;
+                    collapsedDueHtml = `<span class="collapsed-transferred">ট্রান্সফার্ড</span>`;
                 } else if (lease.status === 'active') {
                     dueHtml = `<span class="font-bold text-red-600 text-base">${fmt(lease.dueAmount)}</span> <span class="text-xs">টাকা</span>
-                               <button data-id="${id}" data-name="${lease.farmerName}" data-year="${lease.year}" data-due="${lease.dueAmount}" class="adjustBtn collapsible block mt-1 text-xs text-indigo-500 hover:underline">নতুন বছরে নিন</button>`;
+                               <button data-id="${id}" data-name="${lease.farmerName}" data-year="${lease.year}" data-due="${lease.dueAmount}" class="adjustBtn block mt-1 text-xs text-indigo-500 hover:underline">নতুন বছরে নিন</button>`;
+                    collapsedDueHtml = `<span class="collapsed-due">বকেয়া: ${fmt(lease.dueAmount)}</span>`;
                 } else {
                     dueHtml = `<span class="block text-xs text-red-400 mt-1">নিষ্ক্রিয়</span>`;
+                    collapsedDueHtml = `<span class="collapsed-due">নিষ্ক্রিয়</span>`;
                 }
 
                 tr.innerHTML = `
                     <td data-label="চাষীর নাম ও সাল" class="p-3 align-top">
-                        <span class="farmer-name text-red-600 font-bold cursor-pointer block" data-name="${lease.farmerName}">${lease.farmerName}</span>
-                        <span class="mobile-amount">জমি: ${lease.amount} শতাংশ</span>
-                        <div class="desktop-only items-center gap-1 mt-1">
-                            <input type="text" value="${lease.year}" data-id="${id}" class="yearInput text-xs text-slate-500 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 w-16 focus:outline-none p-0">
-                            <span class="text-xs text-slate-400">(${lease.cycleType})</span>
+                        <div class="collapsed-view">
+                            <div>
+                                <span class="collapsed-name" data-name="${lease.farmerName}">${lease.farmerName}</span>
+                                <span class="collapsed-year">${lease.year} (${lease.cycleType})</span>
+                            </div>
+                            <span class="collapsed-amount">জমি: ${lease.amount} শতাংশ</span>
+                            ${collapsedDueHtml}
+                        </div>
+                        <div class="desktop-only items-start gap-1 mt-1 hidden">
+                            <span class="farmer-name text-red-600 font-bold cursor-pointer block" data-name="${lease.farmerName}">${lease.farmerName}</span>
+                            <div class="flex items-center gap-1">
+                                <input type="text" value="${lease.year}" data-id="${id}" class="yearInput text-xs text-cyan-600 font-bold bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 w-16 focus:outline-none p-0">
+                                <span class="text-xs text-cyan-600 font-bold">(${lease.cycleType})</span>
+                            </div>
                         </div>
                     </td>
                     <td data-label="জমি / দর" class="p-3 align-top text-xs space-y-1 collapsible">
@@ -591,7 +584,7 @@
                         <div><span class="text-slate-400">মোট:</span> <b class="text-slate-800">${fmt(lease.totalCost)}</b> টাকা</div>
                         <div><span class="text-slate-400">জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)}</b> টাকা</div>
                     </td>
-                    <td data-label="বকেয়া" class="p-3 align-top">${dueHtml}</td>
+                    <td data-label="বকেয়া" class="p-3 align-top collapsible">${dueHtml}</td>
                     <td data-label="অ্যাকশন" class="p-3 align-top collapsible">
                         ${(lease.status === 'active' && !isTransferred) ? `
                         <div class="flex items-center gap-1 justify-end flex-wrap">
