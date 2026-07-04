@@ -74,7 +74,7 @@
         import { getFirestore, collection, addDoc, query, where, getDocs, setDoc, doc, onSnapshot, updateDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
-          apiKey: "AIzaSyDZhV6G0D-fTrH2auEqgtz72DGrBHpgFDU",
+            apiKey: "AIzaSyDZhV6G0D-fTrH2auEqgtz72DGrBHpgFDU",
             authDomain: "lease-management-c7c35.firebaseapp.com",
             projectId: "lease-management-c7c35",
             storageBucket: "lease-management-c7c35.firebasestorage.app",
@@ -91,7 +91,7 @@
         let allLeases = []; 
         let currentPage = 1;
         const itemsPerPage = 5;
-        let expandedRows = new Set(); // এক্সপান্ডেড কার্ড ট্র্যাক রাখার জন্য
+        let expandedRows = new Set(); 
 
         const fmt = (val) => (parseFloat(val) || 0).toFixed(2);
 
@@ -119,15 +119,43 @@
         }
         ['mousemove', 'keydown', 'click', 'scroll'].forEach(evt => window.addEventListener(evt, resetIdleTimer));
 
-        function cleanError(errCode) {
+        // URL বাদ দিয়ে ক্লিন এরর মেসেজ
+        function cleanError(err) {
             const errors = {
                 'auth/invalid-email': 'ইমেইল ঠিকানাটি সঠিক নয়।',
                 'auth/user-not-found': 'এই ইমেইল বা ইউজারনেম দিয়ে কোনো অ্যাকাউন্ট নেই।',
                 'auth/wrong-password': 'পাসওয়ার্ড ভুল হয়েছে।',
                 'auth/email-already-in-use': 'Email already exist',
-                'auth/weak-password': 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।'
+                'auth/weak-password': 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।',
+                'auth/network-request-failed': 'নেটওয়ার্ক সমস্যা! ইন্টারনেট সংযোগ পরীক্ষা করুন।',
+                'permission-denied': 'অনুমতি নেই।'
             };
-            return errors[errCode] || 'কিছু একটা সমস্যা হয়েছে। আবার চেষ্টা করুন।';
+            if (err && err.code && errors[err.code]) return errors[err.code];
+            return 'কিছু একটা সমস্যা হয়েছে। আবার চেষ্টা করুন।';
+        }
+
+        // মাসের নাম থেকে মাসের নম্বর বের করার ফাংশন (অটো-রোলওভারের জন্য)
+        function getMonthNumber(monthStr) {
+            if (!monthStr) return 0;
+            const m = monthStr.toLowerCase().trim();
+            const map = {
+                'জানুয়ারি': 0, 'january': 0,
+                'ফেব্রুয়ারি': 1, 'february': 1,
+                'মার্চ': 2, 'march': 2,
+                'এপ্রিল': 3, 'april': 3,
+                'মে': 4, 'may': 4,
+                'জুন': 5, 'june': 5, 'জ্যৈষ্ঠ': 5,
+                'জুলাই': 6, 'july': 6, 'আষাঢ়': 6,
+                'আগস্ট': 7, 'august': 7, 'শ্রাবণ': 7,
+                'সেপ্টেম্বর': 8, 'september': 8, 'ভাদ্র': 8,
+                'অক্টোবর': 9, 'october': 9, 'আশ্বিন': 9,
+                'নভেম্বর': 10, 'november': 10, 'কার্তিক': 10,
+                'ডিসেম্বর': 11, 'december': 11, 'অগ্রহায়ণ': 11
+            };
+            for (let key in map) {
+                if (m.includes(key)) return map[key];
+            }
+            return 0;
         }
 
         onAuthStateChanged(auth, (user) => {
@@ -269,7 +297,7 @@
                         localStorage.setItem('savedIdentifiers', JSON.stringify(savedIds));
                     }
                     showToast('সফলভাবে লগইন হয়েছে!', 'success');
-                } catch (err) { showToast(cleanError(err.code)); }
+                } catch (err) { showToast(cleanError(err)); }
                 hideSpinner(btn);
             };
 
@@ -291,7 +319,7 @@
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     await setDoc(doc(db, "users", userCredential.user.uid), { username, email, mobile });
                     showToast('সাইন আপ সফল হয়েছে!', 'success');
-                } catch (err) { showToast(cleanError(err.code)); }
+                } catch (err) { showToast(cleanError(err)); }
                 hideSpinner(btn);
             };
 
@@ -304,7 +332,7 @@
                     await sendPasswordResetEmail(auth, email);
                     showToast('পাসওয়ার্ড রিসেট ইমেইল পাঠানো হয়েছে!', 'success');
                     document.getElementById('backToLogin').click();
-                } catch (err) { showToast(cleanError(err.code)); }
+                } catch (err) { showToast(cleanError(err)); }
                 hideSpinner(btn);
             };
         }
@@ -331,10 +359,7 @@
                                 <input type="text" id="farmerName" placeholder="চাষীর নাম" class="p-2 border rounded-lg text-sm col-span-2 md:col-span-1" required>
                                 <input type="number" step="0.01" id="amount" placeholder="জমির পরিমাণ (শতাংশ)" class="p-2 border rounded-lg text-sm" required>
                                 <input type="number" id="ratePer33" placeholder="দর (যেমন: ১৮০০০)" class="p-2 border rounded-lg text-sm" required>
-                                <select id="cycleType" class="p-2 border rounded-lg text-sm">
-                                    <option value="জ্যৈষ্ঠ">জ্যৈষ্ঠ টু জ্যৈষ্ঠ</option>
-                                    <option value="জানুয়ারি">জানুয়ারি টু জানুয়ারি</option>
-                                </select>
+                                <input type="text" id="cycleType" placeholder="মাস (যেমন: জানুয়ারি)" class="p-2 border rounded-lg text-sm" required>
                                 <input type="text" id="year" placeholder="বছর (২০২৪)" class="p-2 border rounded-lg text-sm" required>
                                 <button type="submit" class="bg-indigo-600 text-white p-2 rounded-lg text-sm hover:bg-indigo-700 font-bold">যুক্ত করুন</button>
                             </form>
@@ -419,7 +444,6 @@
                             year: newYear, ratePer33: yData.ratePer33, totalCost: yData.totalCost, paidAmount: yData.paidAmount, dueAmount: yData.dueAmount
                         });
                         showToast(`${newYear} সালের হিসাব লোড হয়েছে!`, 'success');
-                        // ডেটা আপডেট হওয়ার পর কার্ড এক্সপান্ডেড থাকবে
                         expandedRows.add(id);
                     } else if (newYear !== data.year) {
                         showToast(`${newYear} সালের কোনো হিসাব এই জমিতে নেই।`, 'error');
@@ -434,7 +458,7 @@
         // স্বয়ংক্রিয়ভাবে নতুন বছরে বকেয়া ট্রান্সফার (মাস অনুযায়ী)
         async function autoRollover() {
             let currentYear = new Date().getFullYear();
-            let currentMonth = new Date().getMonth(); // 0-11
+            let currentMonth = new Date().getMonth();
             let updates = [];
             
             for (let lease of allLeases) {
@@ -442,7 +466,7 @@
                     let yearVal = parseInt(lease.year);
                     if (isNaN(yearVal)) continue; 
                     
-                    let cycleMonth = lease.cycleType === 'জ্যৈষ্ঠ' ? 5 : 0; 
+                    let cycleMonth = getMonthNumber(lease.cycleType);
                     let activeCycleYear = currentYear;
                     
                     if (currentMonth < cycleMonth) {
@@ -550,7 +574,7 @@
             paginatedLeases.forEach(lease => {
                 const id = lease.id;
                 const tr = document.createElement('tr');
-                tr.dataset.id = id; // এক্সপান্ডেড স্টেট ট্র্যাক রাখার জন্য আইডি
+                tr.dataset.id = id;
                 
                 const currentYearData = lease.yearlyData?.[lease.year] || {};
                 const isTransferred = currentYearData.status === 'transferred';
@@ -581,7 +605,6 @@
 
                 tr.innerHTML = `
                     <td data-label="চাষীর নাম ও সাল" class="p-3 align-top">
-                        <!-- Mobile Collapsed View -->
                         <div class="collapsed-view">
                             <div>
                                 <span class="collapsed-name" data-name="${lease.farmerName}">${lease.farmerName}</span>
@@ -591,7 +614,6 @@
                             ${collapsedDueHtml}
                         </div>
                         
-                        <!-- Desktop & Mobile Expanded View -->
                         <div class="expanded-view-content">
                             <span class="farmer-name text-red-600 font-bold cursor-pointer block" data-name="${lease.farmerName}">${lease.farmerName}</span>
                             <div class="flex items-center gap-1 mt-1">
@@ -677,8 +699,12 @@
 
         async function handleDelete(id) {
             if(confirm("আপনি কি এই হিসাবটি ডিলিট করতে চান?")) {
-                await deleteDoc(doc(db, "leases", id));
-                showToast('হিসাব ডিলিট করা হয়েছে!', 'success');
+                try {
+                    await deleteDoc(doc(db, "leases", id));
+                    showToast('হিসাব ডিলিট করা হয়েছে!', 'success');
+                } catch(err) {
+                    showToast(cleanError(err));
+                }
             }
         }
 
@@ -793,25 +819,39 @@
                 const q2 = query(collection(db, "leases"), where("farmerName", "==", newName), where("status", "==", "active"));
                 const newFarmerSnap = await getDocs(q2);
 
-                const oldNewAmount = oldData.amount - tAmount;
-                const oldNewTotal = fmt((oldNewAmount / 33) * oldData.ratePer33);
+                const oldNewAmount = parseFloat(oldData.amount) - tAmount;
+                
+                // পূর্বের বছরের বকেয়া (Carried Due) বের করা এবং হস্তান্তরের পরেও তা ধরে রাখা
+                const oldFullCurrentCost = (parseFloat(oldData.amount) / 33) * parseFloat(oldData.ratePer33);
+                const oldCarriedDue = parseFloat(oldData.totalCost) - oldFullCurrentCost;
+                
+                const oldNewCurrentCost = (oldNewAmount / 33) * parseFloat(oldData.ratePer33);
+                const oldNewTotal = oldCarriedDue + oldNewCurrentCost;
+                const oldNewDue = oldNewTotal - parseFloat(oldData.paidAmount);
+
                 const oldHistory = oldData.history || [];
                 oldHistory.push({ date: new Date().toLocaleDateString('bn-BD'), amount: tAmount, type: 'transfer_out', to: newName });
                 
                 const oldYearlyData = oldData.yearlyData || {};
                 const oldYear = oldData.year;
                 if (oldYearlyData[oldYear]) {
-                    oldYearlyData[oldYear].totalCost = parseFloat(oldNewTotal);
-                    oldYearlyData[oldYear].dueAmount = parseFloat(oldNewTotal) - oldData.paidAmount;
+                    oldYearlyData[oldYear].totalCost = oldNewTotal.toFixed(2);
+                    oldYearlyData[oldYear].dueAmount = oldNewDue.toFixed(2);
                 }
 
-                await updateDoc(oldRef, { amount: oldNewAmount, totalCost: parseFloat(oldNewTotal), dueAmount: fmt(parseFloat(oldNewTotal) - oldData.paidAmount), history: oldHistory, yearlyData: oldYearlyData });
+                await updateDoc(oldRef, { 
+                    amount: oldNewAmount, 
+                    totalCost: oldNewTotal.toFixed(2), 
+                    dueAmount: oldNewDue.toFixed(2), 
+                    history: oldHistory, 
+                    yearlyData: oldYearlyData 
+                });
 
                 if (!newFarmerSnap.empty) {
                     const newDoc = newFarmerSnap.docs[0];
                     const newData = newDoc.data();
-                    const newAmount = newData.amount + tAmount;
-                    const newTotal = fmt((newAmount / 33) * newData.ratePer33);
+                    const newAmount = parseFloat(newData.amount) + tAmount;
+                    const newTotal = fmt((newAmount / 33) * parseFloat(newData.ratePer33));
                     const newHistory = newData.history || [];
                     newHistory.push({ date: new Date().toLocaleDateString('bn-BD'), amount: tAmount, type: 'transfer_in', from: oldData.farmerName });
                     
@@ -819,14 +859,14 @@
                     const newYear = newData.year;
                     if (newYearlyData[newYear]) {
                         newYearlyData[newYear].totalCost = parseFloat(newTotal);
-                        newYearlyData[newYear].dueAmount = fmt(parseFloat(newTotal) - newData.paidAmount);
+                        newYearlyData[newYear].dueAmount = fmt(parseFloat(newTotal) - parseFloat(newData.paidAmount));
                     }
 
                     await updateDoc(doc(db, "leases", newDoc.id), { 
-                        amount: newAmount, totalCost: parseFloat(newTotal), dueAmount: fmt(parseFloat(newTotal) - newData.paidAmount), history: newHistory, yearlyData: newYearlyData 
+                        amount: newAmount, totalCost: parseFloat(newTotal), dueAmount: fmt(parseFloat(newTotal) - parseFloat(newData.paidAmount)), history: newHistory, yearlyData: newYearlyData 
                     });
                 } else {
-                    const newTotal = fmt((tAmount / 33) * oldData.ratePer33);
+                    const newTotal = fmt((tAmount / 33) * parseFloat(oldData.ratePer33));
                     const newYearlyData = {};
                     newYearlyData[oldData.year] = { ratePer33: oldData.ratePer33, totalCost: parseFloat(newTotal), paidAmount: 0, dueAmount: parseFloat(newTotal), status: 'active' };
                     
@@ -880,7 +920,7 @@
                     ratePer33: newRate, year: newYear, totalCost: yearlyData[newYear].totalCost, paidAmount: yearlyData[newYear].paidAmount, dueAmount: yearlyData[newYear].dueAmount, history, yearlyData 
                 });
                 
-                expandedRows.add(id); // এডিট করার পর কার্ড এক্সপান্ডেড রাখার জন্য
+                expandedRows.add(id);
                 showToast('দর এবং বছর আপডেট হয়েছে!', 'success');
                 document.getElementById('modalContainer').classList.add('hidden');
             };
@@ -931,7 +971,7 @@
                     year: newYear, ratePer33: newRate, totalCost: fmt(totalNewCost), paidAmount: 0, dueAmount: fmt(totalNewCost), status: 'active', history, yearlyData 
                 });
 
-                expandedRows.add(id); // ট্রান্সফারের পর কার্ড এক্সপান্ডেড রাখার জন্য
+                expandedRows.add(id);
                 showToast('নতুন হিসাব বর্ষ সফলভাবে শুরু হয়েছে!', 'success');
                 document.getElementById('modalContainer').classList.add('hidden');
             };
