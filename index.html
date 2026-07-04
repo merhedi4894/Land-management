@@ -15,7 +15,6 @@
         .table-fixed { table-layout: fixed; }
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: #888; border-radius: 5px; }
-        /* Premium Input Focus */
         .premium-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
     </style>
     <script type="module">
@@ -83,7 +82,6 @@
         function renderAuth() {
             appContainer.innerHTML = `
                 <div class="min-h-screen flex items-center justify-center bg-slate-900 relative overflow-hidden">
-                    <!-- Animated Background -->
                     <div class="absolute top-0 -left-20 w-96 h-96 bg-indigo-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
                     <div class="absolute bottom-0 -right-20 w-96 h-96 bg-cyan-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
                     
@@ -98,52 +96,34 @@
                         
                         <div class="bg-white/5 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 overflow-hidden">
                             <div class="flex border-b border-white/10">
-                                <button id="tabLogin" class="flex-1 py-4 font-bold text-white bg-white/5 transition relative">
-                                    লগইন
-                                    <span class="absolute bottom-0 left-1/4 right-1/4 h-0.5 bg-cyan-400"></span>
-                                </button>
+                                <button id="tabLogin" class="flex-1 py-4 font-bold text-white bg-white/5 transition relative">লগইন <span class="absolute bottom-0 left-1/4 right-1/4 h-0.5 bg-cyan-400"></span></button>
                                 <button id="tabSignup" class="flex-1 py-4 font-bold text-slate-400 hover:text-white transition">সাইন আপ</button>
                             </div>
 
                             <div class="p-8 space-y-6">
-                                <!-- Login Form -->
                                 <form id="loginForm" class="space-y-5">
                                     <div>
                                         <label class="block text-xs font-medium text-slate-300 mb-1">ইমেইল অথবা ইউজারনেম</label>
-                                        <input type="text" id="loginIdentifier" autocomplete="username" class="premium-input w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 outline-none transition" placeholder="example@email.com" required>
+                                        <input type="text" id="loginIdentifier" autocomplete="username" class="premium-input w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 outline-none transition" required>
                                     </div>
                                     <div>
                                         <label class="block text-xs font-medium text-slate-300 mb-1">পাসওয়ার্ড</label>
-                                        <input type="password" id="loginPassword" autocomplete="current-password" class="premium-input w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 outline-none transition" placeholder="********" required>
+                                        <input type="password" id="loginPassword" autocomplete="current-password" class="premium-input w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 outline-none transition" required>
                                     </div>
                                     <button type="submit" id="loginBtn" class="w-full bg-gradient-to-r from-cyan-500 to-indigo-600 text-white p-3 rounded-xl font-bold hover:from-cyan-600 hover:to-indigo-700 transition flex justify-center shadow-lg shadow-indigo-900/50">লগইন করুন</button>
                                     <button type="button" id="forgotBtn" class="w-full text-center text-sm text-cyan-400 hover:text-cyan-300 hover:underline">পাসওয়ার্ড ভুলে গেছেন?</button>
                                 </form>
 
-                                <!-- Signup Form -->
                                 <form id="signupForm" class="space-y-5 hidden">
                                     <div class="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-xs font-medium text-slate-300 mb-1">ইউজারনেম</label>
-                                            <input type="text" id="suUsername" autocomplete="off" class="premium-input w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 outline-none" required>
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-medium text-slate-300 mb-1">মোবাইল</label>
-                                            <input type="text" id="suMobile" autocomplete="off" class="premium-input w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 outline-none" required>
-                                        </div>
+                                        <div><label class="block text-xs font-medium text-slate-300 mb-1">ইউজারনেম</label><input type="text" id="suUsername" autocomplete="off" class="premium-input w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 outline-none" required></div>
+                                        <div><label class="block text-xs font-medium text-slate-300 mb-1">মোবাইল</label><input type="text" id="suMobile" autocomplete="off" class="premium-input w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 outline-none" required></div>
                                     </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-slate-300 mb-1">ইমেইল</label>
-                                        <input type="email" id="suEmail" autocomplete="email" class="premium-input w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 outline-none" required>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-slate-300 mb-1">পাসওয়ার্ড</label>
-                                        <input type="password" id="suPassword" autocomplete="new-password" class="premium-input w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 outline-none" required>
-                                    </div>
+                                    <div><label class="block text-xs font-medium text-slate-300 mb-1">ইমেইল</label><input type="email" id="suEmail" autocomplete="email" class="premium-input w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 outline-none" required></div>
+                                    <div><label class="block text-xs font-medium text-slate-300 mb-1">পাসওয়ার্ড</label><input type="password" id="suPassword" autocomplete="new-password" class="premium-input w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 outline-none" required></div>
                                     <button type="submit" id="signupBtn" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white p-3 rounded-xl font-bold hover:from-green-600 hover:to-emerald-700 transition flex justify-center shadow-lg shadow-emerald-900/50">রেজিস্টার করুন</button>
                                 </form>
 
-                                <!-- Forgot Form -->
                                 <form id="forgotForm" class="space-y-5 hidden">
                                     <p class="text-sm text-slate-400">পাসওয়ার্ড রিকভারির জন্য আপনার রেজিস্টার্ড ইমেইল দিন।</p>
                                     <input type="email" id="resetEmail" autocomplete="email" class="premium-input w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 outline-none" placeholder="রেজিস্টার্ড ইমেইল" required>
@@ -184,7 +164,6 @@
                 const identifier = document.getElementById('loginIdentifier').value;
                 const password = document.getElementById('loginPassword').value;
                 let email = identifier;
-
                 try {
                     if(!identifier.includes('@')) {
                         const q = query(collection(db, "users"), where("username", "==", identifier));
@@ -206,13 +185,11 @@
                 const email = document.getElementById('suEmail').value;
                 const mobile = document.getElementById('suMobile').value;
                 const password = document.getElementById('suPassword').value;
-
                 try {
                     const q1 = query(collection(db, "users"), where("username", "==", username));
                     const q2 = query(collection(db, "users"), where("email", "==", email));
                     if (!(await getDocs(q1)).empty) { hideSpinner(btn); return showToast("Username already exists!"); }
                     if (!(await getDocs(q2)).empty) { hideSpinner(btn); return showToast("Email already exists!"); }
-
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     await setDoc(doc(db, "users", userCredential.user.uid), { username, email, mobile });
                     showToast('সাইন আপ সফল হয়েছে!', 'success');
@@ -291,6 +268,49 @@
 
             document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
             document.getElementById('leaseForm').addEventListener('submit', addLease);
+            
+            // Event Delegation for dynamic table buttons
+            document.getElementById('leasesTable').addEventListener('click', (e) => {
+                const btn = e.target.closest('button');
+                if (btn) {
+                    const id = btn.dataset.id;
+                    if (btn.classList.contains('payBtn')) openPaymentModal(id, btn.dataset.name);
+                    else if (btn.classList.contains('transferBtn')) openTransferModal(id, btn.dataset.amount);
+                    else if (btn.classList.contains('editBtn')) openEditRateModal(id, btn.dataset.year, btn.dataset.rate);
+                    else if (btn.classList.contains('delBtn')) handleDelete(id);
+                    else if (btn.classList.contains('adjustBtn')) openAdjustDueModal(id, btn.dataset.name, btn.dataset.year, btn.dataset.due);
+                } else if (e.target.dataset.name) {
+                    openHistoryModal(e.target.dataset.name);
+                }
+            });
+
+            // Event Delegation for inline year change
+            document.getElementById('leasesTable').addEventListener('change', async (e) => {
+                if (e.target.classList.contains('yearInput')) {
+                    const id = e.target.dataset.id;
+                    const newYear = e.target.value;
+                    const ref = doc(db, "leases", id);
+                    const snap = await getDoc(ref);
+                    const data = snap.data();
+                    const yearlyData = data.yearlyData || {};
+                    
+                    if (yearlyData[newYear]) {
+                        const yData = yearlyData[newYear];
+                        await updateDoc(ref, {
+                            year: newYear,
+                            ratePer33: yData.ratePer33,
+                            totalCost: yData.totalCost,
+                            paidAmount: yData.paidAmount,
+                            dueAmount: yData.dueAmount
+                        });
+                        showToast(`${newYear} সালের হিসাব লোড হয়েছে!`, 'success');
+                    } else if (newYear !== data.year) {
+                        showToast(`${newYear} সালের কোনো হিসাব এই জমিতে নেই। এডিট আইকন দিয়ে যুক্ত করুন।`, 'error');
+                        e.target.value = data.year; // Revert
+                    }
+                }
+            });
+
             loadLeases();
         }
 
@@ -350,20 +370,6 @@
                     `;
                     tbody.appendChild(tr);
                 });
-
-                document.querySelectorAll('.yearInput').forEach(inp => inp.addEventListener('change', async (e) => {
-                    const id = e.target.dataset.id;
-                    const newYear = e.target.value;
-                    await updateDoc(doc(db, "leases", id), { year: newYear });
-                    showToast('সাল আপডেট হয়েছে!', 'success');
-                }));
-
-                document.querySelectorAll('.payBtn').forEach(b => b.addEventListener('click', e => openPaymentModal(e.currentTarget.dataset.id, e.currentTarget.dataset.name)));
-                document.querySelectorAll('.transferBtn').forEach(b => b.addEventListener('click', e => openTransferModal(e.currentTarget.dataset.id, e.currentTarget.dataset.amount)));
-                document.querySelectorAll('.editBtn').forEach(b => b.addEventListener('click', e => openEditRateModal(e.currentTarget.dataset.id, e.currentTarget.dataset.year, e.currentTarget.dataset.rate)));
-                document.querySelectorAll('.delBtn').forEach(b => b.addEventListener('click', e => handleDelete(e.currentTarget.dataset.id)));
-                document.querySelectorAll('.adjustBtn').forEach(b => b.addEventListener('click', e => openAdjustDueModal(e.currentTarget.dataset.id, e.currentTarget.dataset.name, e.currentTarget.dataset.year, e.currentTarget.dataset.due)));
-                document.querySelectorAll('[data-name]').forEach(b => b.addEventListener('click', e => openHistoryModal(e.target.dataset.name)));
             });
         }
 
@@ -376,10 +382,13 @@
             const year = document.getElementById('year').value;
             const totalCost = ((amount / 33) * ratePer33).toFixed(2);
 
+            const yearlyData = {};
+            yearlyData[year] = { ratePer33, totalCost: parseFloat(totalCost), paidAmount: 0, dueAmount: parseFloat(totalCost) };
+
             await addDoc(collection(db, "leases"), {
-                farmerName, amount, ratePer33, cycleType, year,
+                farmerName, amount, cycleType, year, ratePer33,
                 totalCost: parseFloat(totalCost), paidAmount: 0, dueAmount: parseFloat(totalCost),
-                status: 'active', history: []
+                status: 'active', history: [], yearlyData: yearlyData
             });
             showToast('নতুন হিসাব যুক্ত হয়েছে!', 'success');
             document.getElementById('leaseForm').reset();
@@ -395,11 +404,18 @@
         function openModal(htmlContent) {
             const modal = document.getElementById('modalContainer');
             modal.classList.remove('hidden');
-            modal.innerHTML = `<div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md fade-in">${htmlContent}</div>`;
+            modal.innerHTML = `
+                <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md fade-in relative">
+                    <button class="absolute top-4 right-4 text-slate-400 hover:text-red-500 text-2xl" onclick="document.getElementById('modalContainer').classList.add('hidden')">&times;</button>
+                    ${htmlContent}
+                </div>
+            `;
+            // Click outside to close
+            modal.onclick = (e) => {
+                if (e.target.id === 'modalContainer') modal.classList.add('hidden');
+            };
         }
-        function closeModal() { document.getElementById('modalContainer').classList.add('hidden'); }
 
-        // পেমেন্ট মডাল - একাধিক জমি থাকলে সিলেক্ট করার সুবিধা
         async function openPaymentModal(id, name) {
             const q = query(collection(db, "leases"), where("farmerName", "==", name), where("status", "==", "active"));
             const snap = await getDocs(q);
@@ -420,6 +436,7 @@
                 <input type="number" id="payAmount" placeholder="পরিশোধের পরিমাণ" class="w-full p-3 border rounded-lg mb-3" autofocus>
                 <input type="date" id="payDate" class="w-full p-3 border rounded-lg mb-4" value="${new Date().toISOString().split('T')[0]}">
                 <button id="confirmPay" class="w-full bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 flex justify-center">নিশ্চিত করুন</button>
+                <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>
             `);
 
             document.getElementById('confirmPay').onclick = async () => {
@@ -438,9 +455,17 @@
                 const history = data.history || [];
                 history.push({ date, amount, type: 'payment' });
 
-                await updateDoc(ref, { paidAmount: newPaid, dueAmount: newDue, history });
+                // Update yearlyData
+                const yearlyData = data.yearlyData || {};
+                const currentYear = data.year;
+                if (yearlyData[currentYear]) {
+                    yearlyData[currentYear].paidAmount = newPaid;
+                    yearlyData[currentYear].dueAmount = newDue;
+                }
+
+                await updateDoc(ref, { paidAmount: newPaid, dueAmount: newDue, history, yearlyData });
                 showToast('টাকা পরিশোধ সফল হয়েছে!', 'success');
-                closeModal();
+                document.getElementById('modalContainer').classList.add('hidden');
             };
         }
 
@@ -459,6 +484,7 @@
                 <datalist id="farmerList">${options}</datalist>
                 <input type="text" id="newFarmerName" list="farmerList" placeholder="যাকে দিচ্ছেন তার নাম" class="w-full p-3 border rounded-lg mb-4">
                 <button id="confirmTransfer" class="w-full bg-yellow-500 text-white p-3 rounded-lg font-bold hover:bg-yellow-600 flex justify-center">হস্তান্তর করুন</button>
+                <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>
             `);
 
             document.getElementById('confirmTransfer').onclick = async () => {
@@ -482,7 +508,15 @@
                 const oldHistory = oldData.history || [];
                 oldHistory.push({ date: new Date().toLocaleDateString('bn-BD'), amount: tAmount, type: 'transfer_out', to: newName });
                 
-                await updateDoc(oldRef, { amount: oldNewAmount, totalCost: parseFloat(oldNewTotal), dueAmount: parseFloat(oldNewTotal) - oldData.paidAmount, history: oldHistory });
+                // Update old yearlyData
+                const oldYearlyData = oldData.yearlyData || {};
+                const oldYear = oldData.year;
+                if (oldYearlyData[oldYear]) {
+                    oldYearlyData[oldYear].totalCost = parseFloat(oldNewTotal);
+                    oldYearlyData[oldYear].dueAmount = parseFloat(oldNewTotal) - oldData.paidAmount;
+                }
+
+                await updateDoc(oldRef, { amount: oldNewAmount, totalCost: parseFloat(oldNewTotal), dueAmount: parseFloat(oldNewTotal) - oldData.paidAmount, history: oldHistory, yearlyData: oldYearlyData });
 
                 if (!newFarmerSnap.empty) {
                     const newDoc = newFarmerSnap.docs[0];
@@ -492,20 +526,32 @@
                     const newHistory = newData.history || [];
                     newHistory.push({ date: new Date().toLocaleDateString('bn-BD'), amount: tAmount, type: 'transfer_in', from: oldData.farmerName });
                     
+                    // Update new yearlyData
+                    const newYearlyData = newData.yearlyData || {};
+                    const newYear = newData.year;
+                    if (newYearlyData[newYear]) {
+                        newYearlyData[newYear].totalCost = parseFloat(newTotal);
+                        newYearlyData[newYear].dueAmount = parseFloat(newTotal) - newData.paidAmount;
+                    }
+
                     await updateDoc(doc(db, "leases", newDoc.id), { 
-                        amount: newAmount, totalCost: parseFloat(newTotal), dueAmount: parseFloat(newTotal) - newData.paidAmount, history: newHistory 
+                        amount: newAmount, totalCost: parseFloat(newTotal), dueAmount: parseFloat(newTotal) - newData.paidAmount, history: newHistory, yearlyData: newYearlyData 
                     });
                 } else {
                     const newTotal = ((tAmount / 33) * oldData.ratePer33).toFixed(2);
+                    const newYearlyData = {};
+                    newYearlyData[oldData.year] = { ratePer33: oldData.ratePer33, totalCost: parseFloat(newTotal), paidAmount: 0, dueAmount: parseFloat(newTotal) };
+                    
                     await addDoc(collection(db, "leases"), {
                         farmerName: newName, amount: tAmount, ratePer33: oldData.ratePer33, cycleType: oldData.cycleType, year: oldData.year,
                         totalCost: parseFloat(newTotal), paidAmount: 0, dueAmount: parseFloat(newTotal), status: 'active',
-                        history: [{ date: new Date().toLocaleDateString('bn-BD'), amount: tAmount, type: 'transfer_in', from: oldData.farmerName }]
+                        history: [{ date: new Date().toLocaleDateString('bn-BD'), amount: tAmount, type: 'transfer_in', from: oldData.farmerName }],
+                        yearlyData: newYearlyData
                     });
                 }
 
                 showToast('জমি সফলভাবে হস্তান্তর হয়েছে!', 'success');
-                closeModal();
+                document.getElementById('modalContainer').classList.add('hidden');
             };
         }
 
@@ -517,6 +563,7 @@
                 <label class="text-sm text-slate-500">বর্তমান দর: ${oldRate}</label>
                 <input type="number" id="newRate" value="${oldRate}" placeholder="নতুন দর" class="w-full p-3 border rounded-lg mb-4 mt-1">
                 <button id="confirmEdit" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 flex justify-center">আপডেট করুন</button>
+                <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>
             `);
             document.getElementById('confirmEdit').onclick = async () => {
                 const btn = document.getElementById('confirmEdit');
@@ -532,9 +579,29 @@
                 const history = data.history || [];
                 history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'edit', oldYear: data.year, newYear: newYear, oldRate: data.ratePer33, newRate: newRate });
 
-                await updateDoc(ref, { ratePer33: newRate, year: newYear, totalCost: parseFloat(newTotal), dueAmount: parseFloat(newTotal) - data.paidAmount, history });
+                const yearlyData = data.yearlyData || {};
+                if (yearlyData[newYear]) {
+                    // Update existing year's rate
+                    yearlyData[newYear].ratePer33 = newRate;
+                    yearlyData[newYear].totalCost = parseFloat(newTotal);
+                    yearlyData[newYear].dueAmount = parseFloat(newTotal) - yearlyData[newYear].paidAmount;
+                } else {
+                    // Create new year
+                    yearlyData[newYear] = { ratePer33: newRate, totalCost: parseFloat(newTotal), paidAmount: 0, dueAmount: parseFloat(newTotal) };
+                }
+
+                await updateDoc(ref, { 
+                    ratePer33: newRate, 
+                    year: newYear, 
+                    totalCost: yearlyData[newYear].totalCost, 
+                    paidAmount: yearlyData[newYear].paidAmount, 
+                    dueAmount: yearlyData[newYear].dueAmount, 
+                    history, 
+                    yearlyData 
+                });
+                
                 showToast('দর এবং বছর আপডেট হয়েছে!', 'success');
-                closeModal();
+                document.getElementById('modalContainer').classList.add('hidden');
             };
         }
 
@@ -551,6 +618,7 @@
                 <label class="text-sm text-slate-500">নতুন বছরের দর (৩৩ শতাংশ)</label>
                 <input type="number" id="adjustRate" placeholder="যেমন: ২০০০০" class="w-full p-3 border rounded-lg mb-4 mt-1">
                 <button id="confirmAdjust" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700 flex justify-center">নতুন বছরে নিন</button>
+                <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>
             `);
 
             document.getElementById('confirmAdjust').onclick = async () => {
@@ -564,23 +632,32 @@
                 const snap = await getDoc(ref);
                 const data = snap.data();
                 const currentYearCost = ((data.amount / 33) * newRate);
-                const totalNewCost = parseFloat(data.dueAmount) + currentYearCost; // Old Due + New Year Cost
+                const totalNewCost = parseFloat(data.dueAmount) + currentYearCost;
                 const history = data.history || [];
                 history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'new_year', oldYear: data.year, newYear: newYear, carriedDue: data.dueAmount });
 
+                const yearlyData = data.yearlyData || {};
+                yearlyData[newYear] = {
+                    ratePer33: newRate,
+                    totalCost: totalNewCost.toFixed(2),
+                    paidAmount: 0,
+                    dueAmount: totalNewCost.toFixed(2)
+                };
+
                 await updateDoc(ref, { 
-                    year: newYear, ratePer33: newRate, totalCost: totalNewCost.toFixed(2), paidAmount: 0, dueAmount: totalNewCost.toFixed(2), status: 'active', history: history 
+                    year: newYear, ratePer33: newRate, totalCost: totalNewCost.toFixed(2), paidAmount: 0, dueAmount: totalNewCost.toFixed(2), status: 'active', history, yearlyData 
                 });
 
                 showToast('নতুন হিসাব বর্ষ সফলভাবে শুরু হয়েছে!', 'success');
-                closeModal();
+                document.getElementById('modalContainer').classList.add('hidden');
             };
         }
 
         async function openHistoryModal(farmerName) {
             const modal = document.getElementById('modalContainer');
             modal.classList.remove('hidden');
-            modal.innerHTML = `<div class="bg-white rounded-2xl p-6 w-full max-w-md fade-in"><div class="animate-pulse text-center py-10">লোড হচ্ছে...</div></div>`;
+            modal.innerHTML = `<div class="bg-white rounded-2xl p-6 w-full max-w-md fade-in relative"><div class="animate-pulse text-center py-10">লোড হচ্ছে...</div></div>`;
+            modal.onclick = (e) => { if (e.target.id === 'modalContainer') modal.classList.add('hidden'); };
 
             const q = query(collection(db, "leases"), where("farmerName", "==", farmerName));
             const snap = await getDocs(q);
@@ -608,12 +685,11 @@
 
             modal.innerHTML = `
                 <div class="bg-white rounded-2xl p-6 w-full max-w-md fade-in max-h-[80vh] overflow-y-auto relative">
-                    <button id="closeHistory" class="absolute top-4 right-4 text-red-500 text-xl">&times;</button>
+                    <button class="absolute top-4 right-4 text-slate-400 hover:text-red-500 text-2xl" onclick="document.getElementById('modalContainer').classList.add('hidden')">&times;</button>
                     <h3 class="text-lg font-bold mb-4 text-slate-800">${farmerName} এর ইতিহাস</h3>
                     ${historyHTML}
                 </div>
             `;
-            document.getElementById('closeHistory').onclick = closeModal;
         }
 
     </script>
