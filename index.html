@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>জমি লিজ ম্যানেজমেন্ট সিস্টেম</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        // Firebase SDK ইম্পোর্ট
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, setDoc, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // 🔥 এখানে আপনার Firebase এর Configuration বসান
+        const firebaseConfig = {
+            apiKey: "AIzaSyDZhV6G0D-fTrH2auEqgtz72DGrBHpgFDU",
+            authDomain: "lease-management-c7c35.firebaseapp.com",
+            projectId: "lease-management-c7c35",
+            storageBucket: "lease-management-c7c35.firebasestorage.app",
+            messagingSenderId: "182624418687",
+            appId: "1:182624418687:web:6e5964459b5c2287f5384a"
+        };
+
+        // Firebase ইনিশিয়ালাইজ
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // DOM Elements
+        const appContainer = document.getElementById('app');
+
+        // Auth State Listener
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                renderDashboard(user);
+            } else {
+                renderAuth();
+            }
+        });
+
+        // ---------- ১. লগইন ও সাইন আপ পেজ ----------
+        function renderAuth() {
+            appContainer.innerHTML = `
+                <div class="flex items-center justify-center min-h-screen bg-gray-100">
+                    <div class="bg-white p-8 rounded shadow-md w-96">
+                        <h2 class="text-2xl font-bold mb-4 text-center text-blue-600" id="formTitle">Login</h2>
+                        <p id="error" class="text-red-500 text-sm mb-2 text-center"></p>
+                        
+                        <div id="signupFields" class="hidden">
+                            <input type="text" id="username" placeholder="Username" class="w-full p-2 mb-2 border rounded" required />
+                            <input type="text" id="mobile" placeholder="Mobile Number" class="w-full p-2 mb-2 border rounded" required />
+                        </div>
+                        
+                        <input type="email" id="email" placeholder="Email" class="w-full p-2 mb-2 border rounded" required />
+                        <input type="password" id="password" placeholder="Password" class="w-full p-2 mb-4 border rounded" required />
+                        
+                        <button id="submitBtn" class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">Login</button>
+                        <button id="resetBtn" class="text-sm text-blue-500 mt-2 w-full text-center hover:underline">Forgot Password?</button>
+                        
+                        <p class="text-center mt-4 text-sm">
+                            <span id="toggleText">Don't have an account? </span>
+                            <span id="toggleBtn" class="text-blue-600 cursor-pointer font-bold">Sign Up</span>
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            let isLogin = true;
+            document.getElementById('toggleBtn').addEventListener('click', () => {
+                isLogin = !isLogin;
+                document.getElementById('formTitle').innerText = isLogin ? "Login" : "Sign Up";
+                document.getElementById('submitBtn').innerText = isLogin ? "Login" : "Sign Up";
+                document.getElementById('toggleText').innerText = isLogin ? "Don't have an account? " : "Already have an account? ";
+                document.getElementById('toggleBtn').innerText = isLogin ? "Sign Up" : "Login";
+                document.getElementById('signupFields').classList.toggle('hidden');
+                document.getElementById('error').innerText = '';
+            });
+
+            document.getElementById('submitBtn').addEventListener('click', handleAuth);
+            document.getElementById('resetBtn').addEventListener('click', handlePasswordReset);
+        }
+
+        async function handleAuth() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('error');
+            const btnText = document.getElementById('submitBtn').innerText;
+
+            try {
+                if (btnText === 'Sign Up') {
+                    const username = document.getElementById('username').value;
+                    const mobile = document.getElementById('mobile').value;
+
+                    // Username এবং Email ইউনিক কিনা চেক
+                    const q1 = query(collection(db, "users"), where("username", "==", username));
+                    const q2 = query(collection(db, "users"), where("email", "==", email));
+                    const snap1 = await getDocs(q1);
+                    const snap2 = await getDocs(q2);
+
+                    if (!snap1.empty) { errorEl.innerText = "Username already exists!"; return; }
+                    if (!snap2.empty) { errorEl.innerText = "Email already exists!"; return; }
+
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    await setDoc(doc(db, "users", userCredential.user.uid), { username, email, mobile });
+                    alert("Signup Successful!");
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                }
+            } catch (err) {
+                errorEl.innerText = err.message;
+            }
+        }
+
+        async function handlePasswordReset() {
+            const email = document.getElementById('email').value;
+            if (!email) return alert("পাসওয়ার্ড রিকভার করতে উপরে আপনার ইমেইল দিন।");
+            await sendPasswordResetEmail(auth, email);
+            alert("পাসওয়ার্ড রিসেট ইমেইল পাঠানো হয়েছে!");
+        }
+
+        // ---------- ২. ড্যাশবোর্ড পেজ ----------
+        function renderDashboard(user) {
+            appContainer.innerHTML = `
+                <div class="p-6 bg-gray-50 min-h-screen">
+                    <div class="flex justify-between items-center mb-6 max-w-6xl mx-auto">
+                        <h1 class="text-2xl font-bold text-gray-800">জমির হিসাব ব্যবস্থাপনা</h1>
+                        <button id="logoutBtn" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Logout</button>
+                    </div>
+
+                    <!-- নতুন এন্ট্রি ফর্ম -->
+                    <div class="bg-white p-6 rounded shadow-md mb-8 max-w-6xl mx-auto">
+                        <h2 class="text-xl font-bold mb-4 text-gray-700">নতুন চাষের হিসাব যুক্ত করুন</h2>
+                        <form id="leaseForm" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                            <input type="text" id="farmerName" placeholder="চাষীর নাম" class="p-2 border rounded" required />
+                            <input type="number" step="0.01" id="amount" placeholder="জমির পরিমাণ (শতাংশ)" class="p-2 border rounded" required />
+                            <select id="ratePer33" class="p-2 border rounded">
+                                <option value="18000">১৮০০০ টাকা/৩৩ শতাংশ</option>
+                                <option value="20000">২০০০০ টাকা/৩৩ শতাংশ</option>
+                                <option value="16000">১৬০০০ টাকা/৩৩ শতাংশ</option>
+                            </select>
+                            <select id="cycleType" class="p-2 border rounded">
+                                <option value="জ্যৈষ্ঠ">জ্যৈষ্ঠ টু জ্যৈষ্ঠ</option>
+                                <option value="জানুয়ারি">জানুয়ারি টু জানুয়ারি</option>
+                            </select>
+                            <button type="submit" class="bg-blue-600 text-white p-2 rounded hover:bg-blue-700">যুক্ত করুন</button>
+                        </form>
+                    </div>
+
+                    <!-- জমির তালিকা -->
+                    <div class="bg-white p-6 rounded shadow-md max-w-6xl mx-auto overflow-x-auto">
+                        <h2 class="text-xl font-bold mb-4 text-gray-700">চলমান হিসাব সমূহ</h2>
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b bg-gray-100 text-gray-600">
+                                    <th class="p-3">চাষীর নাম</th>
+                                    <th class="p-3">জমির পরিমাণ</th>
+                                    <th class="p-3">হারির দর</th>
+                                    <th class="p-3">মোট দেয়</th>
+                                    <th class="p-3">পরিশোধিত</th>
+                                    <th class="p-3">বকেয়া</th>
+                                    <th class="p-3">হিসাব বছর</th>
+                                    <th class="p-3">অ্যাকশন</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leasesTable">
+                                <!-- ডেটা এখানে লোড হবে -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
+            document.getElementById('leaseForm').addEventListener('submit', addLease);
+            loadLeases();
+        }
+
+        // নতুন লিজ (জমির হিসাব) যুক্ত করার ফাংশন
+        async function addLease(e) {
+            e.preventDefault();
+            const farmerName = document.getElementById('farmerName').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const ratePer33 = parseFloat(document.getElementById('ratePer33').value);
+            const cycleType = document.getElementById('cycleType').value;
+            const year = new Date().getFullYear().toString();
+
+            const totalCost = ((amount / 33) * ratePer33).toFixed(2);
+
+            await addDoc(collection(db, "leases"), {
+                farmerName, amount, ratePer33, cycleType, year,
+                totalCost: parseFloat(totalCost),
+                paidAmount: 0,
+                dueAmount: parseFloat(totalCost),
+                status: 'active',
+                createdAt: new Date()
+            });
+
+            document.getElementById('leaseForm').reset();
+        }
+
+        // Firebase থেকে রিয়েল-টাইমে ডেটা লোড করার ফাংশন
+        function loadLeases() {
+            const q = collection(db, "leases");
+            onSnapshot(q, (snapshot) => {
+                const tableBody = document.getElementById('leasesTable');
+                tableBody.innerHTML = '';
+                
+                if (snapshot.empty) {
+                    tableBody.innerHTML = `<tr><td colspan="8" class="text-center text-gray-400 p-4">কোনো হিসাব যুক্ত করা হয়নি।</td></tr>`;
+                    return;
+                }
+
+                snapshot.forEach(doc => {
+                    const lease = doc.data();
+                    const row = document.createElement('tr');
+                    row.className = `border-b hover:bg-gray-50 ${lease.status === 'inactive' ? 'bg-red-50 text-red-500' : ''}`;
+                    
+                    row.innerHTML = `
+                        <td class="p-3 font-medium">${lease.farmerName}</td>
+                        <td class="p-3">${lease.amount} শতাংশ</td>
+                        <td class="p-3">${lease.ratePer33} টাকা</td>
+                        <td class="p-3 font-bold text-gray-800">${lease.totalCost} টাকা</td>
+                        <td class="p-3 text-green-600">${lease.paidAmount} টাকা</td>
+                        <td class="p-3 text-red-600 font-bold">${lease.dueAmount} টাকা</td>
+                        <td class="p-3">${lease.year} (${lease.cycleType})</td>
+                        <td class="p-3 flex gap-2">
+                            ${lease.status === 'active' ? `
+                                <button data-id="${doc.id}" data-paid="${lease.paidAmount}" data-total="${lease.totalCost}" data-due="${lease.dueAmount}" data-name="${lease.farmerName}" class="payBtn bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">পরিশোধ</button>
+                                <button data-id="${doc.id}" class="stopBtn bg-yellow-500 text-white px-3 py-1 rounded text-sm hover:bg-yellow-600">ছেড়ে দিন</button>
+                            ` : `<span class="text-xs font-bold">চাষ বন্ধ</span>`}
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                // পরিশোধ বাটনের ইভেন্ট
+                document.querySelectorAll('.payBtn').forEach(btn => {
+                    btn.addEventListener('click', handlePayment);
+                });
+                
+                // ছেড়ে দেওয়া বাটনের ইভেন্ট
+                document.querySelectorAll('.stopBtn').forEach(btn => {
+                    btn.addEventListener('click', handleStopLease);
+                });
+            });
+        }
+
+        // টাকা পরিশোধের লজিক
+        async function handlePayment(e) {
+            const id = e.target.getAttribute('data-id');
+            const currentPaid = parseFloat(e.target.getAttribute('data-paid'));
+            const total = parseFloat(e.target.getAttribute('data-total'));
+            const due = parseFloat(e.target.getAttribute('data-due'));
+            const name = e.target.getAttribute('data-name');
+
+            const payAmountStr = prompt(`${name} এর বকেয়া: ${due} টাকা।\nকত টাকা পরিশোধ করবেন?`);
+            if (!payAmountStr) return;
+            
+            const payAmount = parseFloat(payAmountStr);
+            if (isNaN(payAmount) || payAmount <= 0) return alert("সঠিক পরিমাণ লিখুন!");
+
+            const newPaid = currentPaid + payAmount;
+            const newDue = total - newPaid;
+
+            await updateDoc(doc(db, "leases", id), {
+                paidAmount: newPaid,
+                dueAmount: newDue
+            });
+
+            // Payment History সেভ করা
+            await addDoc(collection(db, "payments"), {
+                leaseId: id, farmerName: name, amount: payAmount, date: new Date().toLocaleDateString('bn-BD')
+            });
+
+            alert("টাকা পরিশোধ সফল হয়েছে!");
+        }
+
+        // জমি চাষ ছেড়ে দেওয়ার লজিক
+        async function handleStopLease(e) {
+            const id = e.target.getAttribute('data-id');
+            if (confirm("আপনি কি নিশ্চিত? এই জমির চাষ বন্ধ করা হবে।")) {
+                await updateDoc(doc(db, "leases", id), { status: 'inactive' });
+                alert("চাষ বন্ধ করা হয়েছে। এখন আপনি চাইলে এই জমি অন্যকে নতুন এন্ট্রি দিতে পারবেন।");
+            }
+        }
+    </script>
+</head>
+<body class="font-sans">
+    <div id="app" class="min-h-screen">
+        <div class="flex items-center justify-center min-h-screen">
+            <div class="text-gray-500">Loading...</div>
+        </div>
+    </div>
+</body>
+</html>
