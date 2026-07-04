@@ -15,20 +15,8 @@
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: #888; border-radius: 5px; }
         .premium-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
-
-        /* Mobile Responsive Table to Card Conversion */
-        @media (max-width: 767px) {
-            .table-fixed thead { display: none; }
-            .table-fixed, .table-fixed tbody, .table-fixed tr, .table-fixed td { display: block; width: 100%; }
-            .table-fixed tr { margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 0.75rem; background: white; padding: 0.5rem; }
-            .table-fixed td { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding: 0.75rem; text-align: right; }
-            .table-fixed td:last-child { border-bottom: none; }
-            .table-fixed td::before { content: attr(data-label); font-weight: bold; margin-right: 1rem; text-align: left; color: #64748b; width: 45%; }
-            .table-fixed td[data-label="চাষীর নাম ও সাল"] { flex-direction: column; align-items: flex-start; }
-            .table-fixed td[data-label="চাষীর নাম ও সাল"]::before { margin-bottom: 0.25rem; }
-            .table-fixed td[data-label="অ্যাকশন"] { justify-content: flex-end; }
-            .table-fixed td[data-label="অ্যাকশন"]::before { display: none; }
-        }
+        /* Table Scroll Fix */
+        .table-wrap { -webkit-overflow-scrolling: touch; }
     </style>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -36,7 +24,7 @@
         import { getFirestore, collection, addDoc, query, where, getDocs, setDoc, doc, onSnapshot, updateDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
-           apiKey: "AIzaSyDZhV6G0D-fTrH2auEqgtz72DGrBHpgFDU",
+             apiKey: "AIzaSyDZhV6G0D-fTrH2auEqgtz72DGrBHpgFDU",
             authDomain: "lease-management-c7c35.firebaseapp.com",
             projectId: "lease-management-c7c35",
             storageBucket: "lease-management-c7c35.firebasestorage.app",
@@ -50,8 +38,10 @@
 
         const appContainer = document.getElementById('app');
         let idleTimer = null;
+        let allLeases = []; 
+        let currentPage = 1;
+        const itemsPerPage = 5;
 
-        // Money Formatter (2 decimal places)
         const fmt = (val) => (parseFloat(val) || 0).toFixed(2);
 
         function showToast(msg, type = 'error') {
@@ -83,7 +73,7 @@
                 'auth/invalid-email': 'ইমেইল ঠিকানাটি সঠিক নয়।',
                 'auth/user-not-found': 'এই ইমেইল বা ইউজারনেম দিয়ে কোনো অ্যাকাউন্ট নেই।',
                 'auth/wrong-password': 'পাসওয়ার্ড ভুল হয়েছে।',
-                'auth/email-already-in-use': 'এই ইমেইল বা ইউজারনেম দিয়ে অ্যাকাউন্ট আগে থেকেই আছে!',
+                'auth/email-already-in-use': 'এই ইমেইল দিয়ে অ্যাকাউন্ট আগে থেকেই আছে!',
                 'auth/weak-password': 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।'
             };
             return errors[errCode] || 'কিছু একটা সমস্যা হয়েছে। আবার চেষ্টা করুন।';
@@ -94,57 +84,59 @@
             else { renderAuth(); }
         });
 
-        // ---------- ১. প্রিমিয়াম লগইন পেজ ----------
+        // ---------- ১. প্রফেশনাল অ্যাশ কালার লগইন পেজ ----------
         function renderAuth() {
+            // Load saved identifiers for autocomplete
+            const savedIds = JSON.parse(localStorage.getItem('savedIdentifiers') || '[]');
+            const optionsHtml = savedIds.map(id => `<option value="${id}">`).join('');
+
             appContainer.innerHTML = `
-                <div class="min-h-screen flex items-center justify-center bg-slate-900 relative overflow-hidden">
-                    <div class="absolute top-0 -left-20 w-96 h-96 bg-indigo-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
-                    <div class="absolute bottom-0 -right-20 w-96 h-96 bg-cyan-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
-                    
-                    <div class="relative z-10 w-full max-w-md p-4">
+                <div class="min-h-screen flex items-center justify-center bg-slate-200 p-4">
+                    <div class="w-full max-w-md">
                         <div class="text-center mb-8">
-                            <div class="inline-block p-4 bg-gradient-to-tr from-indigo-600 to-cyan-500 rounded-2xl shadow-2xl mb-4 transform hover:scale-105 transition">
-                                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21l1.65-3.8a9 9 0 113.4 2.9L3 21"></path></svg>
+                            <div class="inline-block p-4 bg-white rounded-2xl shadow-lg mb-4 border border-slate-200">
+                                <svg class="w-10 h-10 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21l1.65-3.8a9 9 0 113.4 2.9L3 21"></path></svg>
                             </div>
-                            <h1 class="text-3xl font-bold text-white tracking-tight">জমি লিজ ম্যানেজমেন্ট</h1>
-                            <p class="text-slate-400 mt-2 text-sm">নিরাপদ ও স্মার্ট হিসাব ব্যবস্থাপনা</p>
+                            <h1 class="text-3xl font-bold text-slate-800 tracking-tight">জমি লিজ ম্যানেজমেন্ট</h1>
+                            <p class="text-slate-500 mt-2 text-sm">নিরাপদ ও স্মার্ট হিসাব ব্যবস্থাপনা</p>
                         </div>
                         
-                        <div class="bg-white/5 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 overflow-hidden">
-                            <div class="flex border-b border-white/10">
-                                <button id="tabLogin" class="flex-1 py-4 font-bold text-white bg-white/5 transition relative">লগইন <span class="absolute bottom-0 left-1/4 right-1/4 h-0.5 bg-cyan-400"></span></button>
-                                <button id="tabSignup" class="flex-1 py-4 font-bold text-slate-400 hover:text-white transition">সাইন আপ</button>
+                        <div class="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+                            <div class="flex border-b border-slate-200">
+                                <button id="tabLogin" class="flex-1 py-4 font-bold text-white bg-slate-800 transition relative">লগইন <span class="absolute bottom-0 left-1/4 right-1/4 h-1 bg-cyan-500"></span></button>
+                                <button id="tabSignup" class="flex-1 py-4 font-bold text-slate-500 hover:text-slate-800 transition">সাইন আপ</button>
                             </div>
 
                             <div class="p-8 space-y-6">
                                 <form id="loginForm" class="space-y-5">
                                     <div>
-                                        <label class="block text-xs font-medium text-slate-300 mb-1">ইমেইল অথবা ইউজারনেম</label>
-                                        <input type="text" id="loginIdentifier" autocomplete="username" class="premium-input w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 outline-none transition" required>
+                                        <label class="block text-xs font-medium text-slate-600 mb-1">ইমেইল অথবা ইউজারনেম</label>
+                                        <input type="text" id="loginIdentifier" list="identifierList" autocomplete="username" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none transition" required>
+                                        <datalist id="identifierList">${optionsHtml}</datalist>
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-medium text-slate-300 mb-1">পাসওয়ার্ড</label>
-                                        <input type="password" id="loginPassword" autocomplete="current-password" class="premium-input w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 outline-none transition" required>
+                                        <label class="block text-xs font-medium text-slate-600 mb-1">পাসওয়ার্ড</label>
+                                        <input type="password" id="loginPassword" autocomplete="current-password" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none transition" required>
                                     </div>
-                                    <button type="submit" id="loginBtn" class="w-full bg-gradient-to-r from-cyan-500 to-indigo-600 text-white p-3 rounded-xl font-bold hover:from-cyan-600 hover:to-indigo-700 transition flex justify-center shadow-lg shadow-indigo-900/50">লগইন করুন</button>
-                                    <button type="button" id="forgotBtn" class="w-full text-center text-sm text-cyan-400 hover:text-cyan-300 hover:underline">পাসওয়ার্ড ভুলে গেছেন?</button>
+                                    <button type="submit" id="loginBtn" class="w-full bg-slate-800 text-white p-3 rounded-xl font-bold hover:bg-slate-900 transition flex justify-center shadow-md">লগইন করুন</button>
+                                    <button type="button" id="forgotBtn" class="w-full text-center text-sm text-cyan-600 hover:text-cyan-700 hover:underline">পাসওয়ার্ড ভুলে গেছেন?</button>
                                 </form>
 
                                 <form id="signupForm" class="space-y-5 hidden">
                                     <div class="grid grid-cols-2 gap-4">
-                                        <div><label class="block text-xs font-medium text-slate-300 mb-1">ইউজারনেম</label><input type="text" id="suUsername" autocomplete="off" class="premium-input w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 outline-none" required></div>
-                                        <div><label class="block text-xs font-medium text-slate-300 mb-1">মোবাইল</label><input type="text" id="suMobile" autocomplete="off" class="premium-input w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 outline-none" required></div>
+                                        <div><label class="block text-xs font-medium text-slate-600 mb-1">ইউজারনেম</label><input type="text" id="suUsername" autocomplete="off" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required></div>
+                                        <div><label class="block text-xs font-medium text-slate-600 mb-1">মোবাইল</label><input type="text" id="suMobile" autocomplete="off" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required></div>
                                     </div>
-                                    <div><label class="block text-xs font-medium text-slate-300 mb-1">ইমেইল</label><input type="email" id="suEmail" autocomplete="email" class="premium-input w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 outline-none" required></div>
-                                    <div><label class="block text-xs font-medium text-slate-300 mb-1">পাসওয়ার্ড</label><input type="password" id="suPassword" autocomplete="new-password" class="premium-input w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 outline-none" required></div>
-                                    <button type="submit" id="signupBtn" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white p-3 rounded-xl font-bold hover:from-green-600 hover:to-emerald-700 transition flex justify-center shadow-lg shadow-emerald-900/50">রেজিস্টার করুন</button>
+                                    <div><label class="block text-xs font-medium text-slate-600 mb-1">ইমেইল</label><input type="email" id="suEmail" autocomplete="email" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required></div>
+                                    <div><label class="block text-xs font-medium text-slate-600 mb-1">পাসওয়ার্ড</label><input type="password" id="suPassword" autocomplete="new-password" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required></div>
+                                    <button type="submit" id="signupBtn" class="w-full bg-emerald-600 text-white p-3 rounded-xl font-bold hover:bg-emerald-700 transition flex justify-center shadow-md">রেজিস্টার করুন</button>
                                 </form>
 
                                 <form id="forgotForm" class="space-y-5 hidden">
-                                    <p class="text-sm text-slate-400">পাসওয়ার্ড রিকভারির জন্য আপনার রেজিস্টার্ড ইমেইল দিন।</p>
-                                    <input type="email" id="resetEmail" autocomplete="email" class="premium-input w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 outline-none" placeholder="রেজিস্টার্ড ইমেইল" required>
-                                    <button type="submit" id="resetBtn" class="w-full bg-gradient-to-r from-cyan-500 to-indigo-600 text-white p-3 rounded-xl font-bold flex justify-center">রিসেট লিংক পাঠান</button>
-                                    <button type="button" id="backToLogin" class="w-full text-center text-sm text-slate-400 hover:text-white hover:underline">লগইন পেজে ফিরে যান</button>
+                                    <p class="text-sm text-slate-500">পাসওয়ার্ড রিকভারির জন্য আপনার রেজিস্টার্ড ইমেইল দিন।</p>
+                                    <input type="email" id="resetEmail" autocomplete="email" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" placeholder="রেজিস্টার্ড ইমেইল" required>
+                                    <button type="submit" id="resetBtn" class="w-full bg-slate-800 text-white p-3 rounded-xl font-bold flex justify-center">রিসেট লিংক পাঠান</button>
+                                    <button type="button" id="backToLogin" class="w-full text-center text-sm text-slate-500 hover:text-slate-800 hover:underline">লগইন পেজে ফিরে যান</button>
                                 </form>
                             </div>
                         </div>
@@ -158,16 +150,16 @@
 
             document.getElementById('tabLogin').onclick = () => {
                 loginForm.classList.remove('hidden'); signupForm.classList.add('hidden'); forgotForm.classList.add('hidden');
-                document.getElementById('tabLogin').className = "flex-1 py-4 font-bold text-white bg-white/5 transition relative";
-                document.getElementById('tabLogin').innerHTML = `লগইন <span class="absolute bottom-0 left-1/4 right-1/4 h-0.5 bg-cyan-400"></span>`;
-                document.getElementById('tabSignup').className = "flex-1 py-4 font-bold text-slate-400 hover:text-white transition";
+                document.getElementById('tabLogin').className = "flex-1 py-4 font-bold text-white bg-slate-800 transition relative";
+                document.getElementById('tabLogin').innerHTML = `লগইন <span class="absolute bottom-0 left-1/4 right-1/4 h-1 bg-cyan-500"></span>`;
+                document.getElementById('tabSignup').className = "flex-1 py-4 font-bold text-slate-500 hover:text-slate-800 transition";
                 document.getElementById('tabSignup').innerText = "সাইন আপ";
             };
             document.getElementById('tabSignup').onclick = () => {
                 signupForm.classList.remove('hidden'); loginForm.classList.add('hidden'); forgotForm.classList.add('hidden');
-                document.getElementById('tabSignup').className = "flex-1 py-4 font-bold text-white bg-white/5 transition relative";
-                document.getElementById('tabSignup').innerHTML = `সাইন আপ <span class="absolute bottom-0 left-1/4 right-1/4 h-0.5 bg-cyan-400"></span>`;
-                document.getElementById('tabLogin').className = "flex-1 py-4 font-bold text-slate-400 hover:text-white transition";
+                document.getElementById('tabSignup').className = "flex-1 py-4 font-bold text-white bg-slate-800 transition relative";
+                document.getElementById('tabSignup').innerHTML = `সাইন আপ <span class="absolute bottom-0 left-1/4 right-1/4 h-1 bg-cyan-500"></span>`;
+                document.getElementById('tabLogin').className = "flex-1 py-4 font-bold text-slate-500 hover:text-slate-800 transition";
                 document.getElementById('tabLogin').innerText = "লগইন";
             };
             document.getElementById('forgotBtn').onclick = () => { loginForm.classList.add('hidden'); forgotForm.classList.remove('hidden'); };
@@ -188,6 +180,14 @@
                         email = snap.docs[0].data().email;
                     }
                     await signInWithEmailAndPassword(auth, email, password);
+                    
+                    // Save identifier for autocomplete
+                    let savedIds = JSON.parse(localStorage.getItem('savedIdentifiers') || '[]');
+                    if (!savedIds.includes(identifier)) {
+                        savedIds.push(identifier);
+                        localStorage.setItem('savedIdentifiers', JSON.stringify(savedIds));
+                    }
+                    
                     showToast('সফলভাবে লগইন হয়েছে!', 'success');
                 } catch (err) { showToast(cleanError(err.code)); }
                 hideSpinner(btn);
@@ -204,8 +204,9 @@
                 try {
                     const q1 = query(collection(db, "users"), where("username", "==", username));
                     const q2 = query(collection(db, "users"), where("email", "==", email));
-                    if (!(await getDocs(q1)).empty) { hideSpinner(btn); return showToast("Username already exists!"); }
-                    if (!(await getDocs(q2)).empty) { hideSpinner(btn); return showToast("Email already exists!"); }
+                    if (!(await getDocs(q1)).empty) { hideSpinner(btn); return showToast("Username already taken"); }
+                    if (!(await getDocs(q2)).empty) { hideSpinner(btn); return showToast("Email already taken"); }
+                    
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     await setDoc(doc(db, "users", userCredential.user.uid), { username, email, mobile });
                     showToast('সাইন আপ সফল হয়েছে!', 'success');
@@ -259,14 +260,16 @@
                         </div>
 
                         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                            <div class="p-4 border-b">
+                            <div class="p-4 border-b flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                                 <h2 class="text-md font-bold text-slate-700">চলমান হিসাব সমূহ</h2>
+                                <input type="text" id="searchInput" placeholder="নাম দিয়ে সার্চ করুন..." class="p-2 border rounded-lg text-sm w-full md:w-64 outline-none focus:border-indigo-500">
                             </div>
-                            <div class="p-4">
-                                <table class="w-full text-sm text-left text-slate-600 table-fixed">
+                            
+                            <div class="table-wrap overflow-x-auto">
+                                <table class="w-full text-sm text-left text-slate-600 min-w-[700px]">
                                     <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
                                         <tr>
-                                            <th class="p-3 w-1/4">চাষীর নাম ও সাল</th>
+                                            <th class="p-3 w-1/5">চাষীর নাম ও সাল</th>
                                             <th class="p-3 w-1/5">জমি / দর</th>
                                             <th class="p-3 w-1/5">মোট / পরিশোধিত</th>
                                             <th class="p-3 w-1/5">বকেয়া</th>
@@ -276,6 +279,7 @@
                                     <tbody id="leasesTable" class="divide-y divide-slate-100"></tbody>
                                 </table>
                             </div>
+                            <div id="pagination" class="p-4 flex justify-center items-center gap-2 border-t"></div>
                         </div>
                     </div>
                 </div>
@@ -284,6 +288,10 @@
 
             document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
             document.getElementById('leaseForm').addEventListener('submit', addLease);
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                currentPage = 1;
+                renderTable();
+            });
             
             document.getElementById('leasesTable').addEventListener('click', (e) => {
                 const btn = e.target.closest('button');
@@ -311,15 +319,11 @@
                     if (yearlyData[newYear]) {
                         const yData = yearlyData[newYear];
                         await updateDoc(ref, {
-                            year: newYear,
-                            ratePer33: yData.ratePer33,
-                            totalCost: yData.totalCost,
-                            paidAmount: yData.paidAmount,
-                            dueAmount: yData.dueAmount
+                            year: newYear, ratePer33: yData.ratePer33, totalCost: yData.totalCost, paidAmount: yData.paidAmount, dueAmount: yData.dueAmount
                         });
                         showToast(`${newYear} সালের হিসাব লোড হয়েছে!`, 'success');
                     } else if (newYear !== data.year) {
-                        showToast(`${newYear} সালের কোনো হিসাব এই জমিতে নেই। এডিট আইকন দিয়ে যুক্ত করুন।`, 'error');
+                        showToast(`${newYear} সালের কোনো হিসাব এই জমিতে নেই।`, 'error');
                         e.target.value = data.year; 
                     }
                 }
@@ -331,70 +335,117 @@
         function loadLeases() {
             const q = collection(db, "leases");
             onSnapshot(q, (snapshot) => {
-                const tbody = document.getElementById('leasesTable');
-                if (snapshot.empty) { tbody.innerHTML = `<tr><td colspan="5" class="text-center text-slate-400 py-6">কোনো হিসাব নেই</td></tr>`; return; }
-                
-                tbody.innerHTML = '';
-                snapshot.forEach(d => {
-                    const lease = d.data();
-                    const id = d.id;
-                    const tr = document.createElement('tr');
-                    
-                    const currentYearData = lease.yearlyData?.[lease.year] || {};
-                    const isTransferred = currentYearData.status === 'transferred';
-                    
-                    if (lease.status === 'inactive' || isTransferred) tr.className = 'bg-red-50 text-red-400';
-                    
-                    let dueHtml = `<span class="font-bold text-red-600 text-base">${fmt(lease.dueAmount)}</span> <span class="text-xs">টাকা</span>`;
-                    if (isTransferred) {
-                        dueHtml = `<span class="text-indigo-600 text-xs font-bold">নতুন বছরে যোগ হয়েছে</span>`;
-                    } else if (lease.status === 'active') {
-                        dueHtml += `<button data-id="${id}" data-name="${lease.farmerName}" data-year="${lease.year}" data-due="${lease.dueAmount}" class="adjustBtn block mt-1 text-xs text-indigo-500 hover:underline">নতুন বছরে নিন</button>`;
-                    } else {
-                        dueHtml = `<span class="block text-xs text-red-400 mt-1">নিষ্ক্রিয়</span>`;
-                    }
-
-                    tr.innerHTML = `
-                        <td data-label="চাষীর নাম ও সাল" class="p-3 align-top">
-                            <span class="font-bold text-slate-800 cursor-pointer hover:text-indigo-600 block" data-name="${lease.farmerName}">${lease.farmerName}</span>
-                            <div class="flex items-center gap-1 mt-1">
-                                <input type="text" value="${lease.year}" data-id="${id}" class="yearInput text-xs text-slate-500 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 w-16 focus:outline-none p-0">
-                                <span class="text-xs text-slate-400">(${lease.cycleType})</span>
-                            </div>
-                        </td>
-                        <td data-label="জমি / দর" class="p-3 align-top text-xs space-y-1">
-                            <div><span class="text-slate-400">জমি:</span> <b>${lease.amount}</b> শতাংশ</div>
-                            <div><span class="text-slate-400">দর:</span> <b>${lease.ratePer33}</b> টাকা</div>
-                        </td>
-                        <td data-label="মোট / পরিশোধিত" class="p-3 align-top text-xs space-y-1">
-                            <div><span class="text-slate-400">মোট:</span> <b class="text-slate-800">${fmt(lease.totalCost)}</b> টাকা</div>
-                            <div><span class="text-slate-400">জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)}</b> টাকা</div>
-                        </td>
-                        <td data-label="বকেয়া" class="p-3 align-top">
-                            ${dueHtml}
-                        </td>
-                        <td data-label="অ্যাকশন" class="p-3 align-top">
-                            ${(lease.status === 'active' && !isTransferred) ? `
-                            <div class="flex items-center gap-1 justify-end flex-wrap">
-                                <button data-id="${id}" data-name="${lease.farmerName}" class="payBtn text-green-500 hover:bg-green-100 p-2 rounded-lg transition" title="পরিশোধ">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                </button>
-                                <button data-id="${id}" data-amount="${lease.amount}" class="transferBtn text-yellow-500 hover:bg-yellow-100 p-2 rounded-lg transition" title="ছেড়ে দিন">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-                                </button>
-                                <button data-id="${id}" data-year="${lease.year}" data-rate="${lease.ratePer33}" class="editBtn text-blue-500 hover:bg-blue-100 p-2 rounded-lg transition" title="এডিট দর">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.038-2.038l-9.9 9.9a1 1 0 00-.4.243l-2.324 2.324a.5.5 0 00.707.707l2.324-2.324a1 1 0 00.243-.4l9.9-9.9a2 2 0 112.828 2.828z"></path></svg>
-                                </button>
-                                <button data-id="${id}" class="delBtn text-red-500 hover:bg-red-100 p-2 rounded-lg transition" title="ডিলিট">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                </button>
-                            </div>
-                            ` : ''}
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
+                allLeases = [];
+                snapshot.forEach(d => allLeases.push({ id: d.id, ...d.data() }));
+                renderTable();
             });
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('leasesTable');
+            const paginationDiv = document.getElementById('pagination');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            const filteredLeases = allLeases.filter(lease => lease.farmerName.toLowerCase().includes(searchTerm));
+            
+            const totalPages = Math.ceil(filteredLeases.length / itemsPerPage);
+            if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+            if (currentPage === 0 && totalPages > 0) currentPage = 1;
+
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const paginatedLeases = filteredLeases.slice(start, end);
+
+            if (paginatedLeases.length === 0) { 
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-slate-400 py-6">কোনো হিসাব পাওয়া যায়নি</td></tr>`; 
+                paginationDiv.innerHTML = '';
+                return; 
+            }
+            
+            tbody.innerHTML = '';
+            paginatedLeases.forEach(lease => {
+                const id = lease.id;
+                const tr = document.createElement('tr');
+                
+                const currentYearData = lease.yearlyData?.[lease.year] || {};
+                const isTransferred = currentYearData.status === 'transferred';
+                const isPaid = parseFloat(lease.dueAmount) === 0;
+                
+                if (lease.status === 'inactive' || isTransferred) tr.className = 'bg-red-50 text-red-400';
+                
+                let dueHtml = '';
+                if (isPaid && lease.status === 'active' && !isTransferred) {
+                    dueHtml = `<span class="font-bold text-green-600 text-base">পরিশোধ</span>`;
+                } else if (isTransferred) {
+                    dueHtml = `<span class="text-indigo-600 text-xs font-bold">নতুন বছরে যোগ হয়েছে</span>`;
+                } else if (lease.status === 'active') {
+                    dueHtml = `<span class="font-bold text-red-600 text-base">${fmt(lease.dueAmount)}</span> <span class="text-xs">টাকা</span>
+                               <button data-id="${id}" data-name="${lease.farmerName}" data-year="${lease.year}" data-due="${lease.dueAmount}" class="adjustBtn block mt-1 text-xs text-indigo-500 hover:underline">নতুন বছরে নিন</button>`;
+                } else {
+                    dueHtml = `<span class="block text-xs text-red-400 mt-1">নিষ্ক্রিয়</span>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="p-3 align-top">
+                        <span class="font-bold text-slate-800 cursor-pointer hover:text-indigo-600 block" data-name="${lease.farmerName}">${lease.farmerName}</span>
+                        <div class="flex items-center gap-1 mt-1">
+                            <input type="text" value="${lease.year}" data-id="${id}" class="yearInput text-xs text-slate-500 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 w-16 focus:outline-none p-0">
+                            <span class="text-xs text-slate-400">(${lease.cycleType})</span>
+                        </div>
+                    </td>
+                    <td class="p-3 align-top text-xs space-y-1">
+                        <div><span class="text-slate-400">জমি:</span> <b>${lease.amount}</b> শতাংশ</div>
+                        <div><span class="text-slate-400">দর:</span> <b>${lease.ratePer33}</b> টাকা</div>
+                    </td>
+                    <td class="p-3 align-top text-xs space-y-1">
+                        <div><span class="text-slate-400">মোট:</span> <b class="text-slate-800">${fmt(lease.totalCost)}</b> টাকা</div>
+                        <div><span class="text-slate-400">জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)}</b> টাকা</div>
+                    </td>
+                    <td class="p-3 align-top">${dueHtml}</td>
+                    <td class="p-3 align-top">
+                        ${(lease.status === 'active' && !isTransferred) ? `
+                        <div class="flex items-center gap-1 justify-end flex-wrap">
+                            <button data-id="${id}" data-name="${lease.farmerName}" class="payBtn text-green-500 hover:bg-green-100 p-2 rounded-lg transition" title="পরিশোধ">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </button>
+                            <button data-id="${id}" data-amount="${lease.amount}" class="transferBtn text-yellow-500 hover:bg-yellow-100 p-2 rounded-lg transition" title="ছেড়ে দিন">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                            </button>
+                            <button data-id="${id}" data-year="${lease.year}" data-rate="${lease.ratePer33}" class="editBtn text-blue-500 hover:bg-blue-100 p-2 rounded-lg transition" title="এডিট দর">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.038-2.038l-9.9 9.9a1 1 0 00-.4.243l-2.324 2.324a.5.5 0 00.707.707l2.324-2.324a1 1 0 00.243-.4l9.9-9.9a2 2 0 112.828 2.828z"></path></svg>
+                            </button>
+                            <button data-id="${id}" class="delBtn text-red-500 hover:bg-red-100 p-2 rounded-lg transition" title="ডিলিট">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                        ` : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Render Pagination
+            paginationDiv.innerHTML = '';
+            if (totalPages > 1) {
+                const prevBtn = document.createElement('button');
+                prevBtn.innerHTML = 'পূর্ববর্তী';
+                prevBtn.className = 'px-3 py-1 bg-slate-200 rounded hover:bg-slate-300 text-sm';
+                prevBtn.disabled = currentPage === 1;
+                prevBtn.onclick = () => { currentPage--; renderTable(); };
+                paginationDiv.appendChild(prevBtn);
+
+                const pageText = document.createElement('span');
+                pageText.className = 'text-sm text-slate-600';
+                pageText.innerText = `পেজ ${currentPage} / ${totalPages}`;
+                paginationDiv.appendChild(pageText);
+
+                const nextBtn = document.createElement('button');
+                nextBtn.innerHTML = 'পরবর্তী';
+                nextBtn.className = 'px-3 py-1 bg-slate-200 rounded hover:bg-slate-300 text-sm';
+                nextBtn.disabled = currentPage === totalPages;
+                nextBtn.onclick = () => { currentPage++; renderTable(); };
+                paginationDiv.appendChild(nextBtn);
+            }
         }
 
         async function addLease(e) {
@@ -429,7 +480,7 @@
             const modal = document.getElementById('modalContainer');
             modal.classList.remove('hidden');
             modal.innerHTML = `
-                <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md fade-in relative">
+                <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md fade-in relative max-h-[90vh] overflow-y-auto">
                     <button class="absolute top-4 right-4 text-slate-400 hover:text-red-500 text-2xl" onclick="document.getElementById('modalContainer').classList.add('hidden')">&times;</button>
                     ${htmlContent}
                 </div>
@@ -477,7 +528,6 @@
                 let newPaid = parseFloat(data.paidAmount) + amount;
                 let newDue = parseFloat(data.totalCost) - newPaid;
 
-                // Adjust small due amounts (10 to 30 taka)
                 let adjustedMsg = '';
                 if (newDue > 0 && newDue <= 30) {
                     adjustedMsg = `${fmt(newDue)} টাকা ক্ষুদ্র বকেয়া সমন্বয় করা হয়েছে।`;
@@ -621,13 +671,7 @@
                 }
 
                 await updateDoc(ref, { 
-                    ratePer33: newRate, 
-                    year: newYear, 
-                    totalCost: yearlyData[newYear].totalCost, 
-                    paidAmount: yearlyData[newYear].paidAmount, 
-                    dueAmount: yearlyData[newYear].dueAmount, 
-                    history, 
-                    yearlyData 
+                    ratePer33: newRate, year: newYear, totalCost: yearlyData[newYear].totalCost, paidAmount: yearlyData[newYear].paidAmount, dueAmount: yearlyData[newYear].dueAmount, history, yearlyData 
                 });
                 
                 showToast('দর এবং বছর আপডেট হয়েছে!', 'success');
@@ -668,21 +712,13 @@
                 history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'new_year', fromYear: data.year, toYear: newYear, carriedDue: fmt(oldDue) });
 
                 const yearlyData = data.yearlyData || {};
-                // Mark old year as transferred
                 if (yearlyData[data.year]) {
                     yearlyData[data.year].status = 'transferred';
                 } else {
                     yearlyData[data.year] = { ratePer33: data.ratePer33, totalCost: data.totalCost, paidAmount: data.paidAmount, dueAmount: oldDue, status: 'transferred' };
                 }
 
-                // Create new year data
-                yearlyData[newYear] = {
-                    ratePer33: newRate,
-                    totalCost: fmt(totalNewCost),
-                    paidAmount: 0,
-                    dueAmount: fmt(totalNewCost),
-                    status: 'active'
-                };
+                yearlyData[newYear] = { ratePer33: newRate, totalCost: fmt(totalNewCost), paidAmount: 0, dueAmount: fmt(totalNewCost), status: 'active' };
 
                 await updateDoc(ref, { 
                     year: newYear, ratePer33: newRate, totalCost: fmt(totalNewCost), paidAmount: 0, dueAmount: fmt(totalNewCost), status: 'active', history, yearlyData 
@@ -693,43 +729,72 @@
             };
         }
 
+        // History Modal with Pagination (10 per page)
         async function openHistoryModal(farmerName) {
             const modal = document.getElementById('modalContainer');
             modal.classList.remove('hidden');
-            modal.innerHTML = `<div class="bg-white rounded-2xl p-6 w-full max-w-md fade-in relative"><div class="animate-pulse text-center py-10">লোড হচ্ছে...</div></div>`;
+            modal.innerHTML = `<div class="bg-white rounded-2xl p-6 w-full max-w-md fade-in relative h-[80vh] flex flex-col"><div class="animate-pulse text-center py-10">লোড হচ্ছে...</div></div>`;
             modal.onclick = (e) => { if (e.target.id === 'modalContainer') modal.classList.add('hidden'); };
 
             const q = query(collection(db, "leases"), where("farmerName", "==", farmerName));
             const snap = await getDocs(q);
             
-            let historyHTML = '';
+            let allHistory = [];
             snap.forEach(doc => {
                 const data = doc.data();
-                historyHTML += `<div class="mb-4 border-l-4 border-indigo-200 pl-3">
-                    <p class="font-bold text-sm text-slate-700">${data.year} (${data.amount} শতাংশ) - ${data.status == 'active' ? 'সক্রিয়' : 'নিষ্ক্রিয়'}</p>`;
-                if(data.history && data.history.length > 0) {
-                    historyHTML += `<ul class="mt-1 space-y-1 text-xs">`;
-                    data.history.forEach(h => {
-                        if(h.type === 'payment') historyHTML += `<li class="text-green-600 flex justify-between"><span>${h.date}</span> <span>+${fmt(h.amount)} টাকা জমা</span></li>`;
-                        else if(h.type === 'transfer_out') historyHTML += `<li class="text-yellow-600 flex justify-between"><span>${h.date}</span> <span>${h.amount} শতাংশ হস্তান্তর (${h.to})</span></li>`;
-                        else if(h.type === 'transfer_in') historyHTML += `<li class="text-blue-600 flex justify-between"><span>${h.date}</span> <span>${h.amount} শতাংশ পেয়েছেন (${h.from})</span></li>`;
-                        else if(h.type === 'edit') historyHTML += `<li class="text-gray-500 flex justify-between"><span>${h.date}</span> <span>দর/বছর পরিবর্তন: ${h.oldRate}->${h.newRate}</span></li>`;
-                        else if(h.type === 'new_year') historyHTML += `<li class="text-indigo-600 flex justify-between"><span>${h.date}</span> <span>${h.fromYear} থেকে ${h.toYear} সালে ${h.carriedDue} টাকা বকেয়া যোগ হয়েছে</span></li>`;
-                    });
-                    historyHTML += `</ul>`;
-                }
-                historyHTML += `</div>`;
+                (data.history || []).forEach(h => {
+                    allHistory.push({ ...h, context: `${data.year} (${data.amount} শতাংশ)` });
+                });
             });
 
-            if(!historyHTML) historyHTML = `<p class="text-slate-500 text-center py-4">কোনো ইতিহাস নেই।</p>`;
+            let historyPage = 1;
+            const historyPerPage = 10;
 
-            modal.innerHTML = `
-                <div class="bg-white rounded-2xl p-6 w-full max-w-md fade-in max-h-[80vh] overflow-y-auto relative">
-                    <button class="absolute top-4 right-4 text-slate-400 hover:text-red-500 text-2xl" onclick="document.getElementById('modalContainer').classList.add('hidden')">&times;</button>
-                    <h3 class="text-lg font-bold mb-4 text-slate-800">${farmerName} এর ইতিহাস</h3>
-                    ${historyHTML}
-                </div>
-            `;
+            function renderHistoryPage() {
+                const totalPages = Math.ceil(allHistory.length / historyPerPage);
+                const start = (historyPage - 1) * historyPerPage;
+                const end = start + historyPerPage;
+                const paginatedHistory = allHistory.slice(start, end);
+
+                let historyHTML = '';
+                paginatedHistory.forEach(h => {
+                    historyHTML += `<div class="mb-3 border-l-4 border-indigo-200 pl-3">
+                        <p class="font-bold text-xs text-slate-400">${h.context}</p>`;
+                    historyHTML += `<ul class="mt-1 space-y-1 text-xs">`;
+                    if(h.type === 'payment') historyHTML += `<li class="text-green-600 flex justify-between"><span>${h.date}</span> <span>+${fmt(h.amount)} টাকা জমা</span></li>`;
+                    else if(h.type === 'transfer_out') historyHTML += `<li class="text-yellow-600 flex justify-between"><span>${h.date}</span> <span>${h.amount} শতাংশ হস্তান্তর (${h.to})</span></li>`;
+                    else if(h.type === 'transfer_in') historyHTML += `<li class="text-blue-600 flex justify-between"><span>${h.date}</span> <span>${h.amount} শতাংশ পেয়েছেন (${h.from})</span></li>`;
+                    else if(h.type === 'edit') historyHTML += `<li class="text-gray-500 flex justify-between"><span>${h.date}</span> <span>দর/বছর পরিবর্তন: ${h.oldRate}->${h.newRate}</span></li>`;
+                    else if(h.type === 'new_year') historyHTML += `<li class="text-indigo-600 flex justify-between"><span>${h.date}</span> <span>${h.fromYear} থেকে ${h.toYear} সালে ${h.carriedDue} টাকা যোগ হয়েছে</span></li>`;
+                    historyHTML += `</ul></div>`;
+                });
+
+                let paginationHTML = '';
+                if (totalPages > 1) {
+                    paginationHTML = `<div class="flex justify-center items-center gap-2 mt-4 pt-3 border-t">
+                        <button id="prevHist" class="px-3 py-1 bg-slate-200 rounded text-sm ${historyPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-300'}">পূর্ববর্তী</button>
+                        <span class="text-sm">${historyPage} / ${totalPages}</span>
+                        <button id="nextHist" class="px-3 py-1 bg-slate-200 rounded text-sm ${historyPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-300'}">পরবর্তী</button>
+                    </div>`;
+                }
+
+                modal.innerHTML = `
+                    <div class="bg-white rounded-2xl p-6 w-full max-w-md fade-in relative h-[80vh] flex flex-col">
+                        <button class="absolute top-4 right-4 text-slate-400 hover:text-red-500 text-2xl" onclick="document.getElementById('modalContainer').classList.add('hidden')">&times;</button>
+                        <h3 class="text-lg font-bold mb-4 text-slate-800">${farmerName} এর ইতিহাস</h3>
+                        <div class="flex-1 overflow-y-auto pr-2">
+                            ${historyHTML || '<p class="text-slate-500 text-center py-4">কোনো ইতিহাস নেই।</p>'}
+                        </div>
+                        ${paginationHTML}
+                    </div>
+                `;
+
+                const prevBtn = document.getElementById('prevHist');
+                const nextBtn = document.getElementById('nextHist');
+                if(prevBtn) prevBtn.onclick = () => { if(historyPage > 1) { historyPage--; renderHistoryPage(); } };
+                if(nextBtn) nextBtn.onclick = () => { if(historyPage < totalPages) { historyPage++; renderHistoryPage(); } };
+            }
+            renderHistoryPage();
         }
 
     </script>
