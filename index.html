@@ -15,8 +15,20 @@
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: #888; border-radius: 5px; }
         .premium-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
-        /* Table Scroll Fix */
-        .table-wrap { -webkit-overflow-scrolling: touch; }
+        
+        /* Mobile Responsive Table (No Scroll) */
+        @media (max-width: 767px) {
+            .table-fixed thead { display: none; }
+            .table-fixed, .table-fixed tbody, .table-fixed tr, .table-fixed td { display: block; width: 100%; }
+            .table-fixed tr { margin-bottom: 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; background: white; padding: 0.5rem; }
+            .table-fixed td { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding: 0.5rem; text-align: right; font-size: 12px; }
+            .table-fixed td:last-child { border-bottom: none; }
+            .table-fixed td::before { content: attr(data-label); font-weight: bold; margin-right: 1rem; text-align: left; color: #64748b; width: 45%; }
+            .table-fixed td[data-label="চাষীর নাম ও সাল"] { flex-direction: column; align-items: flex-start; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 0.5rem; }
+            .table-fixed td[data-label="চাষীর নাম ও সাল"]::before { display: none; }
+            .table-fixed td[data-label="অ্যাকশন"] { justify-content: flex-start; gap: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #e2e8f0; margin-top: 0.25rem; }
+            .table-fixed td[data-label="অ্যাকশন"]::before { display: none; }
+        }
     </style>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -24,7 +36,7 @@
         import { getFirestore, collection, addDoc, query, where, getDocs, setDoc, doc, onSnapshot, updateDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
-             apiKey: "AIzaSyDZhV6G0D-fTrH2auEqgtz72DGrBHpgFDU",
+            apiKey: "AIzaSyDZhV6G0D-fTrH2auEqgtz72DGrBHpgFDU",
             authDomain: "lease-management-c7c35.firebaseapp.com",
             projectId: "lease-management-c7c35",
             storageBucket: "lease-management-c7c35.firebasestorage.app",
@@ -73,7 +85,7 @@
                 'auth/invalid-email': 'ইমেইল ঠিকানাটি সঠিক নয়।',
                 'auth/user-not-found': 'এই ইমেইল বা ইউজারনেম দিয়ে কোনো অ্যাকাউন্ট নেই।',
                 'auth/wrong-password': 'পাসওয়ার্ড ভুল হয়েছে।',
-                'auth/email-already-in-use': 'এই ইমেইল দিয়ে অ্যাকাউন্ট আগে থেকেই আছে!',
+                'auth/email-already-in-use': 'Email already exist',
                 'auth/weak-password': 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।'
             };
             return errors[errCode] || 'কিছু একটা সমস্যা হয়েছে। আবার চেষ্টা করুন।';
@@ -86,7 +98,6 @@
 
         // ---------- ১. প্রফেশনাল অ্যাশ কালার লগইন পেজ ----------
         function renderAuth() {
-            // Load saved identifiers for autocomplete
             const savedIds = JSON.parse(localStorage.getItem('savedIdentifiers') || '[]');
             const optionsHtml = savedIds.map(id => `<option value="${id}">`).join('');
 
@@ -111,12 +122,12 @@
                                 <form id="loginForm" class="space-y-5">
                                     <div>
                                         <label class="block text-xs font-medium text-slate-600 mb-1">ইমেইল অথবা ইউজারনেম</label>
-                                        <input type="text" id="loginIdentifier" list="identifierList" autocomplete="username" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none transition" required>
+                                        <input type="text" id="loginIdentifier" name="loginIdentifier" list="identifierList" autocomplete="username" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none transition" required>
                                         <datalist id="identifierList">${optionsHtml}</datalist>
                                     </div>
                                     <div>
                                         <label class="block text-xs font-medium text-slate-600 mb-1">পাসওয়ার্ড</label>
-                                        <input type="password" id="loginPassword" autocomplete="current-password" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none transition" required>
+                                        <input type="password" id="loginPassword" name="loginPassword" autocomplete="current-password" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none transition" required>
                                     </div>
                                     <button type="submit" id="loginBtn" class="w-full bg-slate-800 text-white p-3 rounded-xl font-bold hover:bg-slate-900 transition flex justify-center shadow-md">লগইন করুন</button>
                                     <button type="button" id="forgotBtn" class="w-full text-center text-sm text-cyan-600 hover:text-cyan-700 hover:underline">পাসওয়ার্ড ভুলে গেছেন?</button>
@@ -124,17 +135,17 @@
 
                                 <form id="signupForm" class="space-y-5 hidden">
                                     <div class="grid grid-cols-2 gap-4">
-                                        <div><label class="block text-xs font-medium text-slate-600 mb-1">ইউজারনেম</label><input type="text" id="suUsername" autocomplete="off" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required></div>
-                                        <div><label class="block text-xs font-medium text-slate-600 mb-1">মোবাইল</label><input type="text" id="suMobile" autocomplete="off" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required></div>
+                                        <div><label class="block text-xs font-medium text-slate-600 mb-1">ইউজারনেম</label><input type="text" id="suUsername" name="suUsername" autocomplete="off" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required></div>
+                                        <div><label class="block text-xs font-medium text-slate-600 mb-1">মোবাইল</label><input type="text" id="suMobile" name="suMobile" autocomplete="off" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required></div>
                                     </div>
-                                    <div><label class="block text-xs font-medium text-slate-600 mb-1">ইমেইল</label><input type="email" id="suEmail" autocomplete="email" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required></div>
-                                    <div><label class="block text-xs font-medium text-slate-600 mb-1">পাসওয়ার্ড</label><input type="password" id="suPassword" autocomplete="new-password" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required></div>
+                                    <div><label class="block text-xs font-medium text-slate-600 mb-1">ইমেইল</label><input type="email" id="suEmail" name="suEmail" autocomplete="email" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required></div>
+                                    <div><label class="block text-xs font-medium text-slate-600 mb-1">পাসওয়ার্ড</label><input type="password" id="suPassword" name="suPassword" autocomplete="new-password" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required></div>
                                     <button type="submit" id="signupBtn" class="w-full bg-emerald-600 text-white p-3 rounded-xl font-bold hover:bg-emerald-700 transition flex justify-center shadow-md">রেজিস্টার করুন</button>
                                 </form>
 
                                 <form id="forgotForm" class="space-y-5 hidden">
                                     <p class="text-sm text-slate-500">পাসওয়ার্ড রিকভারির জন্য আপনার রেজিস্টার্ড ইমেইল দিন।</p>
-                                    <input type="email" id="resetEmail" autocomplete="email" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" placeholder="রেজিস্টার্ড ইমেইল" required>
+                                    <input type="email" id="resetEmail" name="resetEmail" autocomplete="email" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" placeholder="রেজিস্টার্ড ইমেইল" required>
                                     <button type="submit" id="resetBtn" class="w-full bg-slate-800 text-white p-3 rounded-xl font-bold flex justify-center">রিসেট লিংক পাঠান</button>
                                     <button type="button" id="backToLogin" class="w-full text-center text-sm text-slate-500 hover:text-slate-800 hover:underline">লগইন পেজে ফিরে যান</button>
                                 </form>
@@ -181,7 +192,6 @@
                     }
                     await signInWithEmailAndPassword(auth, email, password);
                     
-                    // Save identifier for autocomplete
                     let savedIds = JSON.parse(localStorage.getItem('savedIdentifiers') || '[]');
                     if (!savedIds.includes(identifier)) {
                         savedIds.push(identifier);
@@ -204,8 +214,8 @@
                 try {
                     const q1 = query(collection(db, "users"), where("username", "==", username));
                     const q2 = query(collection(db, "users"), where("email", "==", email));
-                    if (!(await getDocs(q1)).empty) { hideSpinner(btn); return showToast("Username already taken"); }
-                    if (!(await getDocs(q2)).empty) { hideSpinner(btn); return showToast("Email already taken"); }
+                    if (!(await getDocs(q1)).empty) { hideSpinner(btn); return showToast("Username already exist"); }
+                    if (!(await getDocs(q2)).empty) { hideSpinner(btn); return showToast("Email already exist"); }
                     
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     await setDoc(doc(db, "users", userCredential.user.uid), { username, email, mobile });
@@ -235,15 +245,15 @@
                     <nav class="bg-slate-800 text-white p-4 flex justify-between items-center sticky top-0 z-10 shadow-md">
                         <div class="flex items-center gap-2">
                             <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21l1.65-3.8a9 9 0 113.4 2.9L3 21"></path></svg>
-                            <h1 class="text-lg md:text-xl font-bold">জমির হিসাব ব্যবস্থাপনা</h1>
+                            <h1 class="text-base md:text-xl font-bold">জমির হিসাব ব্যবস্থাপনা</h1>
                         </div>
-                        <button id="logoutBtn" class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600 transition flex items-center gap-1">
+                        <button id="logoutBtn" class="bg-red-500 text-white px-3 md:px-4 py-2 rounded-lg text-sm hover:bg-red-600 transition flex items-center gap-1">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                            লগআউট
+                            <span class="hidden md:inline">লগআউট</span>
                         </button>
                     </nav>
 
-                    <div class="container mx-auto p-4 md:p-6">
+                    <div class="container mx-auto p-3 md:p-6">
                         <div class="bg-white p-4 md:p-6 rounded-xl shadow-sm mb-6 border border-slate-200">
                             <h2 class="text-md font-bold mb-3 text-slate-700 border-b pb-2">নতুন চাষের হিসাব যুক্ত করুন</h2>
                             <form id="leaseForm" class="grid grid-cols-2 md:grid-cols-6 gap-3">
@@ -265,8 +275,8 @@
                                 <input type="text" id="searchInput" placeholder="নাম দিয়ে সার্চ করুন..." class="p-2 border rounded-lg text-sm w-full md:w-64 outline-none focus:border-indigo-500">
                             </div>
                             
-                            <div class="table-wrap overflow-x-auto">
-                                <table class="w-full text-sm text-left text-slate-600 min-w-[700px]">
+                            <div class="p-2 md:p-4">
+                                <table class="w-full text-left text-slate-600 table-fixed">
                                     <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
                                         <tr>
                                             <th class="p-3 w-1/5">চাষীর নাম ও সাল</th>
@@ -386,23 +396,23 @@
                 }
 
                 tr.innerHTML = `
-                    <td class="p-3 align-top">
+                    <td data-label="চাষীর নাম ও সাল" class="p-3 align-top">
                         <span class="font-bold text-slate-800 cursor-pointer hover:text-indigo-600 block" data-name="${lease.farmerName}">${lease.farmerName}</span>
                         <div class="flex items-center gap-1 mt-1">
                             <input type="text" value="${lease.year}" data-id="${id}" class="yearInput text-xs text-slate-500 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 w-16 focus:outline-none p-0">
                             <span class="text-xs text-slate-400">(${lease.cycleType})</span>
                         </div>
                     </td>
-                    <td class="p-3 align-top text-xs space-y-1">
+                    <td data-label="জমি / দর" class="p-3 align-top text-xs space-y-1">
                         <div><span class="text-slate-400">জমি:</span> <b>${lease.amount}</b> শতাংশ</div>
                         <div><span class="text-slate-400">দর:</span> <b>${lease.ratePer33}</b> টাকা</div>
                     </td>
-                    <td class="p-3 align-top text-xs space-y-1">
+                    <td data-label="মোট / পরিশোধিত" class="p-3 align-top text-xs space-y-1">
                         <div><span class="text-slate-400">মোট:</span> <b class="text-slate-800">${fmt(lease.totalCost)}</b> টাকা</div>
                         <div><span class="text-slate-400">জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)}</b> টাকা</div>
                     </td>
-                    <td class="p-3 align-top">${dueHtml}</td>
-                    <td class="p-3 align-top">
+                    <td data-label="বকেয়া" class="p-3 align-top">${dueHtml}</td>
+                    <td data-label="অ্যাকশন" class="p-3 align-top">
                         ${(lease.status === 'active' && !isTransferred) ? `
                         <div class="flex items-center gap-1 justify-end flex-wrap">
                             <button data-id="${id}" data-name="${lease.farmerName}" class="payBtn text-green-500 hover:bg-green-100 p-2 rounded-lg transition" title="পরিশোধ">
@@ -729,7 +739,6 @@
             };
         }
 
-        // History Modal with Pagination (10 per page)
         async function openHistoryModal(farmerName) {
             const modal = document.getElementById('modalContainer');
             modal.classList.remove('hidden');
