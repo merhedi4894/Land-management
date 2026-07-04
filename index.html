@@ -10,18 +10,20 @@
         body { font-family: 'Hind Siliguri', sans-serif; }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        /* Hide number input arrows */
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
+        .table-fixed { table-layout: fixed; }
+        /* Custom Scrollbar for modal */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 5px; }
     </style>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, where, getDocs, setDoc, doc, onSnapshot, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, setDoc, doc, onSnapshot, updateDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // 🔥 এখানে আপনার Firebase এর Configuration বসান
         const firebaseConfig = {
-             apiKey: "AIzaSyDZhV6G0D-fTrH2auEqgtz72DGrBHpgFDU",
+            apiKey: "AIzaSyDZhV6G0D-fTrH2auEqgtz72DGrBHpgFDU",
             authDomain: "lease-management-c7c35.firebaseapp.com",
             projectId: "lease-management-c7c35",
             storageBucket: "lease-management-c7c35.firebasestorage.app",
@@ -34,9 +36,9 @@
         const db = getFirestore(app);
 
         const appContainer = document.getElementById('app');
-        let mainUser = null; // অটোসাজেশনের জন্য ইউজার ডেটা রাখা
+        let idleTimer = null;
 
-        // Toast Notification System
+        // Toast Notification
         function showToast(msg, type = 'error') {
             const colors = { error: 'bg-red-500', success: 'bg-green-500', info: 'bg-blue-500' };
             const toast = document.createElement('div');
@@ -46,92 +48,91 @@
             setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
         }
 
-        // Clean Firebase Error Messages (No URL)
+        // Spinner Helper
+        function showSpinner(btn) {
+            btn.disabled = true;
+            btn.dataset.originalHtml = btn.innerHTML;
+            btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+        }
+        function hideSpinner(btn) {
+            btn.disabled = false;
+            btn.innerHTML = btn.dataset.originalHtml;
+        }
+
+        // Idle Auto Logout (5 minutes)
+        function resetIdleTimer() {
+            clearTimeout(idleTimer);
+            idleTimer = setTimeout(() => {
+                signOut(auth).then(() => showToast('৫ মিনিট নিষ্ক্রিয়তার কারণে লগআউট হয়েছে', 'info'));
+            }, 300000); // 300,000 ms = 5 mins
+        }
+        ['mousemove', 'keydown', 'click', 'scroll'].forEach(evt => window.addEventListener(evt, resetIdleTimer));
+
         function cleanError(errCode) {
             const errors = {
-                'auth/invalid-email': 'ইমেইল ঠিকানাটি সঠিক নয়।',
-                'auth/user-not-found': 'এই ইমেইল বা ইউজারনেম দিয়ে কোনো অ্যাকাউন্ট নেই।',
+                'auth/invalid-email': 'ইমেইল ঠিকানাটি সঠিক নয়।',
+                'auth/user-not-found': 'এই ইমেইল বা ইউজারনেম দিয়ে কোনো অ্যাকাউন্ট নেই।',
                 'auth/wrong-password': 'পাসওয়ার্ড ভুল হয়েছে।',
-                'auth/email-already-in-use': 'এই ইমেইল বা ইউজারনেম দিয়ে অ্যাকাউন্ট আগে থেকেই আছে!',
-                'auth/weak-password': 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।',
-                'auth/missing-email': 'ইমেইল দিন।'
+                'auth/email-already-in-use': 'এই ইমেইল বা ইউজারনেম দিয়ে অ্যাকাউন্ট আগে থেকেই আছে!',
+                'auth/weak-password': 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।'
             };
-            return errors[errCode] || 'কিছু একটা সমস্যা হয়েছে। আবার চেষ্টা করুন।';
+            return errors[errCode] || 'কিছু একটা সমস্যা হয়েছে। আবার চেষ্টা করুন।';
         }
 
         onAuthStateChanged(auth, (user) => {
-            if (user) {
-                getDoc(doc(db, "users", user.uid)).then(userSnap => {
-                    if(userSnap.exists()) mainUser = userSnap.data();
-                });
-                renderDashboard();
-            } else {
-                mainUser = null;
-                renderAuth();
-            }
+            if (user) { renderDashboard(); } 
+            else { renderAuth(); }
         });
 
-        // ---------- ১. অথেনটিকেশন (Login / Signup) ----------
+        // ---------- ১. লগইন পেজ ----------
         function renderAuth() {
             appContainer.innerHTML = `
-                <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-800 to-indigo-900 p-4">
-                    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-                        <div class="bg-blue-600 p-6 text-center">
-                            <h1 class="text-2xl font-bold text-white">জমি লিজ ম্যানেজমেন্ট</h1>
-                            <p class="text-blue-100 text-sm mt-1">আপনার অ্যাকাউন্টে লগইন করুন</p>
+                <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-indigo-900 p-4">
+                    <div class="w-full max-w-md">
+                        <div class="text-center mb-6">
+                            <div class="inline-block p-4 bg-indigo-600 rounded-full shadow-lg mb-4">
+                                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21l1.65-3.8a9 9 0 113.4 2.9L3 21"></path></svg>
+                            </div>
+                            <h1 class="text-3xl font-bold text-white">জমি লিজ ম্যানেজমেন্ট</h1>
+                            <p class="text-indigo-300 mt-2">আপনার অ্যাকাউন্টে লগইন করুন</p>
                         </div>
                         
-                        <div class="p-8">
-                            <div class="flex border-b mb-6">
-                                <button id="tabLogin" class="flex-1 py-2 font-bold text-blue-600 border-b-2 border-blue-600">লগইন</button>
-                                <button id="tabSignup" class="flex-1 py-2 font-bold text-gray-400 border-b-2 border-transparent">সাইন আপ</button>
+                        <div class="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
+                            <div class="flex border-b border-white/20">
+                                <button id="tabLogin" class="flex-1 py-3 font-bold text-white bg-white/10 transition">লগইন</button>
+                                <button id="tabSignup" class="flex-1 py-3 font-bold text-indigo-200 transition">সাইন আপ</button>
                             </div>
 
-                            <!-- Login Form -->
-                            <form id="loginForm" class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">ইমেইল বা ইউজারনেম</label>
-                                    <input type="text" id="loginIdentifier" autocomplete="username" class="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="example@email.com" required>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">পাসওয়ার্ড</label>
-                                    <input type="password" id="loginPassword" autocomplete="current-password" class="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="********" required>
-                                </div>
-                                <button type="submit" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition">লগইন করুন</button>
-                                <button type="button" id="forgotBtn" class="w-full text-center text-sm text-blue-500 hover:underline">পাসওয়ার্ড ভুলে গেছেন?</button>
-                            </form>
+                            <div class="p-6 md:p-8 space-y-6">
+                                <form id="loginForm" class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-indigo-100">ইমেইল বা ইউজারনেম</label>
+                                        <input type="text" id="loginIdentifier" autocomplete="username" class="w-full p-3 mt-1 bg-white/10 border border-white/20 rounded-lg text-white placeholder-indigo-200 focus:ring-2 focus:ring-indigo-400 outline-none" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-indigo-100">পাসওয়ার্ড</label>
+                                        <input type="password" id="loginPassword" autocomplete="current-password" class="w-full p-3 mt-1 bg-white/10 border border-white/20 rounded-lg text-white placeholder-indigo-200 focus:ring-2 focus:ring-indigo-400 outline-none" required>
+                                    </div>
+                                    <button type="submit" id="loginBtn" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-500 transition flex justify-center">লগইন করুন</button>
+                                    <button type="button" id="forgotBtn" class="w-full text-center text-sm text-indigo-200 hover:text-white hover:underline">পাসওয়ার্ড ভুলে গেছেন?</button>
+                                </form>
 
-                            <!-- Signup Form -->
-                            <form id="signupForm" class="space-y-4 hidden">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">ইউজারনেম</label>
-                                    <input type="text" id="suUsername" autocomplete="username" class="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">ইমেইল</label>
-                                    <input type="email" id="suEmail" autocomplete="email" class="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">মোবাইল নাম্বার</label>
-                                    <input type="text" id="suMobile" autocomplete="tel" class="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">পাসওয়ার্ড</label>
-                                    <input type="password" id="suPassword" autocomplete="new-password" class="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
-                                </div>
-                                <button type="submit" class="w-full bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 transition">রেজিস্টার করুন</button>
-                            </form>
+                                <form id="signupForm" class="space-y-4 hidden">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <input type="text" id="suUsername" placeholder="ইউজারনেম" autocomplete="off" class="w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-indigo-200 focus:ring-2 focus:ring-indigo-400 outline-none" required>
+                                        <input type="text" id="suMobile" placeholder="মোবাইল" autocomplete="off" class="w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-indigo-200 focus:ring-2 focus:ring-indigo-400 outline-none" required>
+                                    </div>
+                                    <input type="email" id="suEmail" placeholder="ইমেইল" autocomplete="email" class="w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-indigo-200 focus:ring-2 focus:ring-indigo-400 outline-none" required>
+                                    <input type="password" id="suPassword" placeholder="পাসওয়ার্ড" autocomplete="new-password" class="w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-indigo-200 focus:ring-2 focus:ring-indigo-400 outline-none" required>
+                                    <button type="submit" id="signupBtn" class="w-full bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-500 transition flex justify-center">রেজিস্টার করুন</button>
+                                </form>
 
-                            <!-- Forgot Password Form -->
-                            <form id="forgotForm" class="space-y-4 hidden">
-                                <p class="text-sm text-gray-600">পাসওয়ার্ড রিকভারির জন্য আপনার রেজিস্টার্ড ইমেইল দিন।</p>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">রেজিস্টার্ড ইমেইল</label>
-                                    <input type="email" id="resetEmail" autocomplete="email" class="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
-                                </div>
-                                <button type="submit" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition">রিসেট লিংক পাঠান</button>
-                                <button type="button" id="backToLogin" class="w-full text-center text-sm text-gray-500 hover:underline">লগইন পেজে ফিরে যান</button>
-                            </form>
+                                <form id="forgotForm" class="space-y-4 hidden">
+                                    <input type="email" id="resetEmail" placeholder="রেজিস্টার্ড ইমেইল" autocomplete="email" class="w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-indigo-200 focus:ring-2 focus:ring-indigo-400 outline-none" required>
+                                    <button type="submit" id="resetBtn" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-500 transition flex justify-center">রিসেট লিংক পাঠান</button>
+                                    <button type="button" id="backToLogin" class="w-full text-center text-sm text-indigo-200 hover:text-white hover:underline">লগইন পেজে ফিরে যান</button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -141,29 +142,23 @@
             const signupForm = document.getElementById('signupForm');
             const forgotForm = document.getElementById('forgotForm');
 
-            document.getElementById('tabLogin').addEventListener('click', () => {
+            document.getElementById('tabLogin').onclick = () => {
                 loginForm.classList.remove('hidden'); signupForm.classList.add('hidden'); forgotForm.classList.add('hidden');
-                document.getElementById('tabLogin').className = "flex-1 py-2 font-bold text-blue-600 border-b-2 border-blue-600";
-                document.getElementById('tabSignup').className = "flex-1 py-2 font-bold text-gray-400 border-b-2 border-transparent";
-            });
-
-            document.getElementById('tabSignup').addEventListener('click', () => {
+                document.getElementById('tabLogin').className = "flex-1 py-3 font-bold text-white bg-white/10 transition";
+                document.getElementById('tabSignup').className = "flex-1 py-3 font-bold text-indigo-200 transition";
+            };
+            document.getElementById('tabSignup').onclick = () => {
                 signupForm.classList.remove('hidden'); loginForm.classList.add('hidden'); forgotForm.classList.add('hidden');
-                document.getElementById('tabSignup').className = "flex-1 py-2 font-bold text-blue-600 border-b-2 border-blue-600";
-                document.getElementById('tabLogin').className = "flex-1 py-2 font-bold text-gray-400 border-b-2 border-transparent";
-            });
+                document.getElementById('tabSignup').className = "flex-1 py-3 font-bold text-white bg-white/10 transition";
+                document.getElementById('tabLogin').className = "flex-1 py-3 font-bold text-indigo-200 transition";
+            };
+            document.getElementById('forgotBtn').onclick = () => { loginForm.classList.add('hidden'); forgotForm.classList.remove('hidden'); };
+            document.getElementById('backToLogin').onclick = () => { forgotForm.classList.add('hidden'); loginForm.classList.remove('hidden'); };
 
-            document.getElementById('forgotBtn').addEventListener('click', () => {
-                loginForm.classList.add('hidden'); forgotForm.classList.remove('hidden');
-            });
-
-            document.getElementById('backToLogin').addEventListener('click', () => {
-                forgotForm.classList.add('hidden'); loginForm.classList.remove('hidden');
-            });
-
-            // Login Logic (Email or Username)
-            loginForm.addEventListener('submit', async (e) => {
+            loginForm.onsubmit = async (e) => {
                 e.preventDefault();
+                const btn = document.getElementById('loginBtn');
+                showSpinner(btn);
                 const identifier = document.getElementById('loginIdentifier').value;
                 const password = document.getElementById('loginPassword').value;
                 let email = identifier;
@@ -172,19 +167,19 @@
                     if(!identifier.includes('@')) {
                         const q = query(collection(db, "users"), where("username", "==", identifier));
                         const snap = await getDocs(q);
-                        if(snap.empty) return showToast("এই ইউজারনেম দিয়ে কোনো অ্যাকাউন্ট নেই।");
+                        if(snap.empty) { hideSpinner(btn); return showToast("এই ইউজারনেম দিয়ে কোনো অ্যাকাউন্ট নেই।"); }
                         email = snap.docs[0].data().email;
                     }
                     await signInWithEmailAndPassword(auth, email, password);
-                    showToast('সফলভাবে লগইন হয়েছে!', 'success');
-                } catch (err) {
-                    showToast(cleanError(err.code));
-                }
-            });
+                    showToast('সফলভাবে লগইন হয়েছে!', 'success');
+                } catch (err) { showToast(cleanError(err.code)); }
+                hideSpinner(btn);
+            };
 
-            // Signup Logic
-            signupForm.addEventListener('submit', async (e) => {
+            signupForm.onsubmit = async (e) => {
                 e.preventDefault();
+                const btn = document.getElementById('signupBtn');
+                showSpinner(btn);
                 const username = document.getElementById('suUsername').value;
                 const email = document.getElementById('suEmail').value;
                 const mobile = document.getElementById('suMobile').value;
@@ -193,273 +188,304 @@
                 try {
                     const q1 = query(collection(db, "users"), where("username", "==", username));
                     const q2 = query(collection(db, "users"), where("email", "==", email));
-                    if (!(await getDocs(q1)).empty) return showToast("Username already exists!");
-                    if (!(await getDocs(q2)).empty) return showToast("Email already exists!");
+                    if (!(await getDocs(q1)).empty) { hideSpinner(btn); return showToast("Username already exists!"); }
+                    if (!(await getDocs(q2)).empty) { hideSpinner(btn); return showToast("Email already exists!"); }
 
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     await setDoc(doc(db, "users", userCredential.user.uid), { username, email, mobile });
-                    showToast('সাইন আপ সফল হয়েছে!', 'success');
-                } catch (err) {
-                    showToast(cleanError(err.code));
-                }
-            });
+                    showToast('সাইন আপ সফল হয়েছে!', 'success');
+                } catch (err) { showToast(cleanError(err.code)); }
+                hideSpinner(btn);
+            };
 
-            // Forgot Password Logic
-            forgotForm.addEventListener('submit', async (e) => {
+            forgotForm.onsubmit = async (e) => {
                 e.preventDefault();
+                const btn = document.getElementById('resetBtn');
+                showSpinner(btn);
                 const email = document.getElementById('resetEmail').value;
                 try {
                     await sendPasswordResetEmail(auth, email);
                     showToast('পাসওয়ার্ড রিসেট ইমেইল পাঠানো হয়েছে!', 'success');
                     document.getElementById('backToLogin').click();
-                } catch (err) {
-                    showToast(cleanError(err.code));
-                }
-            });
+                } catch (err) { showToast(cleanError(err.code)); }
+                hideSpinner(btn);
+            };
         }
 
         // ---------- ২. ড্যাশবোর্ড ----------
         function renderDashboard() {
             appContainer.innerHTML = `
-                <div class="min-h-screen bg-gray-100">
-                    <nav class="bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-10">
-                        <h1 class="text-xl md:text-2xl font-bold text-gray-800">জমির হিসাব ব্যবস্থাপনা</h1>
-                        <button id="logoutBtn" class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600 transition">লগআউট</button>
+                <div class="min-h-screen bg-slate-100">
+                    <nav class="bg-slate-800 text-white p-4 flex justify-between items-center sticky top-0 z-10 shadow-md">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21l1.65-3.8a9 9 0 113.4 2.9L3 21"></path></svg>
+                            <h1 class="text-lg md:text-xl font-bold">জমির হিসাব ব্যবস্থাপনা</h1>
+                        </div>
+                        <button id="logoutBtn" class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600 transition flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                            লগআউট
+                        </button>
                     </nav>
 
                     <div class="container mx-auto p-4 md:p-6">
-                        
-                        <!-- নতুন হিসাব যুক্ত করুন -->
-                        <div class="bg-white p-6 rounded-xl shadow-md mb-8">
-                            <h2 class="text-lg font-bold mb-4 text-gray-700 border-b pb-2">নতুন চাষের হিসাব যুক্ত করুন</h2>
-                            <form id="leaseForm" class="grid grid-cols-1 md:grid-cols-6 gap-4">
-                                <input type="text" id="farmerName" placeholder="চাষীর নাম" class="p-2 border rounded-lg md:col-span-2" required>
-                                <input type="number" step="0.01" id="amount" placeholder="জমির পরিমাণ (শতাংশ)" class="p-2 border rounded-lg" required>
-                                <input type="number" id="ratePer33" placeholder="দর (যেমন: ১৮০০০)" class="p-2 border rounded-lg" required>
-                                <select id="cycleType" class="p-2 border rounded-lg">
+                        <div class="bg-white p-4 md:p-6 rounded-xl shadow-sm mb-6 border border-slate-200">
+                            <h2 class="text-md font-bold mb-3 text-slate-700 border-b pb-2">নতুন চাষের হিসাব যুক্ত করুন</h2>
+                            <form id="leaseForm" class="grid grid-cols-2 md:grid-cols-6 gap-3">
+                                <input type="text" id="farmerName" placeholder="চাষীর নাম" class="p-2 border rounded-lg text-sm col-span-2 md:col-span-1" required>
+                                <input type="number" step="0.01" id="amount" placeholder="জমির পরিমাণ" class="p-2 border rounded-lg text-sm" required>
+                                <input type="number" id="ratePer33" placeholder="দর (যেমন: ১৮০০০)" class="p-2 border rounded-lg text-sm" required>
+                                <select id="cycleType" class="p-2 border rounded-lg text-sm">
                                     <option value="জ্যৈষ্ঠ">জ্যৈষ্ঠ টু জ্যৈষ্ঠ</option>
                                     <option value="জানুয়ারি">জানুয়ারি টু জানুয়ারি</option>
                                 </select>
-                                <button type="submit" class="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 font-bold">যুক্ত করুন</button>
+                                <input type="text" id="year" placeholder="বছর (২০২৪)" class="p-2 border rounded-lg text-sm" required>
+                                <button type="submit" class="bg-indigo-600 text-white p-2 rounded-lg text-sm hover:bg-indigo-700 font-bold">যুক্ত করুন</button>
                             </form>
                         </div>
 
-                        <!-- ড্যাশবোর্ড কন্ট্রোল -->
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-lg font-bold text-gray-700">চলমান হিসাব সমূহ</h2>
-                            <button id="newYearBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700">নতুন হিসাব বর্ষ (বকেয়া ট্রান্সফার)</button>
-                        </div>
-
-                        <!-- জমির তালিকা -->
-                        <div class="bg-white p-4 md:p-6 rounded-xl shadow-md">
-                            <div id="cardsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <!-- কার্ড বা টেবিল এখানে লোড হবে -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div class="p-4 border-b flex justify-between items-center">
+                                <h2 class="text-md font-bold text-slate-700">চলমান হিসাব সমূহ</h2>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm text-left text-slate-600 table-fixed">
+                                    <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
+                                        <tr>
+                                            <th class="p-3 w-1/4">চাষীর নাম</th>
+                                            <th class="p-3 w-1/5">জমি / দর / বছর</th>
+                                            <th class="p-3 w-1/5">মোট / পরিশোধিত</th>
+                                            <th class="p-3 w-1/5">বকেয়া</th>
+                                            <th class="p-3 w-1/5 text-right">অ্যাকশন</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="leasesTable" class="divide-y divide-slate-100"></tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Modals -->
-                <div id="modalContainer" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"></div>
+                <div id="modalContainer" class="hidden fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4"></div>
             `;
 
             document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
             document.getElementById('leaseForm').addEventListener('submit', addLease);
-            document.getElementById('newYearBtn').addEventListener('click', startNewFinancialYear);
             loadLeases();
         }
 
-        // জমির ডেটা লোড এবং কার্ড আকারে দেখানো
         function loadLeases() {
             const q = collection(db, "leases");
             onSnapshot(q, (snapshot) => {
-                const container = document.getElementById('cardsContainer');
-                if (snapshot.empty) {
-                    container.innerHTML = `<p class="text-gray-400 text-center col-span-full py-10">কোনো হিসাব যুক্ত করা হয়নি।</p>`;
-                    return;
-                }
-
-                container.innerHTML = '';
+                const tbody = document.getElementById('leasesTable');
+                if (snapshot.empty) { tbody.innerHTML = `<tr><td colspan="5" class="text-center text-slate-400 py-6">কোনো হিসাব নেই</td></tr>`; return; }
+                
+                tbody.innerHTML = '';
                 snapshot.forEach(d => {
                     const lease = d.data();
                     const id = d.id;
-                    const card = document.createElement('div');
-                    card.className = `border rounded-xl p-4 shadow-sm transition ${lease.status === 'inactive' ? 'bg-red-50 border-red-200' : 'bg-white hover:shadow-md'}`;
+                    const tr = document.createElement('tr');
+                    if (lease.status === 'inactive') tr.className = 'bg-red-50 text-red-400';
                     
-                    card.innerHTML = `
-                        <div class="flex justify-between items-start mb-3">
-                            <div>
-                                <h3 class="font-bold text-lg text-blue-700 cursor-pointer hover:underline" data-name="${lease.farmerName}">${lease.farmerName}</h3>
-                                <p class="text-sm text-gray-500">${lease.year} (${lease.cycleType})</p>
+                    tr.innerHTML = `
+                        <td class="p-3 align-top">
+                            <span class="font-bold text-slate-800 cursor-pointer hover:text-indigo-600 block" data-name="${lease.farmerName}">${lease.farmerName}</span>
+                            <span class="text-xs text-slate-400">${lease.cycleType}</span>
+                        </td>
+                        <td class="p-3 align-top text-xs space-y-1">
+                            <div><span class="text-slate-400">জমি:</span> <b>${lease.amount}</b> শতাংশ</div>
+                            <div><span class="text-slate-400">দর:</span> <b>${lease.ratePer33}</b> টাকা</div>
+                            <div><span class="text-slate-400">বছর:</span> <b>${lease.year}</b></div>
+                        </td>
+                        <td class="p-3 align-top text-xs space-y-1">
+                            <div><span class="text-slate-400">মোট:</span> <b class="text-slate-800">${lease.totalCost}</b> টাকা</div>
+                            <div><span class="text-slate-400">জমা:</span> <b class="text-green-600">${lease.paidAmount}</b> টাকা</div>
+                        </td>
+                        <td class="p-3 align-top">
+                            <span class="font-bold text-red-600 text-base">${lease.dueAmount}</span> <span class="text-xs">টাকা</span>
+                            ${lease.status === 'active' ? `
+                            <button data-id="${id}" data-name="${lease.farmerName}" data-year="${lease.year}" data-due="${lease.dueAmount}" class="adjustBtn block mt-1 text-xs text-indigo-500 hover:underline">নতুন বছরে নিন</button>
+                            ` : `<span class="block text-xs text-red-400 mt-1">নিষ্ক্রিয়</span>`}
+                        </td>
+                        <td class="p-3 align-top">
+                            ${lease.status === 'active' ? `
+                            <div class="flex items-center gap-2 justify-end flex-wrap">
+                                <button data-id="${id}" data-name="${lease.farmerName}" class="payBtn text-green-500 hover:bg-green-100 p-2 rounded-lg transition" title="পরিশোধ">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </button>
+                                <button data-id="${id}" data-amount="${lease.amount}" class="transferBtn text-yellow-500 hover:bg-yellow-100 p-2 rounded-lg transition" title="ছেড়ে দিন">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                                </button>
+                                <button data-id="${id}" data-year="${lease.year}" data-rate="${lease.ratePer33}" class="editBtn text-blue-500 hover:bg-blue-100 p-2 rounded-lg transition" title="এডিট দর">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.038-2.038l-9.9 9.9a1 1 0 00-.4.243l-2.324 2.324a.5.5 0 00.707.707l2.324-2.324a1 1 0 00.243-.4l9.9-9.9a2 2 0 112.828 2.828z"></path></svg>
+                                </button>
+                                <button data-id="${id}" class="delBtn text-red-500 hover:bg-red-100 p-2 rounded-lg transition" title="ডিলিট">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
                             </div>
-                            ${lease.status === 'active' ? `<span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">সক্রিয়</span>` : `<span class="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full">নিষ্ক্রিয়</span>`}
-                        </div>
-                        
-                        <div class="space-y-2 text-sm border-t pt-3">
-                            <div class="flex justify-between"><span class="text-gray-500">জমির পরিমাণ:</span> <span class="font-medium">${lease.amount} শতাংশ</span></div>
-                            <div class="flex justify-between"><span class="text-gray-500">হারির দর:</span> <span class="font-medium">${lease.ratePer33} টাকা</span></div>
-                            <div class="flex justify-between"><span class="text-gray-500">মোট দেয়:</span> <span class="font-medium">${lease.totalCost} টাকা</span></div>
-                            <div class="flex justify-between"><span class="text-gray-500">পরিশোধিত:</span> <span class="font-medium text-green-600">${lease.paidAmount} টাকা</span></div>
-                            <div class="flex justify-between text-base"><span class="font-bold text-gray-600">বকেয়া:</span> <span class="font-bold text-red-600">${lease.dueAmount} টাকা</span></div>
-                        </div>
-
-                        ${lease.status === 'active' ? `
-                        <div class="mt-4 grid grid-cols-3 gap-2">
-                            <button data-id="${id}" class="payBtn bg-green-500 text-white py-2 rounded-lg text-sm hover:bg-green-600">পরিশোধ</button>
-                            <button data-id="${id}" data-amount="${lease.amount}" class="transferBtn bg-yellow-500 text-white py-2 rounded-lg text-sm hover:bg-yellow-600">ছেড়ে দিন</button>
-                            <button data-id="${id}" data-amount="${lease.amount}" data-rate="${lease.ratePer33}" class="editBtn bg-gray-500 text-white py-2 rounded-lg text-sm hover:bg-gray-600">এডিট</button>
-                        </div>
-                        ` : `<p class="text-center text-red-500 text-sm mt-4">এই জমির চাষ বন্ধ করা হয়েছে</p>`}
+                            ` : ''}
+                        </td>
                     `;
-                    container.appendChild(card);
+                    tbody.appendChild(tr);
                 });
 
-                // ইভেন্ট লিসেনার
-                document.querySelectorAll('.payBtn').forEach(b => b.addEventListener('click', e => openPaymentModal(e.target.dataset.id)));
-                document.querySelectorAll('.transferBtn').forEach(b => b.addEventListener('click', e => openTransferModal(e.target.dataset.id, e.target.dataset.amount)));
-                document.querySelectorAll('.editBtn').forEach(b => b.addEventListener('click', e => openEditRateModal(e.target.dataset.id, e.target.dataset.amount, e.target.dataset.rate)));
+                // Bind Events
+                document.querySelectorAll('.payBtn').forEach(b => b.addEventListener('click', e => openPaymentModal(e.currentTarget.dataset.id, e.currentTarget.dataset.name)));
+                document.querySelectorAll('.transferBtn').forEach(b => b.addEventListener('click', e => openTransferModal(e.currentTarget.dataset.id, e.currentTarget.dataset.amount)));
+                document.querySelectorAll('.editBtn').forEach(b => b.addEventListener('click', e => openEditRateModal(e.currentTarget.dataset.id, e.currentTarget.dataset.year, e.currentTarget.dataset.rate)));
+                document.querySelectorAll('.delBtn').forEach(b => b.addEventListener('click', e => handleDelete(e.currentTarget.dataset.id)));
+                document.querySelectorAll('.adjustBtn').forEach(b => b.addEventListener('click', e => openAdjustDueModal(e.currentTarget.dataset.id, e.currentTarget.dataset.name, e.currentTarget.dataset.year, e.currentTarget.dataset.due)));
                 document.querySelectorAll('[data-name]').forEach(b => b.addEventListener('click', e => openHistoryModal(e.target.dataset.name)));
             });
         }
 
-        // নতুন লিজ যুক্ত করা
         async function addLease(e) {
             e.preventDefault();
             const farmerName = document.getElementById('farmerName').value;
             const amount = parseFloat(document.getElementById('amount').value);
             const ratePer33 = parseFloat(document.getElementById('ratePer33').value);
             const cycleType = document.getElementById('cycleType').value;
-            const year = new Date().getFullYear().toString();
-
+            const year = document.getElementById('year').value;
             const totalCost = ((amount / 33) * ratePer33).toFixed(2);
 
             await addDoc(collection(db, "leases"), {
                 farmerName, amount, ratePer33, cycleType, year,
-                totalCost: parseFloat(totalCost),
-                paidAmount: 0,
-                dueAmount: parseFloat(totalCost),
-                status: 'active',
-                history: []
+                totalCost: parseFloat(totalCost), paidAmount: 0, dueAmount: parseFloat(totalCost),
+                status: 'active', history: []
             });
-
-            showToast('নতুন হিসাব যুক্ত হয়েছে!', 'success');
+            showToast('নতুন হিসাব যুক্ত হয়েছে!', 'success');
             document.getElementById('leaseForm').reset();
         }
 
-        // টাকা পরিশোধ মডাল
-        function openPaymentModal(id) {
+        async function handleDelete(id) {
+            if(confirm("আপনি কি এই হিসাবটি ডিলিট করতে চান?")) {
+                await deleteDoc(doc(db, "leases", id));
+                showToast('হিসাব ডিলিট করা হয়েছে!', 'success');
+            }
+        }
+
+        // --- Modals ---
+        function openModal(htmlContent) {
             const modal = document.getElementById('modalContainer');
             modal.classList.remove('hidden');
-            modal.innerHTML = `
-                <div class="bg-white rounded-xl p-6 w-full max-w-md fade-in">
-                    <h3 class="text-lg font-bold mb-4">টাকা পরিশোধ করুন</h3>
-                    <input type="number" id="payAmount" placeholder="পরিশোধের পরিমাণ" class="w-full p-2 border rounded-lg mb-4" autofocus>
-                    <input type="date" id="payDate" class="w-full p-2 border rounded-lg mb-4" value="${new Date().toISOString().split('T')[0]}">
-                    <div class="flex gap-2">
-                        <button id="confirmPay" class="flex-1 bg-green-500 text-white p-2 rounded-lg hover:bg-green-600">নিশ্চিত করুন</button>
-                        <button id="cancelPay" class="flex-1 bg-gray-300 p-2 rounded-lg hover:bg-gray-400">বাতিল</button>
-                    </div>
-                </div>
-            `;
+            modal.innerHTML = `<div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md fade-in">${htmlContent}</div>`;
+        }
+        function closeModal() { document.getElementById('modalContainer').classList.add('hidden'); }
 
-            document.getElementById('confirmPay').addEventListener('click', async () => {
+        function openPaymentModal(id, name) {
+            openModal(`
+                <h3 class="text-lg font-bold mb-4 text-slate-800">${name} - টাকা পরিশোধ</h3>
+                <input type="number" id="payAmount" placeholder="পরিশোধের পরিমাণ" class="w-full p-3 border rounded-lg mb-3" autofocus>
+                <input type="date" id="payDate" class="w-full p-3 border rounded-lg mb-4" value="${new Date().toISOString().split('T')[0]}">
+                <button id="confirmPay" class="w-full bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 flex justify-center">নিশ্চিত করুন</button>
+            `);
+            document.getElementById('confirmPay').onclick = async () => {
+                const btn = document.getElementById('confirmPay');
+                showSpinner(btn);
                 const amount = parseFloat(document.getElementById('payAmount').value);
                 const date = document.getElementById('payDate').value;
-                if(isNaN(amount) || amount <= 0) return showToast('সঠিক পরিমাণ লিখুন');
+                if(isNaN(amount) || amount <= 0) { hideSpinner(btn); return showToast('সঠিক পরিমাণ লিখুন'); }
 
                 const ref = doc(db, "leases", id);
                 const snap = await getDoc(ref);
                 const data = snap.data();
-
                 const newPaid = data.paidAmount + amount;
                 const newDue = data.totalCost - newPaid;
                 const history = data.history || [];
                 history.push({ date, amount, type: 'payment' });
 
                 await updateDoc(ref, { paidAmount: newPaid, dueAmount: newDue, history });
-                showToast('টাকা পরিশোধ সফল হয়েছে!', 'success');
-                modal.classList.add('hidden');
-            });
-            document.getElementById('cancelPay').addEventListener('click', () => modal.classList.add('hidden'));
+                showToast('টাকা পরিশোধ সফল হয়েছে!', 'success');
+                closeModal();
+            };
         }
 
-        // জমি ছেড়ে দেওয়া বা কাটা মডাল
-        function openTransferModal(id, totalAmount) {
-            const modal = document.getElementById('modalContainer');
-            modal.classList.remove('hidden');
-            modal.innerHTML = `
-                <div class="bg-white rounded-xl p-6 w-full max-w-md fade-in">
-                    <h3 class="text-lg font-bold mb-4">জমি হস্তান্তর করুন</h3>
-                    <p class="text-sm text-gray-500 mb-4">মোট জমি: ${totalAmount} শতাংশ</p>
-                    <input type="number" step="0.01" id="transferAmount" placeholder="কত শতাংশ জমি দিবেন?" class="w-full p-2 border rounded-lg mb-4" autofocus>
-                    <input type="text" id="newFarmerName" placeholder="যাকে দিচ্ছেন তার নাম" class="w-full p-2 border rounded-lg mb-4">
-                    <div class="flex gap-2">
-                        <button id="confirmTransfer" class="flex-1 bg-yellow-500 text-white p-2 rounded-lg hover:bg-yellow-600">হস্তান্তর করুন</button>
-                        <button id="cancelTransfer" class="flex-1 bg-gray-300 p-2 rounded-lg hover:bg-gray-400">বাতিল</button>
-                    </div>
-                </div>
-            `;
+        async function openTransferModal(id, totalAmount) {
+            // Fetch active farmers for suggestion
+            const q = query(collection(db, "leases"), where("status", "==", "active"));
+            const snap = await getDocs(q);
+            let farmers = [];
+            snap.forEach(d => { if(d.id !== id) farmers.push(d.data().farmerName); });
+            const uniqueFarmers = [...new Set(farmers)];
 
-            document.getElementById('confirmTransfer').addEventListener('click', async () => {
+            const options = uniqueFarmers.map(f => `<option value="${f}">`).join('');
+
+            openModal(`
+                <h3 class="text-lg font-bold mb-4 text-slate-800">জমি হস্তান্তর / ছেড়ে দিন</h3>
+                <p class="text-sm text-slate-500 mb-3">মোট জমি: <b>${totalAmount}</b> শতাংশ</p>
+                <input type="number" step="0.01" id="transferAmount" placeholder="কত শতাংশ জমি দিবেন?" class="w-full p-3 border rounded-lg mb-3" autofocus>
+                <datalist id="farmerList">${options}</datalist>
+                <input type="text" id="newFarmerName" list="farmerList" placeholder="যাকে দিচ্ছেন তার নাম" class="w-full p-3 border rounded-lg mb-4">
+                <button id="confirmTransfer" class="w-full bg-yellow-500 text-white p-3 rounded-lg font-bold hover:bg-yellow-600 flex justify-center">হস্তান্তর করুন</button>
+            `);
+
+            document.getElementById('confirmTransfer').onclick = async () => {
+                const btn = document.getElementById('confirmTransfer');
+                showSpinner(btn);
                 const tAmount = parseFloat(document.getElementById('transferAmount').value);
                 const newName = document.getElementById('newFarmerName').value;
                 
-                if(isNaN(tAmount) || tAmount <= 0 || tAmount > totalAmount) return showToast('সঠিক জমির পরিমাণ দিন');
-                if(!newName) return showToast('নতুন চাষীর নাম দিন');
+                if(isNaN(tAmount) || tAmount <= 0 || tAmount > totalAmount) { hideSpinner(btn); return showToast('সঠিক জমির পরিমাণ দিন'); }
+                if(!newName) { hideSpinner(btn); return showToast('নতুন চাষীর নাম দিন'); }
 
                 const oldRef = doc(db, "leases", id);
                 const oldSnap = await getDoc(oldRef);
                 const oldData = oldSnap.data();
 
+                // Check if new farmer already has an active lease
+                const q2 = query(collection(db, "leases"), where("farmerName", "==", newName), where("status", "==", "active"));
+                const newFarmerSnap = await getDocs(q2);
+
                 const oldNewAmount = oldData.amount - tAmount;
                 const oldNewTotal = ((oldNewAmount / 33) * oldData.ratePer33).toFixed(2);
-
-                // পুরোনো হিসাব আপডেট
-                const history = oldData.history || [];
-                history.push({ date: new Date().toLocaleDateString('bn-BD'), amount: tAmount, type: 'transfer_out', to: newName });
+                const oldHistory = oldData.history || [];
+                oldHistory.push({ date: new Date().toLocaleDateString('bn-BD'), amount: tAmount, type: 'transfer_out', to: newName });
                 
-                await updateDoc(oldRef, { amount: oldNewAmount, totalCost: parseFloat(oldNewTotal), dueAmount: parseFloat(oldNewTotal) - oldData.paidAmount, history });
+                await updateDoc(oldRef, { amount: oldNewAmount, totalCost: parseFloat(oldNewTotal), dueAmount: parseFloat(oldNewTotal) - oldData.paidAmount, history: oldHistory });
 
-                // নতুন হিসাব তৈরি
-                const newTotal = ((tAmount / 33) * oldData.ratePer33).toFixed(2);
-                await addDoc(collection(db, "leases"), {
-                    farmerName: newName,
-                    amount: tAmount,
-                    ratePer33: oldData.ratePer33,
-                    cycleType: oldData.cycleType,
-                    year: oldData.year,
-                    totalCost: parseFloat(newTotal),
-                    paidAmount: 0,
-                    dueAmount: parseFloat(newTotal),
-                    status: 'active',
-                    history: [{ date: new Date().toLocaleDateString('bn-BD'), amount: tAmount, type: 'transfer_in', from: oldData.farmerName }]
-                });
+                if (!newFarmerSnap.empty) {
+                    // Merge with existing farmer
+                    const newDoc = newFarmerSnap.docs[0];
+                    const newData = newDoc.data();
+                    const newAmount = newData.amount + tAmount;
+                    const newTotal = ((newAmount / 33) * newData.ratePer33).toFixed(2);
+                    const newHistory = newData.history || [];
+                    newHistory.push({ date: new Date().toLocaleDateString('bn-BD'), amount: tAmount, type: 'transfer_in', from: oldData.farmerName });
+                    
+                    await updateDoc(doc(db, "leases", newDoc.id), { 
+                        amount: newAmount, 
+                        totalCost: parseFloat(newTotal), 
+                        dueAmount: parseFloat(newTotal) - newData.paidAmount, 
+                        history: newHistory 
+                    });
+                } else {
+                    // Create new farmer entry
+                    const newTotal = ((tAmount / 33) * oldData.ratePer33).toFixed(2);
+                    await addDoc(collection(db, "leases"), {
+                        farmerName: newName, amount: tAmount, ratePer33: oldData.ratePer33, cycleType: oldData.cycleType, year: oldData.year,
+                        totalCost: parseFloat(newTotal), paidAmount: 0, dueAmount: parseFloat(newTotal), status: 'active',
+                        history: [{ date: new Date().toLocaleDateString('bn-BD'), amount: tAmount, type: 'transfer_in', from: oldData.farmerName }]
+                    });
+                }
 
-                showToast('জমি সফলভাবে হস্তান্তর হয়েছে!', 'success');
-                modal.classList.add('hidden');
-            });
-            document.getElementById('cancelTransfer').addEventListener('click', () => modal.classList.add('hidden'));
+                showToast('জমি সফলভাবে হস্তান্তর হয়েছে!', 'success');
+                closeModal();
+            };
         }
 
-        // হারির দর এডিট মডাল
-        function openEditRateModal(id, amount, oldRate) {
-            const modal = document.getElementById('modalContainer');
-            modal.classList.remove('hidden');
-            modal.innerHTML = `
-                <div class="bg-white rounded-xl p-6 w-full max-w-md fade-in">
-                    <h3 class="text-lg font-bold mb-4">হারির দর পরিবর্তন করুন</h3>
-                    <p class="text-sm text-gray-500 mb-4">জমি: ${amount} শতাংশ | বর্তমান দর: ${oldRate}</p>
-                    <input type="number" id="newRate" placeholder="নতুন দর (যেমন: ২০০০০)" class="w-full p-2 border rounded-lg mb-4" autofocus>
-                    <div class="flex gap-2">
-                        <button id="confirmEdit" class="flex-1 bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600">আপডেট করুন</button>
-                        <button id="cancelEdit" class="flex-1 bg-gray-300 p-2 rounded-lg hover:bg-gray-400">বাতিল</button>
-                    </div>
-                </div>
-            `;
-
-            document.getElementById('confirmEdit').addEventListener('click', async () => {
+        function openEditRateModal(id, currentYear, oldRate) {
+            openModal(`
+                <h3 class="text-lg font-bold mb-4 text-slate-800">দর এবং বছর পরিবর্তন</h3>
+                <label class="text-sm text-slate-500">বর্তমান বছর: ${currentYear}</label>
+                <input type="text" id="editYear" value="${currentYear}" placeholder="নতুন বছর" class="w-full p-3 border rounded-lg mb-3 mt-1">
+                <label class="text-sm text-slate-500">বর্তমান দর: ${oldRate}</label>
+                <input type="number" id="newRate" value="${oldRate}" placeholder="নতুন দর" class="w-full p-3 border rounded-lg mb-4 mt-1">
+                <button id="confirmEdit" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 flex justify-center">আপডেট করুন</button>
+            `);
+            document.getElementById('confirmEdit').onclick = async () => {
+                const btn = document.getElementById('confirmEdit');
+                showSpinner(btn);
                 const newRate = parseFloat(document.getElementById('newRate').value);
-                if(isNaN(newRate) || newRate <= 0) return showToast('সঠিক দর লিখুন');
+                const newYear = document.getElementById('editYear').value;
+                if(isNaN(newRate) || newRate <= 0 || !newYear) { hideSpinner(btn); return showToast('সঠিক তথ্য দিন'); }
 
                 const ref = doc(db, "leases", id);
                 const snap = await getDoc(ref);
@@ -467,20 +493,65 @@
 
                 const newTotal = ((data.amount / 33) * newRate).toFixed(2);
                 const history = data.history || [];
-                history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'rate_change', oldRate: data.ratePer33, newRate: newRate });
+                history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'edit', oldYear: data.year, newYear: newYear, oldRate: data.ratePer33, newRate: newRate });
 
-                await updateDoc(ref, { ratePer33: newRate, totalCost: parseFloat(newTotal), dueAmount: parseFloat(newTotal) - data.paidAmount, history });
-                showToast('দর সফলভাবে আপডেট হয়েছে!', 'success');
-                modal.classList.add('hidden');
-            });
-            document.getElementById('cancelEdit').addEventListener('click', () => modal.classList.add('hidden'));
+                await updateDoc(ref, { ratePer33: newRate, year: newYear, totalCost: parseFloat(newTotal), dueAmount: parseFloat(newTotal) - data.paidAmount, history });
+                showToast('দর এবং বছর আপডেট হয়েছে!', 'success');
+                closeModal();
+            };
         }
 
-        // পেমেন্ট হিস্ট্রি বা সামারি মডাল
+        function openAdjustDueModal(id, name, oldYear, due) {
+            const nextYear = (parseInt(oldYear) + 1).toString();
+            openModal(`
+                <h3 class="text-lg font-bold mb-2 text-slate-800">${name} - বকেয়া ট্রান্সফার</h3>
+                <div class="bg-slate-50 p-3 rounded-lg mb-4 text-sm">
+                    <p>বর্তমান বছর: <b>${oldYear}</b></p>
+                    <p>বর্তমান বকেয়া: <b class="text-red-600">${due} টাকা</b></p>
+                </div>
+                <label class="text-sm text-slate-500">নতুন হিসাব বর্ষ</label>
+                <input type="text" id="adjustYear" value="${nextYear}" class="w-full p-3 border rounded-lg mb-3 mt-1">
+                <label class="text-sm text-slate-500">নতুন বছরের দর (৩৩ শতাংশ)</label>
+                <input type="number" id="adjustRate" placeholder="যেমন: ২০০০০" class="w-full p-3 border rounded-lg mb-4 mt-1">
+                <button id="confirmAdjust" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700 flex justify-center">নতুন বছরে নিন</button>
+            `);
+
+            document.getElementById('confirmAdjust').onclick = async () => {
+                const btn = document.getElementById('confirmAdjust');
+                showSpinner(btn);
+                const newYear = document.getElementById('adjustYear').value;
+                const newRate = parseFloat(document.getElementById('adjustRate').value);
+                if(!newYear || isNaN(newRate)) { hideSpinner(btn); return showToast('সঠিক তথ্য দিন'); }
+
+                const ref = doc(db, "leases", id);
+                const snap = await getDoc(ref);
+                const data = snap.data();
+
+                const currentYearCost = ((data.amount / 33) * newRate);
+                const totalNewCost = parseFloat(data.dueAmount) + currentYearCost; // Old Due + New Year Cost
+                const history = data.history || [];
+                history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'new_year', oldYear: data.year, newYear: newYear, carriedDue: data.dueAmount });
+
+                // Mark old as inactive, update with new year, rate, and total cost
+                await updateDoc(ref, { 
+                    year: newYear, 
+                    ratePer33: newRate, 
+                    totalCost: totalNewCost.toFixed(2), 
+                    paidAmount: 0, 
+                    dueAmount: totalNewCost.toFixed(2),
+                    status: 'active', 
+                    history: history 
+                });
+
+                showToast('নতুন হিসাব বর্ষ সফলভাবে শুরু হয়েছে!', 'success');
+                closeModal();
+            };
+        }
+
         async function openHistoryModal(farmerName) {
             const modal = document.getElementById('modalContainer');
             modal.classList.remove('hidden');
-            modal.innerHTML = `<div class="bg-white rounded-xl p-6 w-full max-w-lg fade-in"><div class="animate-pulse">লোড হচ্ছে...</div></div>`;
+            modal.innerHTML = `<div class="bg-white rounded-2xl p-6 w-full max-w-md fade-in"><div class="animate-pulse text-center py-10">লোড হচ্ছে...</div></div>`;
 
             const q = query(collection(db, "leases"), where("farmerName", "==", farmerName));
             const snap = await getDocs(q);
@@ -488,68 +559,40 @@
             let historyHTML = '';
             snap.forEach(doc => {
                 const data = doc.data();
+                historyHTML += `<div class="mb-4 border-l-4 border-indigo-200 pl-3">
+                    <p class="font-bold text-sm text-slate-700">${data.year} (${data.amount} শতাংশ) - ${data.status == 'active' ? 'সক্রিয়' : 'নিষ্ক্রিয়'}</p>`;
                 if(data.history && data.history.length > 0) {
-                    historyHTML += `<div class="mb-4 border-b pb-2">
-                        <p class="font-bold text-sm text-gray-600">হিসাব বছর: ${data.year} (${data.amount} শতাংশ)</p>
-                        <ul class="mt-2 space-y-1 text-sm">`;
+                    historyHTML += `<ul class="mt-1 space-y-1 text-xs">`;
                     data.history.forEach(h => {
                         if(h.type === 'payment') historyHTML += `<li class="text-green-600 flex justify-between"><span>${h.date}</span> <span>+${h.amount} টাকা জমা</span></li>`;
                         else if(h.type === 'transfer_out') historyHTML += `<li class="text-yellow-600 flex justify-between"><span>${h.date}</span> <span>${h.amount} শতাংশ হস্তান্তর (${h.to})</span></li>`;
-                        else if(h.type === 'transfer_in') historyHTML += `<li class="text-blue-600 flex justify-between"><span>${h.date}</span> <span>${h.amount} শতাংশ পেয়েছেন (${h.from})</span></li>`;
-                        else if(h.type === 'rate_change') historyHTML += `<li class="text-gray-500 flex justify-between"><span>${h.date}</span> <span>দর পরিবর্তন: ${h.oldRate} -> ${h.newRate}</span></li>`;
+                        else if(h.type === 'transfer_in') historyHTML += `<li class="text-blue-600 flex justify-between"><span>${h.date}</span> <span>${h.amount} শতাংশ পেয়েছেন (${h.from})</span></li>`;
+                        else if(h.type === 'edit') historyHTML += `<li class="text-gray-500 flex justify-between"><span>${h.date}</span> <span>দর/বছর পরিবর্তন: ${h.oldRate}->${h.newRate}</span></li>`;
+                        else if(h.type === 'new_year') historyHTML += `<li class="text-indigo-600 flex justify-between"><span>${h.date}</span> <span>নতুন বছর: ${h.newYear} (বকেয়া: ${h.carriedDue})</span></li>`;
                     });
-                    historyHTML += `</ul></div>`;
+                    historyHTML += `</ul>`;
                 }
+                historyHTML += `</div>`;
             });
 
-            if(!historyHTML) historyHTML = `<p class="text-gray-500 text-center py-4">এই ব্যক্তির কোনো লেনদেনের ইতিহাস নেই।</p>`;
+            if(!historyHTML) historyHTML = `<p class="text-slate-500 text-center py-4">কোনো ইতিহাস নেই।</p>`;
 
             modal.innerHTML = `
-                <div class="bg-white rounded-xl p-6 w-full max-w-lg fade-in max-h-[80vh] overflow-y-auto">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold">${farmerName} এর লেনদেনের ইতিহাস</h3>
-                        <button id="closeHistory" class="text-red-500 text-xl">&times;</button>
-                    </div>
+                <div class="bg-white rounded-2xl p-6 w-full max-w-md fade-in max-h-[80vh] overflow-y-auto relative">
+                    <button id="closeHistory" class="absolute top-4 right-4 text-red-500 text-xl">&times;</button>
+                    <h3 class="text-lg font-bold mb-4 text-slate-800">${farmerName} এর ইতিহাস</h3>
                     ${historyHTML}
                 </div>
             `;
-            document.getElementById('closeHistory').addEventListener('click', () => modal.classList.add('hidden'));
-        }
-
-        // নতুন হিসাব বর্ষ শুরু (বকেয়া ট্রান্সফার)
-        async function startNewFinancialYear() {
-            if(!confirm("আপনি কি নতুন হিসাব বর্ষ শুরু করতে চান? সকল সক্রিয় জমির বকেয়া পরের বছরের সাথে যুক্ত হবে।")) return;
-            
-            showToast('নতুন হিসাব বর্ষ প্রসেস হচ্ছে...', 'info');
-            const snap = await getDocs(collection(db, "leases"));
-            
-            const newYear = (new Date().getFullYear() + 1).toString();
-            
-            snap.forEach(async (d) => {
-                const data = d.data();
-                if(data.status === 'active') {
-                    const newTotalCost = parseFloat(data.dueAmount) + (((data.amount / 33) * data.ratePer33));
-                    const history = data.history || [];
-                    history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'new_year', year: newYear, carriedDue: data.dueAmount });
-                    
-                    await updateDoc(doc(db, "leases", d.id), {
-                        year: newYear,
-                        totalCost: newTotalCost.toFixed(2),
-                        paidAmount: 0,
-                        dueAmount: newTotalCost.toFixed(2),
-                        history: history
-                    });
-                }
-            });
-            showToast('নতুন হিসাব বর্ষ সফলভাবে শুরু হয়েছে!', 'success');
+            document.getElementById('closeHistory').onclick = closeModal;
         }
 
     </script>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="bg-slate-50 text-slate-800">
     <div id="app" class="min-h-screen">
         <div class="flex items-center justify-center min-h-screen">
-            <div class="text-gray-400 animate-pulse">লোড হচ্ছে...</div>
+            <div class="text-slate-400 animate-pulse">লোড হচ্ছে...</div>
         </div>
     </div>
 </body>
