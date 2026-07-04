@@ -16,13 +16,17 @@
         ::-webkit-scrollbar-thumb { background: #888; border-radius: 5px; }
         .premium-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
         
-        /* Desktop & Mobile Helpers */
-        .desktop-only { display: flex; }
+        /* View Controllers */
+        .expanded-view-content { display: none; }
         .collapsed-view { display: none; }
+
+        @media (min-width: 768px) {
+            .expanded-view-content { display: block !important; }
+            .collapsed-view { display: none !important; }
+        }
 
         /* Mobile Responsive Table (Slim 3D Collapsible Cards) */
         @media (max-width: 767px) {
-            .desktop-only { display: none !important; }
             .collapsed-view { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 2px 0; }
             
             .table-fixed thead { display: none; }
@@ -55,6 +59,8 @@
             .collapsed-transferred { color: #4f46e5; font-weight: 700; font-size: 13px; }
 
             /* Expanded State */
+            .table-fixed tbody tr.expanded .collapsed-view { display: none !important; }
+            .table-fixed tbody tr.expanded .expanded-view-content { display: block !important; }
             .table-fixed tbody tr.expanded { box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
             .table-fixed tbody tr.expanded td.collapsible { display: block; padding-top: 8px; border-top: 1px solid #e2e8f0; margin-top: 8px; }
             .table-fixed tbody tr.expanded td[data-label="অ্যাকশন"] { 
@@ -68,12 +74,13 @@
         import { getFirestore, collection, addDoc, query, where, getDocs, setDoc, doc, onSnapshot, updateDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyDZhV6G0D-fTrH2auEqgtz72DGrBHpgFDU",
+          apiKey: "AIzaSyDZhV6G0D-fTrH2auEqgtz72DGrBHpgFDU",
             authDomain: "lease-management-c7c35.firebaseapp.com",
             projectId: "lease-management-c7c35",
             storageBucket: "lease-management-c7c35.firebasestorage.app",
             messagingSenderId: "182624418687",
-            appId: "1:182624418687:web:6e5964459b5c2287f5384a"};
+            appId: "1:182624418687:web:6e5964459b5c2287f5384a"
+        };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -84,6 +91,7 @@
         let allLeases = []; 
         let currentPage = 1;
         const itemsPerPage = 5;
+        let expandedRows = new Set(); // এক্সপান্ডেড কার্ড ট্র্যাক রাখার জন্য
 
         const fmt = (val) => (parseFloat(val) || 0).toFixed(2);
 
@@ -376,17 +384,23 @@
                     else if (btn.classList.contains('editBtn')) openEditRateModal(id, btn.dataset.year, btn.dataset.rate);
                     else if (btn.classList.contains('delBtn')) handleDelete(id);
                     else if (btn.classList.contains('adjustBtn')) openAdjustDueModal(id, btn.dataset.name, btn.dataset.year, btn.dataset.due);
-                } else if (e.target.closest('.collapsed-name')) {
+                } else if (e.target.closest('.collapsed-name') || e.target.closest('.farmer-name')) {
                     e.stopPropagation();
-                    openHistoryModal(e.target.closest('.collapsed-name').dataset.name);
-                } else if (e.target.closest('.farmer-name')) {
-                    e.stopPropagation();
-                    openHistoryModal(e.target.closest('.farmer-name').dataset.name);
+                    openHistoryModal(e.target.dataset.name);
                 } else if (e.target.closest('input')) {
                     e.stopPropagation();
                 } else {
                     const tr = e.target.closest('tr');
-                    if(tr) tr.classList.toggle('expanded');
+                    if(tr) {
+                        const id = tr.dataset.id;
+                        if (expandedRows.has(id)) {
+                            tr.classList.remove('expanded');
+                            expandedRows.delete(id);
+                        } else {
+                            tr.classList.add('expanded');
+                            expandedRows.add(id);
+                        }
+                    }
                 }
             });
 
@@ -405,6 +419,8 @@
                             year: newYear, ratePer33: yData.ratePer33, totalCost: yData.totalCost, paidAmount: yData.paidAmount, dueAmount: yData.dueAmount
                         });
                         showToast(`${newYear} সালের হিসাব লোড হয়েছে!`, 'success');
+                        // ডেটা আপডেট হওয়ার পর কার্ড এক্সপান্ডেড থাকবে
+                        expandedRows.add(id);
                     } else if (newYear !== data.year) {
                         showToast(`${newYear} সালের কোনো হিসাব এই জমিতে নেই।`, 'error');
                         e.target.value = data.year; 
@@ -534,12 +550,17 @@
             paginatedLeases.forEach(lease => {
                 const id = lease.id;
                 const tr = document.createElement('tr');
+                tr.dataset.id = id; // এক্সপান্ডেড স্টেট ট্র্যাক রাখার জন্য আইডি
                 
                 const currentYearData = lease.yearlyData?.[lease.year] || {};
                 const isTransferred = currentYearData.status === 'transferred';
                 const isPaid = parseFloat(lease.dueAmount) === 0;
                 
                 if (lease.status === 'inactive' || isTransferred) tr.className = 'bg-red-50 text-red-400';
+                
+                if (expandedRows.has(id)) {
+                    tr.classList.add('expanded');
+                }
                 
                 let dueHtml = '';
                 let collapsedDueHtml = '';
@@ -560,6 +581,7 @@
 
                 tr.innerHTML = `
                     <td data-label="চাষীর নাম ও সাল" class="p-3 align-top">
+                        <!-- Mobile Collapsed View -->
                         <div class="collapsed-view">
                             <div>
                                 <span class="collapsed-name" data-name="${lease.farmerName}">${lease.farmerName}</span>
@@ -568,9 +590,11 @@
                             <span class="collapsed-amount">জমি: ${lease.amount} শতাংশ</span>
                             ${collapsedDueHtml}
                         </div>
-                        <div class="desktop-only items-start gap-1 mt-1 hidden">
+                        
+                        <!-- Desktop & Mobile Expanded View -->
+                        <div class="expanded-view-content">
                             <span class="farmer-name text-red-600 font-bold cursor-pointer block" data-name="${lease.farmerName}">${lease.farmerName}</span>
-                            <div class="flex items-center gap-1">
+                            <div class="flex items-center gap-1 mt-1">
                                 <input type="text" value="${lease.year}" data-id="${id}" class="yearInput text-xs text-cyan-600 font-bold bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 w-16 focus:outline-none p-0">
                                 <span class="text-xs text-cyan-600 font-bold">(${lease.cycleType})</span>
                             </div>
@@ -856,6 +880,7 @@
                     ratePer33: newRate, year: newYear, totalCost: yearlyData[newYear].totalCost, paidAmount: yearlyData[newYear].paidAmount, dueAmount: yearlyData[newYear].dueAmount, history, yearlyData 
                 });
                 
+                expandedRows.add(id); // এডিট করার পর কার্ড এক্সপান্ডেড রাখার জন্য
                 showToast('দর এবং বছর আপডেট হয়েছে!', 'success');
                 document.getElementById('modalContainer').classList.add('hidden');
             };
@@ -906,6 +931,7 @@
                     year: newYear, ratePer33: newRate, totalCost: fmt(totalNewCost), paidAmount: 0, dueAmount: fmt(totalNewCost), status: 'active', history, yearlyData 
                 });
 
+                expandedRows.add(id); // ট্রান্সফারের পর কার্ড এক্সপান্ডেড রাখার জন্য
                 showToast('নতুন হিসাব বর্ষ সফলভাবে শুরু হয়েছে!', 'success');
                 document.getElementById('modalContainer').classList.add('hidden');
             };
