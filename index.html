@@ -41,14 +41,8 @@
                 cursor: pointer;
                 transition: all 0.2s;
             }
-            .table-fixed tbody tr.bg-red-50 { 
-                background-color: #fef2f2 !important; 
-                border-color: #ef4444 !important; 
-            }
-            .table-fixed tbody tr.bg-orange-50 { 
-                background-color: #fff7ed !important; 
-                border-color: #f97316 !important; 
-            }
+            .table-fixed tbody tr.bg-red-50 { background-color: #fef2f2 !important; border-color: #ef4444 !important; }
+            .table-fixed tbody tr.bg-orange-50 { background-color: #fff7ed !important; border-color: #f97316 !important; }
             .table-fixed td { padding: 0; margin: 0; border: none; text-align: right; font-size: 12px; }
             .table-fixed td::before { display: none; }
             
@@ -83,30 +77,18 @@
         .lds-spinner { display: inline-block; position: relative; width: 80px; height: 80px; }
         .lds-spinner div { transform-origin: 40px 40px; animation: lds-spinner 1.2s linear infinite; }
         .lds-spinner div:after { content: " "; display: block; position: absolute; top: 3px; left: 37px; width: 6px; height: 18px; border-radius: 20%; }
-        .lds-spinner div:nth-child(1) { transform: rotate(0deg); animation-delay: -1.1s; }
-        .lds-spinner div:nth-child(1):after { background: #ef4444; }
-        .lds-spinner div:nth-child(2) { transform: rotate(30deg); animation-delay: -1s; }
-        .lds-spinner div:nth-child(2):after { background: #f97316; }
-        .lds-spinner div:nth-child(3) { transform: rotate(60deg); animation-delay: -0.9s; }
-        .lds-spinner div:nth-child(3):after { background: #eab308; }
-        .lds-spinner div:nth-child(4) { transform: rotate(90deg); animation-delay: -0.8s; }
-        .lds-spinner div:nth-child(4):after { background: #22c55e; }
-        .lds-spinner div:nth-child(5) { transform: rotate(120deg); animation-delay: -0.7s; }
-        .lds-spinner div:nth-child(5):after { background: #14b8a6; }
-        .lds-spinner div:nth-child(6) { transform: rotate(150deg); animation-delay: -0.6s; }
-        .lds-spinner div:nth-child(6):after { background: #06b6d4; }
-        .lds-spinner div:nth-child(7) { transform: rotate(180deg); animation-delay: -0.5s; }
-        .lds-spinner div:nth-child(7):after { background: #3b82f6; }
-        .lds-spinner div:nth-child(8) { transform: rotate(210deg); animation-delay: -0.4s; }
-        .lds-spinner div:nth-child(8):after { background: #6366f1; }
-        .lds-spinner div:nth-child(9) { transform: rotate(240deg); animation-delay: -0.3s; }
-        .lds-spinner div:nth-child(9):after { background: #8b5cf6; }
-        .lds-spinner div:nth-child(10) { transform: rotate(270deg); animation-delay: -0.2s; }
-        .lds-spinner div:nth-child(10):after { background: #a855f7; }
-        .lds-spinner div:nth-child(11) { transform: rotate(300deg); animation-delay: -0.1s; }
-        .lds-spinner div:nth-child(11):after { background: #d946ef; }
-        .lds-spinner div:nth-child(12) { transform: rotate(330deg); animation-delay: 0s; }
-        .lds-spinner div:nth-child(12):after { background: #ec4899; }
+        .lds-spinner div:nth-child(1) { transform: rotate(0deg); animation-delay: -1.1s; } .lds-spinner div:nth-child(1):after { background: #ef4444; }
+        .lds-spinner div:nth-child(2) { transform: rotate(30deg); animation-delay: -1s; } .lds-spinner div:nth-child(2):after { background: #f97316; }
+        .lds-spinner div:nth-child(3) { transform: rotate(60deg); animation-delay: -0.9s; } .lds-spinner div:nth-child(3):after { background: #eab308; }
+        .lds-spinner div:nth-child(4) { transform: rotate(90deg); animation-delay: -0.8s; } .lds-spinner div:nth-child(4):after { background: #22c55e; }
+        .lds-spinner div:nth-child(5) { transform: rotate(120deg); animation-delay: -0.7s; } .lds-spinner div:nth-child(5):after { background: #14b8a6; }
+        .lds-spinner div:nth-child(6) { transform: rotate(150deg); animation-delay: -0.6s; } .lds-spinner div:nth-child(6):after { background: #06b6d4; }
+        .lds-spinner div:nth-child(7) { transform: rotate(180deg); animation-delay: -0.5s; } .lds-spinner div:nth-child(7):after { background: #3b82f6; }
+        .lds-spinner div:nth-child(8) { transform: rotate(210deg); animation-delay: -0.4s; } .lds-spinner div:nth-child(8):after { background: #6366f1; }
+        .lds-spinner div:nth-child(9) { transform: rotate(240deg); animation-delay: -0.3s; } .lds-spinner div:nth-child(9):after { background: #8b5cf6; }
+        .lds-spinner div:nth-child(10) { transform: rotate(270deg); animation-delay: -0.2s; } .lds-spinner div:nth-child(10):after { background: #a855f7; }
+        .lds-spinner div:nth-child(11) { transform: rotate(300deg); animation-delay: -0.1s; } .lds-spinner div:nth-child(11):after { background: #d946ef; }
+        .lds-spinner div:nth-child(12) { transform: rotate(330deg); animation-delay: 0s; } .lds-spinner div:nth-child(12):after { background: #ec4899; }
         @keyframes lds-spinner { 0% { opacity: 1; } 100% { opacity: 0; } }
     </style>
     <script type="module">
@@ -121,6 +103,7 @@
             storageBucket: "lease-management-c7c35.firebasestorage.app",
             messagingSenderId: "182624418687",
             appId: "1:182624418687:web:6e5964459b5c2287f5384a"
+        
         };
 
         const app = initializeApp(firebaseConfig);
@@ -140,9 +123,7 @@
             if (!yearStr) return '';
             const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
             let str = String(yearStr);
-            for (let i = 0; i < 10; i++) {
-                str = str.replace(new RegExp(bnDigits[i], 'g'), i);
-            }
+            for (let i = 0; i < 10; i++) str = str.replace(new RegExp(bnDigits[i], 'g'), i);
             return str;
         };
 
@@ -156,46 +137,29 @@
         function playSound(type) {
             try {
                 audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-                
                 if (type === 'error' || type === 'delete') {
                     const playTone = (freq, start, duration) => {
-                        const osc = audioCtx.createOscillator();
-                        const gain = audioCtx.createGain();
-                        osc.connect(gain);
-                        gain.connect(audioCtx.destination);
-                        osc.type = 'sine';
-                        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + start);
+                        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                        osc.connect(gain); gain.connect(audioCtx.destination);
+                        osc.type = 'sine'; osc.frequency.setValueAtTime(freq, audioCtx.currentTime + start);
                         gain.gain.setValueAtTime(0, audioCtx.currentTime + start);
                         gain.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + start + 0.02);
                         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + start + duration);
-                        osc.start(audioCtx.currentTime + start);
-                        osc.stop(audioCtx.currentTime + start + duration);
+                        osc.start(audioCtx.currentTime + start); osc.stop(audioCtx.currentTime + start + duration);
                     };
-                    playTone(440, 0, 0.2); 
-                    playTone(349.23, 0.2, 0.3); 
+                    playTone(440, 0, 0.2); playTone(349.23, 0.2, 0.3); 
                 } else if (type === 'success') {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
-                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.15);
-                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.3);
+                    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
                 } else {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.2);
+                    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.2);
                 }
             } catch(e) { console.error("Audio error", e); }
         }
@@ -205,7 +169,6 @@
                 playSound(type === 'delete' ? 'delete' : 'error');
                 const colors = { delete: { bg: 'bg-red-50', border: 'border-red-500', btn: 'bg-red-500 hover:bg-red-600', icon: 'text-red-500' }, warning: { bg: 'bg-yellow-50', border: 'border-yellow-500', btn: 'bg-yellow-500 hover:bg-yellow-600', icon: 'text-yellow-500' }, info: { bg: 'bg-blue-50', border: 'border-blue-500', btn: 'bg-blue-500 hover:bg-blue-600', icon: 'text-blue-500' } };
                 const c = colors[type] || colors.warning;
-                
                 const modal = document.createElement('div');
                 modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-[200] flex items-center justify-center p-4 fade-in';
                 modal.innerHTML = `
@@ -219,10 +182,8 @@
                             <button id="cancelBtn" class="flex-1 bg-slate-200 text-slate-700 p-2 rounded-lg font-bold hover:bg-slate-300">বাতিল করুন</button>
                             <button id="confirmBtn" class="flex-1 ${c.btn} text-white p-2 rounded-lg font-bold">নিশ্চিত করুন</button>
                         </div>
-                    </div>
-                `;
+                    </div>`;
                 document.body.appendChild(modal);
-
                 modal.querySelector('#cancelBtn').onclick = () => { modal.remove(); resolve(false); };
                 modal.querySelector('#confirmBtn').onclick = () => { modal.remove(); resolve(true); };
             });
@@ -238,31 +199,17 @@
             setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
         }
 
-        function showSpinner(btn) {
-            btn.disabled = true;
-            btn.dataset.originalHtml = btn.innerHTML;
-            btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
-        }
+        function showSpinner(btn) { btn.disabled = true; btn.dataset.originalHtml = btn.innerHTML; btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`; }
         function hideSpinner(btn) { btn.disabled = false; btn.innerHTML = btn.dataset.originalHtml; }
 
         function resetIdleTimer() {
             clearTimeout(idleTimer);
-            idleTimer = setTimeout(() => {
-                signOut(auth).then(() => showToast('৫ মিনিট নিষ্ক্রিয়তার কারণে লগআউট হয়েছে', 'info'));
-            }, 300000);
+            idleTimer = setTimeout(() => signOut(auth).then(() => showToast('৫ মিনিট নিষ্ক্রিয়তার কারণে লগআউট হয়েছে', 'info')), 300000);
         }
         ['mousemove', 'keydown', 'click', 'scroll'].forEach(evt => window.addEventListener(evt, resetIdleTimer));
 
         function cleanError(err) {
-            const errors = {
-                'auth/invalid-email': 'ইমেইল ঠিকানাটি সঠিক নয়।',
-                'auth/user-not-found': 'এই ইমেইল বা ইউজারনেম দিয়ে কোনো অ্যাকাউন্ট নেই।',
-                'auth/wrong-password': 'পাসওয়ার্ড ভুল হয়েছে।',
-                'auth/email-already-in-use': 'Email already exist',
-                'auth/weak-password': 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।',
-                'auth/network-request-failed': 'নেটওয়ার্ক সমস্যা! ইন্টারনেট সংযোগ পরীক্ষা করুন।',
-                'permission-denied': 'অনুমতি নেই।'
-            };
+            const errors = { 'auth/invalid-email': 'ইমেইল ঠিকানাটি সঠিক নয়।', 'auth/user-not-found': 'এই ইমেইল বা ইউজারনেম দিয়ে কোনো অ্যাকাউন্ট নেই।', 'auth/wrong-password': 'পাসওয়ার্ড ভুল হয়েছে।', 'auth/email-already-in-use': 'Email already exist', 'auth/weak-password': 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।', 'auth/network-request-failed': 'নেটওয়ার্ক সমস্যা! ইন্টারনেট সংযোগ পরীক্ষা করুন।', 'permission-denied': 'অনুমতি নেই।' };
             if (err && err.code && errors[err.code]) return errors[err.code];
             return 'কিছু একটা সমস্যা হয়েছে। আবার চেষ্টা করুন।';
         }
@@ -270,21 +217,12 @@
         function getMonthNumber(monthStr) {
             if (!monthStr) return 0;
             const m = monthStr.toLowerCase().trim();
-            const map = {
-                'january': 0, 'february': 1, 'march': 2, 'april': 3, 'may': 4, 'june': 5, 'july': 6, 'august': 7, 'september': 8, 'october': 9, 'november': 10, 'december': 11,
-                'বৈশাখ': 3, 'জ্যৈষ্ঠ': 4, 'আষাঢ়': 5, 'শ্রাবণ': 6, 'ভাদ্র': 7, 'আশ্বিন': 8, 'কার্তিক': 9, 'অগ্রহায়ণ': 10, 'পৌষ': 11, 'মাঘ': 0, 'ফাল্গুন': 1, 'চৈত্র': 2,
-                'জানুয়ারি': 0, 'ফেব্রুয়ারি': 1, 'মার্চ': 2, 'এপ্রিল': 3, 'জুন': 5, 'জুলাই': 6, 'আগস্ট': 7, 'সেপ্টেম্বর': 8, 'অক্টোবর': 9, 'নভেম্বর': 10, 'ডিসেম্বর': 11
-            };
-            for (let key in map) {
-                if (m.includes(key)) return map[key];
-            }
+            const map = { 'january': 0, 'february': 1, 'march': 2, 'april': 3, 'may': 4, 'june': 5, 'july': 6, 'august': 7, 'september': 8, 'october': 9, 'november': 10, 'december': 11, 'বৈশাখ': 3, 'জ্যৈষ্ঠ': 4, 'আষাঢ়': 5, 'শ্রাবণ': 6, 'ভাদ্র': 7, 'আশ্বিন': 8, 'কার্তিক': 9, 'অগ্রহায়ণ': 10, 'পৌষ': 11, 'মাঘ': 0, 'ফাল্গুন': 1, 'চৈত্র': 2, 'জানুয়ারি': 0, 'ফেব্রুয়ারি': 1, 'মার্চ': 2, 'এপ্রিল': 3, 'জুন': 5, 'জুলাই': 6, 'আগস্ট': 7, 'সেপ্টেম্বর': 8, 'অক্টোবর': 9, 'নভেম্বর': 10, 'ডিসেম্বর': 11 };
+            for (let key in map) if (m.includes(key)) return map[key];
             return 0;
         }
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) { renderDashboard(); } 
-            else { renderAuth(); }
-        });
+        onAuthStateChanged(auth, (user) => { if (user) renderDashboard(); else renderAuth(); });
 
         // ---------- ১. প্রফেশনাল অ্যাশ কালার লগইন পেজ ----------
         function renderAuth() {
@@ -307,44 +245,22 @@
                                 <button id="tabLogin" class="flex-1 py-4 font-bold text-white bg-slate-800 transition relative">লগইন <span class="absolute bottom-0 left-1/4 right-1/4 h-1 bg-cyan-500"></span></button>
                                 <button id="tabSignup" class="flex-1 py-4 font-bold text-slate-500 hover:text-slate-800 transition">সাইন আপ</button>
                             </div>
-
                             <div class="p-8 space-y-6">
                                 <form id="loginForm" class="space-y-5">
-                                    <div>
-                                        <label class="block text-xs font-medium text-slate-600 mb-1">ইমেইল অথবা ইউজারনেম</label>
-                                        <input type="text" id="loginIdentifier" name="loginIdentifier" list="identifierList" autocomplete="username" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none transition" required>
-                                        <datalist id="identifierList">${optionsHtml}</datalist>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-slate-600 mb-1">পাসওয়ার্ড</label>
-                                        <input type="password" id="loginPassword" name="loginPassword" autocomplete="current-password" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none transition" required>
-                                    </div>
+                                    <div><label class="block text-xs font-medium text-slate-600 mb-1">ইমেইল অথবা ইউজারনেম</label><input type="text" id="loginIdentifier" name="loginIdentifier" list="identifierList" autocomplete="username" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none transition" required><datalist id="identifierList">${optionsHtml}</datalist></div>
+                                    <div><label class="block text-xs font-medium text-slate-600 mb-1">পাসওয়ার্ড</label><input type="password" id="loginPassword" name="loginPassword" autocomplete="current-password" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none transition" required></div>
                                     <button type="submit" id="loginBtn" class="w-full bg-slate-800 text-white p-3 rounded-xl font-bold hover:bg-slate-900 transition flex justify-center shadow-md">লগইন করুন</button>
                                     <button type="button" id="forgotBtn" class="w-full text-center text-sm text-cyan-600 hover:text-cyan-700 hover:underline">পাসওয়ার্ড ভুলে গেছেন?</button>
                                 </form>
-
                                 <form id="signupForm" class="space-y-5 hidden">
                                     <div class="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-xs font-medium text-slate-600 mb-1">ইউজারনেম</label>
-                                            <input type="text" id="suUsername" name="suUsername" autocomplete="off" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required>
-                                            <p id="userCheckMsg" class="text-xs mt-1 h-4 font-bold"></p>
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-medium text-slate-600 mb-1">মোবাইল</label>
-                                            <input type="text" id="suMobile" name="suMobile" autocomplete="off" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required>
-                                            <p class="text-xs mt-1 h-4"></p>
-                                        </div>
+                                        <div><label class="block text-xs font-medium text-slate-600 mb-1">ইউজারনেম</label><input type="text" id="suUsername" name="suUsername" autocomplete="off" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required><p id="userCheckMsg" class="text-xs mt-1 h-4 font-bold"></p></div>
+                                        <div><label class="block text-xs font-medium text-slate-600 mb-1">মোবাইল</label><input type="text" id="suMobile" name="suMobile" autocomplete="off" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required><p class="text-xs mt-1 h-4"></p></div>
                                     </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-slate-600 mb-1">ইমেইল</label>
-                                        <input type="email" id="suEmail" name="suEmail" autocomplete="email" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required>
-                                        <p id="emailCheckMsg" class="text-xs mt-1 h-4 font-bold"></p>
-                                    </div>
+                                    <div><label class="block text-xs font-medium text-slate-600 mb-1">ইমেইল</label><input type="email" id="suEmail" name="suEmail" autocomplete="email" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required><p id="emailCheckMsg" class="text-xs mt-1 h-4 font-bold"></p></div>
                                     <div><label class="block text-xs font-medium text-slate-600 mb-1">পাসওয়ার্ড</label><input type="password" id="suPassword" name="suPassword" autocomplete="new-password" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" required></div>
                                     <button type="submit" id="signupBtn" class="w-full bg-emerald-600 text-white p-3 rounded-xl font-bold hover:bg-emerald-700 transition flex justify-center shadow-md">রেজিস্টার করুন</button>
                                 </form>
-
                                 <form id="forgotForm" class="space-y-5 hidden">
                                     <p class="text-sm text-slate-500">পাসওয়ার্ড রিকভারির জন্য আপনার রেজিস্টার্ড ইমেইল দিন।</p>
                                     <input type="email" id="resetEmail" name="resetEmail" autocomplete="email" class="premium-input w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 outline-none" placeholder="রেজিস্টার্ড ইমেইল" required>
@@ -354,112 +270,48 @@
                             </div>
                         </div>
                     </div>
-                    <footer class="text-slate-500 text-center py-4 text-sm w-full">
-                        Mehedi hasan©2026
-                    </footer>
-                </div>
-            `;
+                    <footer class="text-slate-500 text-center py-4 text-sm w-full">Mehedi hasan©2026</footer>
+                </div>`;
 
-            const loginForm = document.getElementById('loginForm');
-            const signupForm = document.getElementById('signupForm');
-            const forgotForm = document.getElementById('forgotForm');
-
-            document.getElementById('tabLogin').onclick = () => {
-                loginForm.classList.remove('hidden'); signupForm.classList.add('hidden'); forgotForm.classList.add('hidden');
-                document.getElementById('tabLogin').className = "flex-1 py-4 font-bold text-white bg-slate-800 transition relative";
-                document.getElementById('tabLogin').innerHTML = `লগইন <span class="absolute bottom-0 left-1/4 right-1/4 h-1 bg-cyan-500"></span>`;
-                document.getElementById('tabSignup').className = "flex-1 py-4 font-bold text-slate-500 hover:text-slate-800 transition";
-                document.getElementById('tabSignup').innerText = "সাইন আপ";
-            };
-            document.getElementById('tabSignup').onclick = () => {
-                signupForm.classList.remove('hidden'); loginForm.classList.add('hidden'); forgotForm.classList.add('hidden');
-                document.getElementById('tabSignup').className = "flex-1 py-4 font-bold text-white bg-slate-800 transition relative";
-                document.getElementById('tabSignup').innerHTML = `সাইন আপ <span class="absolute bottom-0 left-1/4 right-1/4 h-1 bg-cyan-500"></span>`;
-                document.getElementById('tabLogin').className = "flex-1 py-4 font-bold text-slate-500 hover:text-slate-800 transition";
-                document.getElementById('tabLogin').innerText = "লগইন";
-            };
+            const loginForm = document.getElementById('loginForm'); const signupForm = document.getElementById('signupForm'); const forgotForm = document.getElementById('forgotForm');
+            document.getElementById('tabLogin').onclick = () => { loginForm.classList.remove('hidden'); signupForm.classList.add('hidden'); forgotForm.classList.add('hidden'); document.getElementById('tabLogin').className = "flex-1 py-4 font-bold text-white bg-slate-800 transition relative"; document.getElementById('tabLogin').innerHTML = `লগইন <span class="absolute bottom-0 left-1/4 right-1/4 h-1 bg-cyan-500"></span>`; document.getElementById('tabSignup').className = "flex-1 py-4 font-bold text-slate-500 hover:text-slate-800 transition"; document.getElementById('tabSignup').innerText = "সাইন আপ"; };
+            document.getElementById('tabSignup').onclick = () => { signupForm.classList.remove('hidden'); loginForm.classList.add('hidden'); forgotForm.classList.add('hidden'); document.getElementById('tabSignup').className = "flex-1 py-4 font-bold text-white bg-slate-800 transition relative"; document.getElementById('tabSignup').innerHTML = `সাইন আপ <span class="absolute bottom-0 left-1/4 right-1/4 h-1 bg-cyan-500"></span>`; document.getElementById('tabLogin').className = "flex-1 py-4 font-bold text-slate-500 hover:text-slate-800 transition"; document.getElementById('tabLogin').innerText = "লগইন"; };
             document.getElementById('forgotBtn').onclick = () => { loginForm.classList.add('hidden'); forgotForm.classList.remove('hidden'); };
             document.getElementById('backToLogin').onclick = () => { forgotForm.classList.add('hidden'); loginForm.classList.remove('hidden'); };
 
             let debounceTimer;
             const checkExistence = async (field, value, msgId) => {
-                clearTimeout(debounceTimer);
-                const msgEl = document.getElementById(msgId);
+                clearTimeout(debounceTimer); const msgEl = document.getElementById(msgId);
                 if (value.trim() === '') { msgEl.innerText = ''; return; }
                 debounceTimer = setTimeout(async () => {
-                    const q = query(collection(db, "users"), where(field, "==", value));
-                    const snap = await getDocs(q);
-                    if (!snap.empty) {
-                        msgEl.innerText = 'already exist';
-                        msgEl.className = 'text-xs mt-1 h-4 text-red-500 font-bold';
-                    } else {
-                        msgEl.innerText = 'available';
-                        msgEl.className = 'text-xs mt-1 h-4 text-green-500 font-bold';
-                    }
+                    const q = query(collection(db, "users"), where(field, "==", value)); const snap = await getDocs(q);
+                    if (!snap.empty) { msgEl.innerText = 'already exist'; msgEl.className = 'text-xs mt-1 h-4 text-red-500 font-bold'; } 
+                    else { msgEl.innerText = 'available'; msgEl.className = 'text-xs mt-1 h-4 text-green-500 font-bold'; }
                 }, 500);
             };
-
             document.getElementById('suUsername').addEventListener('input', (e) => checkExistence('username', e.target.value, 'userCheckMsg'));
             document.getElementById('suEmail').addEventListener('input', (e) => checkExistence('email', e.target.value, 'emailCheckMsg'));
 
             loginForm.onsubmit = async (e) => {
-                e.preventDefault();
-                const btn = document.getElementById('loginBtn');
-                showSpinner(btn);
-                const identifier = document.getElementById('loginIdentifier').value;
-                const password = document.getElementById('loginPassword').value;
-                let email = identifier;
+                e.preventDefault(); const btn = document.getElementById('loginBtn'); showSpinner(btn);
+                const identifier = document.getElementById('loginIdentifier').value; const password = document.getElementById('loginPassword').value; let email = identifier;
                 try {
-                    if(!identifier.includes('@')) {
-                        const q = query(collection(db, "users"), where("username", "==", identifier));
-                        const snap = await getDocs(q);
-                        if(snap.empty) { hideSpinner(btn); return showToast("এই ইউজারনেম দিয়ে কোনো অ্যাকাউন্ট নেই।"); }
-                        email = snap.docs[0].data().email;
-                    }
+                    if(!identifier.includes('@')) { const q = query(collection(db, "users"), where("username", "==", identifier)); const snap = await getDocs(q); if(snap.empty) { hideSpinner(btn); return showToast("এই ইউজারনেম দিয়ে কোনো অ্যাকাউন্ট নেই।"); } email = snap.docs[0].data().email; }
                     await signInWithEmailAndPassword(auth, email, password);
-                    let savedIds = JSON.parse(localStorage.getItem('savedIdentifiers') || '[]');
-                    if (!savedIds.includes(identifier)) {
-                        savedIds.push(identifier);
-                        localStorage.setItem('savedIdentifiers', JSON.stringify(savedIds));
-                    }
+                    let savedIds = JSON.parse(localStorage.getItem('savedIdentifiers') || '[]'); if (!savedIds.includes(identifier)) { savedIds.push(identifier); localStorage.setItem('savedIdentifiers', JSON.stringify(savedIds)); }
                     showToast('সফলভাবে লগইন হয়েছে!', 'success', true);
-                } catch (err) { showToast(cleanError(err)); }
-                hideSpinner(btn);
+                } catch (err) { showToast(cleanError(err)); } hideSpinner(btn);
             };
-
             signupForm.onsubmit = async (e) => {
-                e.preventDefault();
-                const btn = document.getElementById('signupBtn');
-                showSpinner(btn);
-                const username = document.getElementById('suUsername').value;
-                const email = document.getElementById('suEmail').value;
-                const mobile = document.getElementById('suMobile').value;
-                const password = document.getElementById('suPassword').value;
-                
-                const q1 = query(collection(db, "users"), where("username", "==", username));
-                const q2 = query(collection(db, "users"), where("email", "==", email));
-                if (!(await getDocs(q1)).empty) { hideSpinner(btn); return showToast("Username already exist"); }
-                if (!(await getDocs(q2)).empty) { hideSpinner(btn); return showToast("Email already exist"); }
-                
-                try {
-                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                    await setDoc(doc(db, "users", userCredential.user.uid), { username, email, mobile });
-                    showToast('সাইন আপ সফল হয়েছে!', 'success', true);
-                } catch (err) { showToast(cleanError(err)); }
-                hideSpinner(btn);
+                e.preventDefault(); const btn = document.getElementById('signupBtn'); showSpinner(btn);
+                const username = document.getElementById('suUsername').value; const email = document.getElementById('suEmail').value; const mobile = document.getElementById('suMobile').value; const password = document.getElementById('suPassword').value;
+                const q1 = query(collection(db, "users"), where("username", "==", username)); const q2 = query(collection(db, "users"), where("email", "==", email));
+                if (!(await getDocs(q1)).empty) { hideSpinner(btn); return showToast("Username already exist"); } if (!(await getDocs(q2)).empty) { hideSpinner(btn); return showToast("Email already exist"); }
+                try { const userCredential = await createUserWithEmailAndPassword(auth, email, password); await setDoc(doc(db, "users", userCredential.user.uid), { username, email, mobile }); showToast('সাইন আপ সফল হয়েছে!', 'success', true); } catch (err) { showToast(cleanError(err)); } hideSpinner(btn);
             };
-
             forgotForm.onsubmit = async (e) => {
-                e.preventDefault();
-                const btn = document.getElementById('resetBtn');
-                showSpinner(btn);
-                const email = document.getElementById('resetEmail').value;
-                try {
-                    await sendPasswordResetEmail(auth, email);
-                    showToast('পাসওয়ার্ড রিসেট ইমেইল পাঠানো হয়েছে!', 'success', true);
-                    document.getElementById('backToLogin').click();
-                } catch (err) { showToast(cleanError(err)); }
-                hideSpinner(btn);
+                e.preventDefault(); const btn = document.getElementById('resetBtn'); showSpinner(btn); const email = document.getElementById('resetEmail').value;
+                try { await sendPasswordResetEmail(auth, email); showToast('পাসওয়ার্ড রিসেট ইমেইল পাঠানো হয়েছে!', 'success', true); document.getElementById('backToLogin').click(); } catch (err) { showToast(cleanError(err)); } hideSpinner(btn);
             };
         }
 
@@ -468,16 +320,9 @@
             appContainer.innerHTML = `
                 <div class="min-h-screen bg-slate-100 flex flex-col">
                     <nav class="bg-slate-800 text-white p-4 flex justify-between items-center sticky top-0 z-10 shadow-md">
-                        <div class="flex items-center gap-2">
-                            <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21l1.65-3.8a9 9 0 113.4 2.9L3 21"></path></svg>
-                            <h1 class="text-base md:text-xl font-bold">জমির লিজ ব্যবস্থাপনা</h1>
-                        </div>
-                        <button id="logoutBtn" class="bg-red-500 text-white px-3 md:px-4 py-2 rounded-lg text-sm hover:bg-red-600 transition flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                            <span class="hidden md:inline">লগআউট</span>
-                        </button>
+                        <div class="flex items-center gap-2"><svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21l1.65-3.8a9 9 0 113.4 2.9L3 21"></path></svg><h1 class="text-base md:text-xl font-bold">জমির লিজ ব্যবস্থাপনা</h1></div>
+                        <button id="logoutBtn" class="bg-red-500 text-white px-3 md:px-4 py-2 rounded-lg text-sm hover:bg-red-600 transition flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="hidden md:inline">লগআউট</span></button>
                     </nav>
-
                     <div class="container mx-auto p-3 md:p-6 flex-1">
                         <div class="bg-white p-4 md:p-6 rounded-xl shadow-sm mb-6 border border-slate-200">
                             <h2 class="text-md font-bold mb-3 text-slate-700 border-b pb-2">নতুন চাষের হিসাব যুক্ত করুন</h2>
@@ -485,117 +330,67 @@
                                 <input type="text" id="farmerName" placeholder="চাষীর নাম" class="p-2 border rounded-lg text-sm col-span-2 md:col-span-1" required>
                                 <input type="number" step="0.01" id="amount" placeholder="জমির পরিমাণ (শতাংশ)" class="p-2 border rounded-lg text-sm" required>
                                 <input type="number" id="ratePer33" placeholder="দর (যেমন: ১৮০০০)" class="p-2 border rounded-lg text-sm" required>
-                                
                                 <div class="flex gap-2 col-span-2 md:col-span-1">
-                                    <select id="monthLang" class="p-2 border rounded-lg text-sm bg-white w-1/3">
-                                        <option value="bn">বাংলা</option>
-                                        <option value="en">English</option>
-                                    </select>
+                                    <select id="monthLang" class="p-2 border rounded-lg text-sm bg-white w-1/3"><option value="bn">বাংলা</option><option value="en">English</option></select>
                                     <select id="cycleType" class="p-2 border rounded-lg text-sm bg-white w-2/3" required></select>
                                 </div>
-
                                 <input type="text" id="year" placeholder="বছর (২০২৪)" class="p-2 border rounded-lg text-sm" required>
                                 <button type="submit" class="bg-indigo-600 text-white p-2 rounded-lg text-sm hover:bg-indigo-700 font-bold col-span-2 md:col-span-1">যুক্ত করুন</button>
                             </form>
                         </div>
-
                         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                            <div class="p-4 border-b flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-                                <h2 class="text-md font-bold text-slate-700">চলমান হিসাব সমূহ</h2>
-                                <input type="text" id="searchInput" placeholder="নাম দিয়ে সার্চ করুন..." class="p-2 border rounded-lg text-sm w-full md:w-64 outline-none focus:border-indigo-500">
-                            </div>
-                            
+                            <div class="p-4 border-b flex flex-col md:flex-row justify-between items-start md:items-center gap-3"><h2 class="text-md font-bold text-slate-700">চলমান হিসাব সমূহ</h2><input type="text" id="searchInput" placeholder="নাম দিয়ে সার্চ করুন..." class="p-2 border rounded-lg text-sm w-full md:w-64 outline-none focus:border-indigo-500"></div>
                             <div class="p-2 md:p-4">
                                 <table class="w-full text-left text-slate-600 table-fixed">
-                                    <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
-                                        <tr>
-                                            <th class="p-3 w-1/5">চাষীর নাম ও সাল</th>
-                                            <th class="p-3 w-1/5">জমি / দর</th>
-                                            <th class="p-3 w-1/5">মোট / পরিশোধিত</th>
-                                            <th class="p-3 w-1/5">বকেয়া</th>
-                                            <th class="p-3 w-1/5 text-right">অ্যাকশন</th>
-                                        </tr>
-                                    </thead>
+                                    <thead class="bg-slate-50 text-slate-500 text-xs uppercase"><tr><th class="p-3 w-1/5">চাষীর নাম ও সাল</th><th class="p-3 w-1/5">জমি / দর</th><th class="p-3 w-1/5">মোট / পরিশোধিত</th><th class="p-3 w-1/5">বকেয়া</th><th class="p-3 w-1/5 text-right">অ্যাকশন</th></tr></thead>
                                     <tbody id="leasesTable" class="divide-y divide-slate-100"></tbody>
                                 </table>
                             </div>
                             <div id="pagination" class="p-4 flex justify-center items-center gap-2 border-t"></div>
                         </div>
                     </div>
-
-                    <!-- Footer -->
-                    <footer class="bg-slate-800 text-slate-400 text-center p-4 text-sm">
-                        Mehedi hasan©2026
-                    </footer>
+                    <footer class="bg-slate-800 text-slate-400 text-center p-4 text-sm">Mehedi hasan©2026</footer>
                 </div>
-                <div id="modalContainer" class="hidden fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4"></div>
-            `;
+                <div id="modalContainer" class="hidden fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4"></div>`;
 
-            const populateMonths = (lang) => {
-                const cycleSelect = document.getElementById('cycleType');
-                cycleSelect.innerHTML = monthNames[lang].map(m => `<option value="${m}">${m}</option>`).join('');
-            };
-            populateMonths('bn'); 
-            document.getElementById('monthLang').addEventListener('change', (e) => populateMonths(e.target.value));
+            const populateMonths = (lang) => { const cycleSelect = document.getElementById('cycleType'); cycleSelect.innerHTML = monthNames[lang].map(m => `<option value="${m}">${m}</option>`).join(''); };
+            populateMonths('bn'); document.getElementById('monthLang').addEventListener('change', (e) => populateMonths(e.target.value));
 
             document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
             document.getElementById('leaseForm').addEventListener('submit', addLease);
-            document.getElementById('searchInput').addEventListener('input', (e) => {
-                currentPage = 1;
-                renderTable();
-            });
+            document.getElementById('searchInput').addEventListener('input', (e) => { currentPage = 1; renderTable(); });
             
             document.getElementById('leasesTable').addEventListener('click', (e) => {
                 const btn = e.target.closest('button');
                 if (btn) {
-                    e.stopPropagation(); 
-                    const id = btn.dataset.id;
+                    e.stopPropagation(); const id = btn.dataset.id;
                     if (btn.classList.contains('payBtn')) openPaymentModal(id, btn.dataset.name);
                     else if (btn.classList.contains('transferBtn')) openTransferModal(id, btn.dataset.amount);
                     else if (btn.classList.contains('editBtn')) openEditRateModal(id, btn.dataset.year, btn.dataset.rate);
                     else if (btn.classList.contains('delBtn')) handleDelete(id);
                     else if (btn.classList.contains('adjustBtn')) openAdjustDueModal(id, btn.dataset.name, btn.dataset.year, btn.dataset.due);
                     else if (btn.classList.contains('manageBtn')) openManageAccountModal(id);
-                } else if (e.target.closest('.collapsed-name') || e.target.closest('.farmer-name')) {
-                    e.stopPropagation();
-                    openHistoryModal(e.target.dataset.name);
-                } else if (e.target.closest('input')) {
-                    e.stopPropagation();
-                } else {
-                    const tr = e.target.closest('tr');
-                    if(tr) {
-                        const id = tr.dataset.id;
-                        if (expandedRows.has(id)) {
-                            tr.classList.remove('expanded');
-                            expandedRows.delete(id);
-                        } else {
-                            tr.classList.add('expanded');
-                            expandedRows.add(id);
-                        }
-                    }
+                } else if (e.target.closest('.collapsed-name') || e.target.closest('.farmer-name')) { e.stopPropagation(); openHistoryModal(e.target.dataset.name); } 
+                else if (e.target.closest('input')) { e.stopPropagation(); } 
+                else {
+                    const tr = e.target.closest('tr'); if(tr) { const id = tr.dataset.id; if (expandedRows.has(id)) { tr.classList.remove('expanded'); expandedRows.delete(id); } else { tr.classList.add('expanded'); expandedRows.add(id); } }
                 }
             });
 
             document.getElementById('leasesTable').addEventListener('change', async (e) => {
                 if (e.target.classList.contains('yearInput')) {
-                    const id = e.target.dataset.id;
-                    const newYearRaw = e.target.value;
-                    const newYear = normalizeYear(newYearRaw);
-                    const ref = doc(db, "leases", id);
-                    const snap = await getDoc(ref);
-                    const data = snap.data();
-                    const yearlyData = data.yearlyData || {};
-                    
-                    if (yearlyData[newYear]) {
-                        const yData = yearlyData[newYear];
-                        await updateDoc(ref, {
-                            year: newYear, ratePer33: yData.ratePer33, totalCost: yData.totalCost, paidAmount: yData.paidAmount, dueAmount: yData.dueAmount
-                        });
-                        showToast(`${newYear} সালের হিসাব লোড হয়েছে!`, 'success');
-                        expandedRows.add(id);
-                    } else if (newYear !== data.year) {
-                        showToast(`${newYear} সালের কোনো হিসাব এই জমিতে নেই।`, 'error');
-                        e.target.value = data.year; 
+                    const id = e.target.dataset.id; const newYearRaw = e.target.value; const newYear = normalizeYear(newYearRaw);
+                    const leaseIndex = allLeases.findIndex(l => l.id === id);
+                    if (leaseIndex !== -1) {
+                        const lease = allLeases[leaseIndex]; const yearlyData = lease.yearlyData || {};
+                        if (yearlyData[newYear]) {
+                            const yData = yearlyData[newYear];
+                            lease.year = newYear; lease.ratePer33 = yData.ratePer33; lease.totalCost = yData.totalCost; lease.paidAmount = yData.paidAmount; lease.dueAmount = yData.dueAmount;
+                            // লোকাল স্টেট আপডেট করে রেন্ডার করবে। ডাটাবেজে সেভ করবে না যাতে রিফ্রেশ দিলে মূল সালে ফিরে যায়।
+                            renderTable();
+                            showToast(`${newYear} সালের হিসাব লোড হয়েছে!`, 'success', true);
+                            expandedRows.add(id);
+                        } else if (newYear !== lease.year) { showToast(`${newYear} সালের কোনো হিসাব এই জমিতে নেই।`, 'error'); e.target.value = lease.year; }
                     }
                 }
             });
@@ -604,196 +399,116 @@
         }
 
         async function autoRollover() {
-            let currentYear = new Date().getFullYear();
-            let currentMonth = new Date().getMonth();
-            let updates = [];
-            
+            let currentYear = new Date().getFullYear(); let currentMonth = new Date().getMonth(); let updates = [];
             for (let lease of allLeases) {
                 if (lease.status === 'active') {
-                    let yearVal = parseInt(normalizeYear(lease.year));
-                    if (isNaN(yearVal)) continue; 
-
-                    let currentYearData = lease.yearlyData?.[lease.year] || {};
-                    if (currentYearData.isPaused) continue;
-                    
-                    let cycleMonth = getMonthNumber(lease.cycleType);
-                    let activeCycleYear = currentYear;
-                    
-                    if (currentMonth < cycleMonth) {
-                        activeCycleYear = currentYear - 1;
-                    }
-                    
+                    let yearVal = parseInt(normalizeYear(lease.year)); if (isNaN(yearVal)) continue; 
+                    let currentYearData = lease.yearlyData?.[lease.year] || {}; if (currentYearData.isPaused) continue;
+                    let cycleMonth = getMonthNumber(lease.cycleType); let activeCycleYear = currentYear;
+                    if (currentMonth < cycleMonth) activeCycleYear = currentYear - 1;
                     if (yearVal < activeCycleYear) {
-                        let year = normalizeYear(lease.year);
-                        let yearlyData = lease.yearlyData || {};
-                        let history = lease.history || [];
-                        let due = parseFloat(lease.dueAmount);
-                        let rate = parseFloat(lease.ratePer33);
-                        let amount = parseFloat(lease.amount);
-                        let totalCost = parseFloat(lease.totalCost);
-                        let paidAmount = parseFloat(lease.paidAmount);
-                        let updated = false;
-
+                        let year = normalizeYear(lease.year); let yearlyData = lease.yearlyData || {}; let history = lease.history || [];
+                        let due = parseFloat(lease.dueAmount); let rate = parseFloat(lease.ratePer33); let amount = parseFloat(lease.amount); let totalCost = parseFloat(lease.totalCost); let paidAmount = parseFloat(lease.paidAmount); let updated = false;
                         while (parseInt(year) < activeCycleYear) {
                             let nextYear = (parseInt(year) + 1).toString();
-                            
-                            if (yearlyData[nextYear]) {
-                                year = nextYear;
-                                let yData = yearlyData[nextYear];
-                                due = parseFloat(yData.dueAmount);
-                                rate = parseFloat(yData.ratePer33);
-                                totalCost = parseFloat(yData.totalCost);
-                                paidAmount = parseFloat(yData.paidAmount);
-                                continue;
-                            }
-                            
-                            let nextRate = rate; 
-                            let nextCost = (amount / 33) * nextRate;
-                            let nextTotal = due + nextCost;
-                            
-                            if (!yearlyData[year]) {
-                                yearlyData[year] = { ratePer33: rate, totalCost: totalCost.toFixed(2), paidAmount: paidAmount.toFixed(2), dueAmount: due.toFixed(2), status: 'transferred' };
-                            } else {
-                                yearlyData[year].status = 'transferred';
-                            }
-                            
+                            if (yearlyData[nextYear]) { year = nextYear; let yData = yearlyData[nextYear]; due = parseFloat(yData.dueAmount); rate = parseFloat(yData.ratePer33); totalCost = parseFloat(yData.totalCost); paidAmount = parseFloat(yData.paidAmount); continue; }
+                            let nextRate = rate; let nextCost = (amount / 33) * nextRate; let nextTotal = due + nextCost;
+                            if (!yearlyData[year]) { yearlyData[year] = { ratePer33: rate, totalCost: totalCost.toFixed(2), paidAmount: paidAmount.toFixed(2), dueAmount: due.toFixed(2), status: 'transferred' }; } else { yearlyData[year].status = 'transferred'; }
                             yearlyData[nextYear] = { ratePer33: nextRate, totalCost: nextTotal.toFixed(2), paidAmount: 0, dueAmount: nextTotal.toFixed(2), status: 'active', isPaused: false };
                             history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'auto_rollover', fromYear: year, toYear: nextYear, carriedDue: due.toFixed(2) });
-                            
-                            year = nextYear;
-                            due = nextTotal;
-                            rate = nextRate;
-                            totalCost = nextTotal;
-                            paidAmount = 0;
-                            updated = true;
+                            year = nextYear; due = nextTotal; rate = nextRate; totalCost = nextTotal; paidAmount = 0; updated = true;
                         }
-                        
-                        if (updated) {
-                            updates.push(updateDoc(doc(db, "leases", lease.id), {
-                                year: year,
-                                ratePer33: rate,
-                                totalCost: totalCost.toFixed(2),
-                                paidAmount: 0,
-                                dueAmount: due.toFixed(2),
-                                history: history,
-                                yearlyData: yearlyData
-                            }));
-                        }
+                        if (updated) updates.push(updateDoc(doc(db, "leases", lease.id), { year: year, ratePer33: rate, totalCost: totalCost.toFixed(2), paidAmount: 0, dueAmount: due.toFixed(2), history: history, yearlyData: yearlyData }));
                     }
                 }
             }
-            
-            if (updates.length > 0) {
-                await Promise.all(updates);
-                showToast(`${updates.length} টি হিসাব স্বয়ংক্রিয়ভাবে নতুন হিসাব বর্ষে আপডেট হয়েছে।`, 'info');
-            }
+            if (updates.length > 0) { await Promise.all(updates); showToast(`${updates.length} টি হিসাব স্বয়ংক্রিয়ভাবে নতুন হিসাব বর্ষে আপডেট হয়েছে।`, 'info'); }
         }
 
         function loadLeases() {
             const q = collection(db, "leases");
             onSnapshot(q, (snapshot) => {
-                allLeases = [];
-                snapshot.forEach(d => allLeases.push({ id: d.id, ...d.data() }));
+                allLeases = []; snapshot.forEach(d => allLeases.push({ id: d.id, ...d.data() }));
                 
-                allLeases.sort((a, b) => {
-                    const aYear = parseInt(normalizeYear(a.year)) || 0;
-                    const bYear = parseInt(normalizeYear(b.year)) || 0;
-                    if (a.status !== b.status) {
-                        return a.status === 'active' ? -1 : 1;
+                // রিফ্রেশ দিলে সাম্প্রতিক সালে ফিরে যাওয়ার লজিক
+                let corrections = [];
+                for (let lease of allLeases) {
+                    if (lease.status === 'active') {
+                        const yearlyData = lease.yearlyData || {}; let maxYear = 0;
+                        for (let y in yearlyData) {
+                            if (yearlyData[y].status === 'active' || yearlyData[y].isPaused === true) {
+                                let yNum = parseInt(y); if (yNum > maxYear) maxYear = yNum;
+                            }
+                        }
+                        if (maxYear > 0) {
+                            let maxYearStr = maxYear.toString();
+                            if (lease.year !== maxYearStr) {
+                                lease.year = maxYearStr; const yData = yearlyData[maxYearStr];
+                                lease.ratePer33 = yData.ratePer33; lease.totalCost = yData.totalCost; lease.paidAmount = yData.paidAmount; lease.dueAmount = yData.dueAmount;
+                                corrections.push(updateDoc(doc(db, "leases", lease.id), { year: maxYearStr, ratePer33: yData.ratePer33, totalCost: yData.totalCost, paidAmount: yData.paidAmount, dueAmount: yData.dueAmount }));
+                            }
+                        }
                     }
+                }
+                if (corrections.length > 0) Promise.all(corrections);
+
+                allLeases.sort((a, b) => {
+                    const aYear = parseInt(normalizeYear(a.year)) || 0; const bYear = parseInt(normalizeYear(b.year)) || 0;
+                    if (a.status !== b.status) return a.status === 'active' ? -1 : 1;
                     return bYear - aYear;
                 });
-
-                autoRollover();
-                renderTable();
+                autoRollover(); renderTable();
             });
         }
 
         function renderTable() {
-            const tbody = document.getElementById('leasesTable');
-            const paginationDiv = document.getElementById('pagination');
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            
+            const tbody = document.getElementById('leasesTable'); const paginationDiv = document.getElementById('pagination'); const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const filteredLeases = allLeases.filter(lease => lease.farmerName.toLowerCase().includes(searchTerm));
-            
             const totalPages = Math.ceil(filteredLeases.length / itemsPerPage);
             if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
             if (currentPage === 0 && totalPages > 0) currentPage = 1;
+            const start = (currentPage - 1) * itemsPerPage; const end = start + itemsPerPage; const paginatedLeases = filteredLeases.slice(start, end);
 
-            const start = (currentPage - 1) * itemsPerPage;
-            const end = start + itemsPerPage;
-            const paginatedLeases = filteredLeases.slice(start, end);
-
-            if (paginatedLeases.length === 0) { 
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-slate-400 py-6">কোনো হিসাব পাওয়া যায়নি</td></tr>`; 
-                paginationDiv.innerHTML = '';
-                return; 
-            }
+            if (paginatedLeases.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="text-center text-slate-400 py-6">কোনো হিসাব পাওয়া যায়নি</td></tr>`; paginationDiv.innerHTML = ''; return; } 
             
             tbody.innerHTML = '';
             paginatedLeases.forEach(lease => {
-                const id = lease.id;
-                const tr = document.createElement('tr');
-                tr.dataset.id = id;
-                
+                const id = lease.id; const tr = document.createElement('tr'); tr.dataset.id = id;
                 const currentYearData = lease.yearlyData?.[lease.year] || {};
-                const isTransferred = currentYearData.status === 'transferred';
-                const isPaused = currentYearData.isPaused === true;
-                const isPaid = parseFloat(lease.dueAmount) === 0;
-                
+                const isTransferred = currentYearData.status === 'transferred'; const isPaused = currentYearData.isPaused === true; const isPaid = parseFloat(lease.dueAmount) === 0;
                 if (lease.status === 'inactive' || isTransferred) tr.className = 'bg-red-50 text-red-400';
                 if (isPaused) tr.className = 'bg-orange-50 text-orange-500';
+                if (expandedRows.has(id)) tr.classList.add('expanded');
                 
-                if (expandedRows.has(id)) {
-                    tr.classList.add('expanded');
-                }
-                
-                let dueHtml = '';
-                let collapsedDueHtml = '';
+                let dueHtml = '', collapsedDueHtml = '';
                 if (isPaused) {
-                    dueHtml = `<span class="font-bold text-orange-500 text-base">হিসাব স্থগিত</span>`;
-                    collapsedDueHtml = `<span class="collapsed-paused">স্থগিত</span>`;
+                    dueHtml = `<span class="font-bold text-orange-500 text-base">পূর্বের বকেয়া: ${fmt(lease.dueAmount)}</span> <span class="text-xs">টাকা</span>`;
+                    collapsedDueHtml = `<span class="collapsed-paused">পূর্বের বকেয়া: ${fmt(lease.dueAmount)}</span>`;
                 } else if (isPaid && lease.status === 'active' && !isTransferred) {
-                    dueHtml = `<span class="font-bold text-green-600 text-base">পরিশোধ</span>`;
-                    collapsedDueHtml = `<span class="collapsed-paid">পরিশোধ</span>`;
+                    dueHtml = `<span class="font-bold text-green-600 text-base">পরিশোধ</span>`; collapsedDueHtml = `<span class="collapsed-paid">পরিশোধ</span>`;
                 } else if (isTransferred) {
-                    dueHtml = `<span class="text-indigo-600 text-xs font-bold">নতুন বছরে যোগ হয়েছে</span>`;
-                    collapsedDueHtml = `<span class="collapsed-transferred">ট্রান্সফার্ড</span>`;
+                    dueHtml = `<span class="text-indigo-600 text-xs font-bold">নতুন বছরে যোগ হয়েছে</span>`; collapsedDueHtml = `<span class="collapsed-transferred">ট্রান্সফার্ড</span>`;
                 } else if (lease.status === 'active') {
-                    dueHtml = `<span class="font-bold text-red-600 text-base">${fmt(lease.dueAmount)}</span> <span class="text-xs">টাকা</span>
-                               <button data-id="${id}" data-name="${lease.farmerName}" data-year="${lease.year}" data-due="${lease.dueAmount}" class="adjustBtn block mt-1 text-xs text-indigo-500 hover:underline">নতুন বছরে নিন</button>`;
+                    dueHtml = `<span class="font-bold text-red-600 text-base">${fmt(lease.dueAmount)}</span> <span class="text-xs">টাকা</span><button data-id="${id}" data-name="${lease.farmerName}" data-year="${lease.year}" data-due="${lease.dueAmount}" class="adjustBtn block mt-1 text-xs text-indigo-500 hover:underline">নতুন বছরে নিন</button>`;
                     collapsedDueHtml = `<span class="collapsed-due">বকেয়া: ${fmt(lease.dueAmount)}</span>`;
-                } else {
-                    dueHtml = `<span class="block text-xs text-red-400 mt-1">নিষ্ক্রিয়</span>`;
-                    collapsedDueHtml = `<span class="collapsed-due">নিষ্ক্রিয়</span>`;
-                }
+                } else { dueHtml = `<span class="block text-xs text-red-400 mt-1">নিষ্ক্রিয়</span>`; collapsedDueHtml = `<span class="collapsed-due">নিষ্ক্রিয়</span>`; }
 
                 tr.innerHTML = `
                     <td data-label="চাষীর নাম ও সাল" class="p-3 align-top">
                         <div class="collapsed-view">
-                            <div>
-                                <span class="collapsed-name" data-name="${lease.farmerName}">${lease.farmerName}</span>
-                                <span class="collapsed-year">${lease.year} (${lease.cycleType})</span>
-                            </div>
-                            <span class="collapsed-amount">জমি: ${lease.amount} শতাংশ</span>
-                            ${collapsedDueHtml}
+                            <div><span class="collapsed-name" data-name="${lease.farmerName}">${lease.farmerName}</span><span class="collapsed-year">${lease.year} (${lease.cycleType})</span></div>
+                            <span class="collapsed-amount">জমি: ${lease.amount} শতাংশ</span>${collapsedDueHtml}
                         </div>
-                        
                         <div class="expanded-view-content">
                             <span class="farmer-name text-red-600 font-bold cursor-pointer block" data-name="${lease.farmerName}">${lease.farmerName}</span>
-                            <div class="flex items-center gap-1 mt-1">
-                                <input type="text" value="${lease.year}" data-id="${id}" class="yearInput text-xs text-cyan-600 font-bold bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 w-16 focus:outline-none p-0">
-                                <span class="text-xs text-cyan-600 font-bold">(${lease.cycleType})</span>
-                            </div>
+                            <div class="flex items-center gap-1 mt-1"><input type="text" value="${lease.year}" data-id="${id}" class="yearInput text-xs text-cyan-600 font-bold bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 w-16 focus:outline-none p-0"><span class="text-xs text-cyan-600 font-bold">(${lease.cycleType})</span></div>
                         </div>
                     </td>
                     <td data-label="জমি / দর" class="p-3 align-top text-xs space-y-1 collapsible">
-                        <div><span class="text-slate-400">জমি:</span> <b>${lease.amount}</b> শতাংশ</div>
-                        <div><span class="text-slate-400">দর:</span> <b>${lease.ratePer33}</b> টাকা</div>
+                        <div><span class="text-slate-400">জমি:</span> <b>${lease.amount}</b> শতাংশ</div><div><span class="text-slate-400">দর:</span> <b>${lease.ratePer33}</b> টাকা</div>
                     </td>
                     <td data-label="মোট / পরিশোধিত" class="p-3 align-top text-xs space-y-1 collapsible">
-                        <div><span class="text-slate-400">মোট:</span> <b class="text-slate-800">${fmt(lease.totalCost)}</b> টাকা</div>
-                        <div><span class="text-slate-400">জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)}</b> টাকা</div>
+                        <div><span class="text-slate-400">মোট:</span> <b class="text-slate-800">${fmt(lease.totalCost)}</b> টাকা</div><div><span class="text-slate-400">জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)}</b> টাকা</div>
                     </td>
                     <td data-label="বকেয়া" class="p-3 align-top collapsible">${dueHtml}</td>
                     <td data-label="অ্যাকশন" class="p-3 align-top collapsible">
@@ -802,109 +517,53 @@
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                             </button>
                             ${(lease.status === 'active' && !isTransferred) ? `
-                            ${!isPaused ? `
                             <button data-id="${id}" data-name="${lease.farmerName}" class="payBtn text-green-500 hover:bg-green-100 p-2 rounded-lg transition" title="পরিশোধ">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             </button>
-                            ` : ''}
                             <button data-id="${id}" data-amount="${lease.amount}" class="transferBtn text-yellow-500 hover:bg-yellow-100 p-2 rounded-lg transition" title="ছেড়ে দিন">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
                             </button>
                             <button data-id="${id}" data-year="${lease.year}" data-rate="${lease.ratePer33}" class="editBtn text-blue-500 hover:bg-blue-100 p-2 rounded-lg transition" title="এডিট দর">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                            </button>
-                            ` : ''}
+                            </button>` : ''}
                             <button data-id="${id}" class="delBtn text-red-500 hover:bg-red-100 p-2 rounded-lg transition" title="ডিলিট">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
                         </div>
-                    </td>
-                `;
+                    </td>`;
                 tbody.appendChild(tr);
             });
 
             paginationDiv.innerHTML = '';
             if (totalPages > 1) {
-                const prevBtn = document.createElement('button');
-                prevBtn.innerHTML = 'পূর্ববর্তী';
-                prevBtn.className = 'px-3 py-1 bg-slate-200 rounded hover:bg-slate-300 text-sm';
-                prevBtn.disabled = currentPage === 1;
-                prevBtn.onclick = () => { currentPage--; renderTable(); };
-                paginationDiv.appendChild(prevBtn);
-
-                const pageText = document.createElement('span');
-                pageText.className = 'text-sm text-slate-600';
-                pageText.innerText = `পেজ ${currentPage} / ${totalPages}`;
-                paginationDiv.appendChild(pageText);
-
-                const nextBtn = document.createElement('button');
-                nextBtn.innerHTML = 'পরবর্তী';
-                nextBtn.className = 'px-3 py-1 bg-slate-200 rounded hover:bg-slate-300 text-sm';
-                nextBtn.disabled = currentPage === totalPages;
-                nextBtn.onclick = () => { currentPage++; renderTable(); };
-                paginationDiv.appendChild(nextBtn);
+                const prevBtn = document.createElement('button'); prevBtn.innerHTML = 'পূর্ববর্তী'; prevBtn.className = 'px-3 py-1 bg-slate-200 rounded hover:bg-slate-300 text-sm'; prevBtn.disabled = currentPage === 1; prevBtn.onclick = () => { currentPage--; renderTable(); }; paginationDiv.appendChild(prevBtn);
+                const pageText = document.createElement('span'); pageText.className = 'text-sm text-slate-600'; pageText.innerText = `পেজ ${currentPage} / ${totalPages}`; paginationDiv.appendChild(pageText);
+                const nextBtn = document.createElement('button'); nextBtn.innerHTML = 'পরবর্তী'; nextBtn.className = 'px-3 py-1 bg-slate-200 rounded hover:bg-slate-300 text-sm'; nextBtn.disabled = currentPage === totalPages; nextBtn.onclick = () => { currentPage++; renderTable(); }; paginationDiv.appendChild(nextBtn);
             }
         }
 
         async function addLease(e) {
-            e.preventDefault();
-            const farmerName = document.getElementById('farmerName').value;
-            const amount = parseFloat(document.getElementById('amount').value);
-            const ratePer33 = parseFloat(document.getElementById('ratePer33').value);
-            const cycleType = document.getElementById('cycleType').value;
-            const year = normalizeYear(document.getElementById('year').value);
-            const totalCost = fmt((amount / 33) * ratePer33);
-
-            const yearlyData = {};
-            yearlyData[year] = { ratePer33, totalCost: parseFloat(totalCost), paidAmount: 0, dueAmount: parseFloat(totalCost), status: 'active', isPaused: false };
-
-            await addDoc(collection(db, "leases"), {
-                farmerName, amount, cycleType, year, ratePer33,
-                totalCost: parseFloat(totalCost), paidAmount: 0, dueAmount: parseFloat(totalCost),
-                status: 'active', history: [], yearlyData: yearlyData
-            });
-            showToast('নতুন হিসাব যুক্ত হয়েছে!', 'success');
-            document.getElementById('leaseForm').reset();
-            populateMonths(document.getElementById('monthLang').value);
+            e.preventDefault(); const farmerName = document.getElementById('farmerName').value; const amount = parseFloat(document.getElementById('amount').value); const ratePer33 = parseFloat(document.getElementById('ratePer33').value); const cycleType = document.getElementById('cycleType').value; const year = normalizeYear(document.getElementById('year').value); const totalCost = fmt((amount / 33) * ratePer33);
+            const yearlyData = {}; yearlyData[year] = { ratePer33, totalCost: parseFloat(totalCost), paidAmount: 0, dueAmount: parseFloat(totalCost), status: 'active', isPaused: false };
+            await addDoc(collection(db, "leases"), { farmerName, amount, cycleType, year, ratePer33, totalCost: parseFloat(totalCost), paidAmount: 0, dueAmount: parseFloat(totalCost), status: 'active', history: [], yearlyData: yearlyData });
+            showToast('নতুন হিসাব যুক্ত হয়েছে!', 'success'); document.getElementById('leaseForm').reset(); populateMonths(document.getElementById('monthLang').value);
         }
 
         async function handleDelete(id) {
             const isConfirmed = await customConfirm("আপনি কি এই হিসাবটি ডিলিট করতে চান?", "delete");
-            if (isConfirmed) {
-                try {
-                    await deleteDoc(doc(db, "leases", id));
-                    showToast('হিসাব ডিলিট করা হয়েছে!', 'success');
-                } catch(err) {
-                    showToast(cleanError(err), 'error');
-                }
-            }
+            if (isConfirmed) { try { await deleteDoc(doc(db, "leases", id)); showToast('হিসাব ডিলিট করা হয়েছে!', 'success'); } catch(err) { showToast(cleanError(err), 'error'); } }
         }
 
         function openModal(htmlContent) {
-            const modal = document.getElementById('modalContainer');
-            modal.classList.remove('hidden');
-            modal.innerHTML = `
-                <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md fade-in relative max-h-[90vh] overflow-y-auto">
-                    <button class="absolute top-4 right-4 text-slate-400 hover:text-red-500 text-2xl" onclick="document.getElementById('modalContainer').classList.add('hidden')">&times;</button>
-                    ${htmlContent}
-                </div>
-            `;
+            const modal = document.getElementById('modalContainer'); modal.classList.remove('hidden');
+            modal.innerHTML = `<div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md fade-in relative max-h-[90vh] overflow-y-auto"><button class="absolute top-4 right-4 text-slate-400 hover:text-red-500 text-2xl" onclick="document.getElementById('modalContainer').classList.add('hidden')">&times;</button>${htmlContent}</div>`;
             modal.onclick = (e) => { if (e.target.id === 'modalContainer') modal.classList.add('hidden'); };
         }
 
-        // হিসাব ব্যবস্থাপনা (চালু/বন্ধ এবং জমা সংশোধন) মডাল
         async function openManageAccountModal(id) {
-            const ref = doc(db, "leases", id);
-            const snap = await getDoc(ref);
-            const data = snap.data();
-            const currentYear = data.year;
-            const yearlyData = data.yearlyData || {};
-            const yData = yearlyData[currentYear] || {};
-            const isPaused = yData.isPaused === true;
-
+            const ref = doc(db, "leases", id); const snap = await getDoc(ref); const data = snap.data(); const currentYear = data.year; const yearlyData = data.yearlyData || {}; const yData = yearlyData[currentYear] || {}; const isPaused = yData.isPaused === true;
             openModal(`
                 <h3 class="text-lg font-bold mb-4 text-slate-800">হিসাব ব্যবস্থাপনা (${data.farmerName})</h3>
-                
                 <div class="flex items-center justify-between bg-slate-50 p-3 rounded-lg mb-4">
                     <span class="text-sm font-bold text-slate-700">চলতি বছরের হিসাব চালু রাখুন</span>
                     <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
@@ -912,141 +571,67 @@
                         <label for="pauseToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
                     </div>
                 </div>
-
                 <div class="space-y-3 border-t pt-4">
                     <p class="text-xs text-slate-500 font-bold">ভুল এন্ট্রি সংশোধন (যদি প্রয়োজন হয়)</p>
-                    <div>
-                        <label class="text-xs text-slate-500">মোট খরচ (টাকা)</label>
-                        <input type="number" id="adjTotalCost" value="${data.totalCost}" class="w-full p-2 border rounded-lg mt-1" step="0.01">
-                    </div>
-                    <div>
-                        <label class="text-xs text-slate-500">জমা পরিমাণ (টাকা)</label>
-                        <input type="number" id="adjPaidAmount" value="${data.paidAmount}" class="w-full p-2 border rounded-lg mt-1" step="0.01">
-                    </div>
+                    <div><label class="text-xs text-slate-500">মোট খরচ (টাকা)</label><input type="number" id="adjTotalCost" value="${data.totalCost}" class="w-full p-2 border rounded-lg mt-1" step="0.01"></div>
+                    <div><label class="text-xs text-slate-500">জমা পরিমাণ (টাকা)</label><input type="number" id="adjPaidAmount" value="${data.paidAmount}" class="w-full p-2 border rounded-lg mt-1" step="0.01"></div>
                 </div>
-                
                 <button id="confirmManage" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700 flex justify-center mt-6">আপডেট সেভ করুন</button>
-                <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>
-            `);
-
+                <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>`);
+            
             document.getElementById('confirmManage').onclick = async () => {
-                const btn = document.getElementById('confirmManage');
-                showSpinner(btn);
-                
+                const btn = document.getElementById('confirmManage'); showSpinner(btn);
                 const newPaused = !document.getElementById('pauseToggle').checked;
-                const newTotal = parseFloat(document.getElementById('adjTotalCost').value);
-                const newPaid = parseFloat(document.getElementById('adjPaidAmount').value);
-                
-                if (isNaN(newTotal) || isNaN(newPaid)) {
-                    hideSpinner(btn);
-                    return showToast('সঠিক সংখ্যা লিখুন');
+                const newTotal = parseFloat(document.getElementById('adjTotalCost').value); const newPaid = parseFloat(document.getElementById('adjPaidAmount').value);
+                if (isNaN(newTotal) || isNaN(newPaid)) { hideSpinner(btn); return showToast('সঠিক সংখ্যা লিখুন'); }
+
+                let finalTotal = newTotal; let finalPaid = newPaid; let finalDue = finalTotal - finalPaid;
+                const currentYearCost = (parseFloat(data.amount) / 33) * parseFloat(data.ratePer33);
+
+                if (newPaused && !yData.isPaused) {
+                    let carriedDue = finalTotal - currentYearCost; if (carriedDue < 0) carriedDue = 0;
+                    finalTotal = carriedDue; finalDue = finalTotal - finalPaid; if (finalDue < 0) finalDue = 0;
+                } else if (!newPaused && yData.isPaused) {
+                    finalTotal = finalTotal + currentYearCost; finalDue = finalTotal - finalPaid;
                 }
-
-                const newDue = newTotal - newPaid;
                 
-                yearlyData[currentYear] = {
-                    ...yData,
-                    totalCost: newTotal.toFixed(2),
-                    paidAmount: newPaid.toFixed(2),
-                    dueAmount: newDue.toFixed(2),
-                    isPaused: newPaused
-                };
-
-                const history = data.history || [];
-                history.push({ 
-                    date: new Date().toLocaleDateString('bn-BD'), 
-                    type: 'manage', 
-                    paused: newPaused, 
-                    total: newTotal.toFixed(2), 
-                    paid: newPaid.toFixed(2) 
-                });
-
-                await updateDoc(ref, {
-                    totalCost: newTotal.toFixed(2),
-                    paidAmount: newPaid.toFixed(2),
-                    dueAmount: newDue.toFixed(2),
-                    yearlyData: yearlyData,
-                    history: history
-                });
-
-                showToast('হিসাব আপডেট হয়েছে!', 'success');
-                document.getElementById('modalContainer').classList.add('hidden');
+                yearlyData[currentYear] = { ...yData, totalCost: finalTotal.toFixed(2), paidAmount: finalPaid.toFixed(2), dueAmount: finalDue.toFixed(2), isPaused: newPaused };
+                const history = data.history || []; history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'manage', paused: newPaused, total: finalTotal.toFixed(2), paid: finalPaid.toFixed(2) });
+                await updateDoc(ref, { totalCost: finalTotal.toFixed(2), paidAmount: finalPaid.toFixed(2), dueAmount: finalDue.toFixed(2), yearlyData: yearlyData, history: history });
+                showToast('হিসাব আপডেট হয়েছে!', 'success'); document.getElementById('modalContainer').classList.add('hidden');
             };
         }
 
         async function openPaymentModal(id, name) {
-            const q = query(collection(db, "leases"), where("farmerName", "==", name), where("status", "==", "active"));
-            const snap = await getDocs(q);
-            let options = '';
-            snap.forEach(d => {
-                const data = d.data();
-                const currentYearData = data.yearlyData?.[data.year] || {};
-                if (currentYearData.status !== 'transferred' && !currentYearData.isPaused) {
-                    const selected = d.id === id ? 'selected' : '';
-                    options += `<option value="${d.id}" ${selected}>${data.amount} শতাংশ (দর: ${data.ratePer33}) - বকেয়া: ${fmt(data.dueAmount)} টাকা</option>`;
-                }
-            });
-
+            const ref = doc(db, "leases", id); const snap = await getDoc(ref); const data = snap.data(); const yData = data.yearlyData?.[data.year] || {}; const isPaused = yData.isPaused === true;
             openModal(`
-                <h3 class="text-lg font-bold mb-1 text-slate-800">${name} - টাকা পরিশোধ</h3>
-                <p class="text-xs text-slate-500 mb-4">একাধিক জমি থাকলে নির্দিষ্ট জমি সিলেক্ট করুন</p>
-                <label class="text-sm text-slate-500">জমি নির্বাচন করুন</label>
-                <select id="paySelect" class="w-full p-3 border rounded-lg mb-4 mt-1 bg-white">
-                    ${options}
-                </select>
+                <h3 class="text-lg font-bold mb-1 text-slate-800">${name} - ${isPaused ? 'পূর্বের বকেয়া' : 'টাকা'} পরিশোধ</h3>
+                <p class="text-xs text-slate-500 mb-4">বকেয়া: ${fmt(data.dueAmount)} টাকা</p>
                 <input type="number" id="payAmount" placeholder="পরিশোধের পরিমাণ" class="w-full p-3 border rounded-lg mb-3" autofocus>
                 <input type="date" id="payDate" class="w-full p-3 border rounded-lg mb-4" value="${new Date().toISOString().split('T')[0]}">
                 <button id="confirmPay" class="w-full bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 flex justify-center">নিশ্চিত করুন</button>
-                <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>
-            `);
+                <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>`);
 
             document.getElementById('confirmPay').onclick = async () => {
-                const btn = document.getElementById('confirmPay');
-                showSpinner(btn);
-                const selectedId = document.getElementById('paySelect').value;
-                const amount = parseFloat(document.getElementById('payAmount').value);
-                const date = document.getElementById('payDate').value;
+                const btn = document.getElementById('confirmPay'); showSpinner(btn);
+                const amount = parseFloat(document.getElementById('payAmount').value); const date = document.getElementById('payDate').value;
                 if(isNaN(amount) || amount <= 0) { hideSpinner(btn); return showToast('সঠিক পরিমাণ লিখুন'); }
-
-                const ref = doc(db, "leases", selectedId);
-                const snap = await getDoc(ref);
-                const data = snap.data();
-                let newPaid = parseFloat(data.paidAmount) + amount;
-                let newDue = parseFloat(data.totalCost) - newPaid;
-
+                let newPaid = parseFloat(data.paidAmount) + amount; let newDue = parseFloat(data.totalCost) - newPaid;
                 let adjustedMsg = '';
-                if (newDue > 0 && newDue <= 30) {
-                    adjustedMsg = `${fmt(newDue)} টাকা ক্ষুদ্র বকেয়া সমন্বয় করা হয়েছে।`;
-                    newDue = 0;
-                    newPaid = parseFloat(data.totalCost);
-                }
-
-                const history = data.history || [];
-                history.push({ date, amount, type: 'payment' });
-
-                const yearlyData = data.yearlyData || {};
-                const currentYear = data.year;
-                if (yearlyData[currentYear]) {
-                    yearlyData[currentYear].paidAmount = fmt(newPaid);
-                    yearlyData[currentYear].dueAmount = fmt(newDue);
-                }
-
+                if (newDue > 0 && newDue <= 30) { adjustedMsg = `${fmt(newDue)} টাকা ক্ষুদ্র বকেয়া সমন্বয় করা হয়েছে।`; newDue = 0; newPaid = parseFloat(data.totalCost); }
+                const history = data.history || []; history.push({ date, amount, type: 'payment' });
+                const yearlyData = data.yearlyData || {}; const currentYear = data.year;
+                if (yearlyData[currentYear]) { yearlyData[currentYear].paidAmount = fmt(newPaid); yearlyData[currentYear].dueAmount = fmt(newDue); }
                 await updateDoc(ref, { paidAmount: fmt(newPaid), dueAmount: fmt(newDue), history, yearlyData });
-                
-                if (adjustedMsg) showToast(adjustedMsg, 'info');
-                else showToast('টাকা পরিশোধ সফল হয়েছে!', 'success');
+                if (adjustedMsg) showToast(adjustedMsg, 'info'); else showToast('টাকা পরিশোধ সফল হয়েছে!', 'success');
                 document.getElementById('modalContainer').classList.add('hidden');
             };
         }
 
         async function openTransferModal(id, totalAmount) {
-            const q = query(collection(db, "leases"), where("status", "==", "active"));
-            const snap = await getDocs(q);
-            let farmers = [];
+            const q = query(collection(db, "leases"), where("status", "==", "active")); const snap = await getDocs(q); let farmers = [];
             snap.forEach(d => { if(d.id !== id) farmers.push(d.data().farmerName); });
-            const uniqueFarmers = [...new Set(farmers)];
-            const options = uniqueFarmers.map(f => `<option value="${f}">`).join('');
-
+            const uniqueFarmers = [...new Set(farmers)]; const options = uniqueFarmers.map(f => `<option value="${f}">`).join('');
             openModal(`
                 <h3 class="text-lg font-bold mb-4 text-slate-800">জমি হস্তান্তর / ছেড়ে দিন</h3>
                 <p class="text-sm text-slate-500 mb-3">মোট জমি: <b>${totalAmount}</b> শতাংশ</p>
@@ -1054,84 +639,34 @@
                 <datalist id="farmerList">${options}</datalist>
                 <input type="text" id="newFarmerName" list="farmerList" placeholder="যাকে দিচ্ছেন তার নাম" class="w-full p-3 border rounded-lg mb-4">
                 <button id="confirmTransfer" class="w-full bg-yellow-500 text-white p-3 rounded-lg font-bold hover:bg-yellow-600 flex justify-center">হস্তান্তর করুন</button>
-                <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>
-            `);
+                <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>`);
 
             document.getElementById('confirmTransfer').onclick = async () => {
-                const btn = document.getElementById('confirmTransfer');
-                showSpinner(btn);
-                const tAmount = parseFloat(document.getElementById('transferAmount').value);
-                const newName = document.getElementById('newFarmerName').value;
-                
+                const btn = document.getElementById('confirmTransfer'); showSpinner(btn);
+                const tAmount = parseFloat(document.getElementById('transferAmount').value); const newName = document.getElementById('newFarmerName').value;
                 if(isNaN(tAmount) || tAmount <= 0 || tAmount > totalAmount) { hideSpinner(btn); return showToast('সঠিক জমির পরিমাণ দিন'); }
                 if(!newName) { hideSpinner(btn); return showToast('নতুন চাষীর নাম দিন'); }
-
-                const oldRef = doc(db, "leases", id);
-                const oldSnap = await getDoc(oldRef);
-                const oldData = oldSnap.data();
-
-                const q2 = query(collection(db, "leases"), where("farmerName", "==", newName), where("status", "==", "active"));
-                const newFarmerSnap = await getDocs(q2);
-
+                const oldRef = doc(db, "leases", id); const oldSnap = await getDoc(oldRef); const oldData = oldSnap.data();
+                const q2 = query(collection(db, "leases"), where("farmerName", "==", newName), where("status", "==", "active")); const newFarmerSnap = await getDocs(q2);
                 const oldNewAmount = parseFloat(oldData.amount) - tAmount;
-                const oldFullCurrentCost = (parseFloat(oldData.amount) / 33) * parseFloat(oldData.ratePer33);
-                const oldCarriedDue = parseFloat(oldData.totalCost) - oldFullCurrentCost;
-                
-                const oldNewCurrentCost = (oldNewAmount / 33) * parseFloat(oldData.ratePer33);
-                const oldNewTotal = oldCarriedDue + oldNewCurrentCost;
-                const oldNewDue = oldNewTotal - parseFloat(oldData.paidAmount);
-
-                const oldHistory = oldData.history || [];
-                oldHistory.push({ date: new Date().toLocaleDateString('bn-BD'), amount: tAmount, type: 'transfer_out', to: newName });
-                
-                const oldYearlyData = oldData.yearlyData || {};
-                const oldYear = oldData.year;
-                if (oldYearlyData[oldYear]) {
-                    oldYearlyData[oldYear].totalCost = oldNewTotal.toFixed(2);
-                    oldYearlyData[oldYear].dueAmount = oldNewDue.toFixed(2);
-                }
-
-                await updateDoc(oldRef, { 
-                    amount: oldNewAmount, 
-                    totalCost: oldNewTotal.toFixed(2), 
-                    dueAmount: oldNewDue.toFixed(2), 
-                    history: oldHistory, 
-                    yearlyData: oldYearlyData 
-                });
-
+                const oldFullCurrentCost = (parseFloat(oldData.amount) / 33) * parseFloat(oldData.ratePer33); const oldCarriedDue = parseFloat(oldData.totalCost) - oldFullCurrentCost;
+                const oldNewCurrentCost = (oldNewAmount / 33) * parseFloat(oldData.ratePer33); const oldNewTotal = oldCarriedDue + oldNewCurrentCost; const oldNewDue = oldNewTotal - parseFloat(oldData.paidAmount);
+                const oldHistory = oldData.history || []; oldHistory.push({ date: new Date().toLocaleDateString('bn-BD'), amount: tAmount, type: 'transfer_out', to: newName });
+                const oldYearlyData = oldData.yearlyData || {}; const oldYear = oldData.year;
+                if (oldYearlyData[oldYear]) { oldYearlyData[oldYear].totalCost = oldNewTotal.toFixed(2); oldYearlyData[oldYear].dueAmount = oldNewDue.toFixed(2); }
+                await updateDoc(oldRef, { amount: oldNewAmount, totalCost: oldNewTotal.toFixed(2), dueAmount: oldNewDue.toFixed(2), history: oldHistory, yearlyData: oldYearlyData });
                 if (!newFarmerSnap.empty) {
-                    const newDoc = newFarmerSnap.docs[0];
-                    const newData = newDoc.data();
-                    const newAmount = parseFloat(newData.amount) + tAmount;
-                    const newTotal = fmt((newAmount / 33) * parseFloat(newData.ratePer33));
-                    const newHistory = newData.history || [];
-                    newHistory.push({ date: new Date().toLocaleDateString('bn-BD'), amount: tAmount, type: 'transfer_in', from: oldData.farmerName });
-                    
-                    const newYearlyData = newData.yearlyData || {};
-                    const newYear = newData.year;
-                    if (newYearlyData[newYear]) {
-                        newYearlyData[newYear].totalCost = parseFloat(newTotal);
-                        newYearlyData[newYear].dueAmount = fmt(parseFloat(newTotal) - parseFloat(newData.paidAmount));
-                    }
-
-                    await updateDoc(doc(db, "leases", newDoc.id), { 
-                        amount: newAmount, totalCost: parseFloat(newTotal), dueAmount: fmt(parseFloat(newTotal) - parseFloat(newData.paidAmount)), history: newHistory, yearlyData: newYearlyData 
-                    });
+                    const newDoc = newFarmerSnap.docs[0]; const newData = newDoc.data(); const newAmount = parseFloat(newData.amount) + tAmount; const newTotal = fmt((newAmount / 33) * parseFloat(newData.ratePer33));
+                    const newHistory = newData.history || []; newHistory.push({ date: new Date().toLocaleDateString('bn-BD'), amount: tAmount, type: 'transfer_in', from: oldData.farmerName });
+                    const newYearlyData = newData.yearlyData || {}; const newYear = newData.year;
+                    if (newYearlyData[newYear]) { newYearlyData[newYear].totalCost = parseFloat(newTotal); newYearlyData[newYear].dueAmount = fmt(parseFloat(newTotal) - parseFloat(newData.paidAmount)); }
+                    await updateDoc(doc(db, "leases", newDoc.id), { amount: newAmount, totalCost: parseFloat(newTotal), dueAmount: fmt(parseFloat(newTotal) - parseFloat(newData.paidAmount)), history: newHistory, yearlyData: newYearlyData });
                 } else {
-                    const newTotal = fmt((tAmount / 33) * parseFloat(oldData.ratePer33));
-                    const newYearlyData = {};
+                    const newTotal = fmt((tAmount / 33) * parseFloat(oldData.ratePer33)); const newYearlyData = {};
                     newYearlyData[oldData.year] = { ratePer33: oldData.ratePer33, totalCost: parseFloat(newTotal), paidAmount: 0, dueAmount: parseFloat(newTotal), status: 'active', isPaused: false };
-                    
-                    await addDoc(collection(db, "leases"), {
-                        farmerName: newName, amount: tAmount, ratePer33: oldData.ratePer33, cycleType: oldData.cycleType, year: oldData.year,
-                        totalCost: parseFloat(newTotal), paidAmount: 0, dueAmount: parseFloat(newTotal), status: 'active',
-                        history: [{ date: new Date().toLocaleDateString('bn-BD'), amount: tAmount, type: 'transfer_in', from: oldData.farmerName }],
-                        yearlyData: newYearlyData
-                    });
+                    await addDoc(collection(db, "leases"), { farmerName: newName, amount: tAmount, ratePer33: oldData.ratePer33, cycleType: oldData.cycleType, year: oldData.year, totalCost: parseFloat(newTotal), paidAmount: 0, dueAmount: parseFloat(newTotal), status: 'active', history: [{ date: new Date().toLocaleDateString('bn-BD'), amount: tAmount, type: 'transfer_in', from: oldData.farmerName }], yearlyData: newYearlyData });
                 }
-
-                showToast('জমি সফলভাবে হস্তান্তর হয়েছে!', 'success');
-                document.getElementById('modalContainer').classList.add('hidden');
+                showToast('জমি সফলভাবে হস্তান্তর হয়েছে!', 'success'); document.getElementById('modalContainer').classList.add('hidden');
             };
         }
 
@@ -1143,169 +678,78 @@
                 <label class="text-sm text-slate-500">বর্তমান দর: ${oldRate}</label>
                 <input type="number" id="newRate" value="${oldRate}" placeholder="নতুন দর" class="w-full p-3 border rounded-lg mb-4 mt-1">
                 <button id="confirmEdit" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 flex justify-center">আপডেট করুন</button>
-                <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>
-            `);
+                <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>`);
             document.getElementById('confirmEdit').onclick = async () => {
-                const btn = document.getElementById('confirmEdit');
-                showSpinner(btn);
-                const newRate = parseFloat(document.getElementById('newRate').value);
-                const newYear = normalizeYear(document.getElementById('editYear').value);
+                const btn = document.getElementById('confirmEdit'); showSpinner(btn);
+                const newRate = parseFloat(document.getElementById('newRate').value); const newYear = normalizeYear(document.getElementById('editYear').value);
                 if(isNaN(newRate) || newRate <= 0 || !newYear) { hideSpinner(btn); return showToast('সঠিক তথ্য দিন'); }
-
-                const ref = doc(db, "leases", id);
-                const snap = await getDoc(ref);
-                const data = snap.data();
-                const newTotal = fmt((data.amount / 33) * newRate);
-                const history = data.history || [];
+                const ref = doc(db, "leases", id); const snap = await getDoc(ref); const data = snap.data();
+                const newTotal = fmt((data.amount / 33) * newRate); const history = data.history || [];
                 history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'edit', oldYear: data.year, newYear: newYear, oldRate: data.ratePer33, newRate: newRate });
-
                 const yearlyData = data.yearlyData || {};
-                if (yearlyData[newYear]) {
-                    yearlyData[newYear].ratePer33 = newRate;
-                    yearlyData[newYear].totalCost = parseFloat(newTotal);
-                    yearlyData[newYear].dueAmount = fmt(parseFloat(newTotal) - yearlyData[newYear].paidAmount);
-                } else {
-                    yearlyData[newYear] = { ratePer33: newRate, totalCost: parseFloat(newTotal), paidAmount: 0, dueAmount: parseFloat(newTotal), status: 'active', isPaused: false };
-                }
-
-                await updateDoc(ref, { 
-                    ratePer33: newRate, year: newYear, totalCost: yearlyData[newYear].totalCost, paidAmount: yearlyData[newYear].paidAmount, dueAmount: yearlyData[newYear].dueAmount, history, yearlyData 
-                });
-                
-                expandedRows.add(id);
-                showToast('দর এবং বছর আপডেট হয়েছে!', 'success');
-                document.getElementById('modalContainer').classList.add('hidden');
+                if (yearlyData[newYear]) { yearlyData[newYear].ratePer33 = newRate; yearlyData[newYear].totalCost = parseFloat(newTotal); yearlyData[newYear].dueAmount = fmt(parseFloat(newTotal) - yearlyData[newYear].paidAmount); } 
+                else { yearlyData[newYear] = { ratePer33: newRate, totalCost: parseFloat(newTotal), paidAmount: 0, dueAmount: parseFloat(newTotal), status: 'active', isPaused: false }; }
+                await updateDoc(ref, { ratePer33: newRate, year: newYear, totalCost: yearlyData[newYear].totalCost, paidAmount: yearlyData[newYear].paidAmount, dueAmount: yearlyData[newYear].dueAmount, history, yearlyData });
+                expandedRows.add(id); showToast('দর এবং বছর আপডেট হয়েছে!', 'success'); document.getElementById('modalContainer').classList.add('hidden');
             };
         }
 
         function openAdjustDueModal(id, name, oldYear, due) {
-            let oldYearNum = parseInt(normalizeYear(oldYear));
-            if (isNaN(oldYearNum)) {
-                oldYearNum = new Date().getFullYear();
-            }
-            const nextYear = (oldYearNum + 1).toString();
-            
+            let oldYearNum = parseInt(normalizeYear(oldYear)); if (isNaN(oldYearNum)) oldYearNum = new Date().getFullYear(); const nextYear = (oldYearNum + 1).toString();
             openModal(`
                 <h3 class="text-lg font-bold mb-2 text-slate-800">${name} - বকেয়া ট্রান্সফার</h3>
-                <div class="bg-slate-50 p-3 rounded-lg mb-4 text-sm">
-                    <p>বর্তমান বছর: <b>${oldYear}</b></p>
-                    <p>বর্তমান বকেয়া: <b class="text-red-600">${fmt(due)} টাকা</b></p>
-                </div>
-                <label class="text-sm text-slate-500">নতুন হিসাব বর্ষ</label>
-                <input type="text" id="adjustYear" value="${nextYear}" class="w-full p-3 border rounded-lg mb-3 mt-1">
-                <label class="text-sm text-slate-500">নতুন বছরের দর (৩৩ শতাংশ)</label>
-                <input type="number" id="adjustRate" placeholder="যেমন: ২০০০০" class="w-full p-3 border rounded-lg mb-4 mt-1">
+                <div class="bg-slate-50 p-3 rounded-lg mb-4 text-sm"><p>বর্তমান বছর: <b>${oldYear}</b></p><p>বর্তমান বকেয়া: <b class="text-red-600">${fmt(due)} টাকা</b></p></div>
+                <label class="text-sm text-slate-500">নতুন হিসাব বর্ষ</label><input type="text" id="adjustYear" value="${nextYear}" class="w-full p-3 border rounded-lg mb-3 mt-1">
+                <label class="text-sm text-slate-500">নতুন বছরের দর (৩৩ শতাংশ)</label><input type="number" id="adjustRate" placeholder="যেমন: ২০০০০" class="w-full p-3 border rounded-lg mb-4 mt-1">
                 <button id="confirmAdjust" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700 flex justify-center">নতুন বছরে নিন</button>
-                <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>
-            `);
-
+                <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>`);
             document.getElementById('confirmAdjust').onclick = async () => {
-                const btn = document.getElementById('confirmAdjust');
-                showSpinner(btn);
-                const newYear = normalizeYear(document.getElementById('adjustYear').value);
-                const newRate = parseFloat(document.getElementById('adjustRate').value);
+                const btn = document.getElementById('confirmAdjust'); showSpinner(btn);
+                const newYear = normalizeYear(document.getElementById('adjustYear').value); const newRate = parseFloat(document.getElementById('adjustRate').value);
                 if(!newYear || isNaN(newRate)) { hideSpinner(btn); return showToast('সঠিক তথ্য দিন'); }
-
-                const ref = doc(db, "leases", id);
-                const snap = await getDoc(ref);
-                const data = snap.data();
-                const oldDue = parseFloat(data.dueAmount);
-                const newYearCost = ((data.amount / 33) * newRate);
-                const totalNewCost = oldDue + newYearCost;
-                const history = data.history || [];
-                history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'new_year', fromYear: data.year, toYear: newYear, carriedDue: fmt(oldDue) });
-
+                const ref = doc(db, "leases", id); const snap = await getDoc(ref); const data = snap.data();
+                const oldDue = parseFloat(data.dueAmount); const newYearCost = ((data.amount / 33) * newRate); const totalNewCost = oldDue + newYearCost;
+                const history = data.history || []; history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'new_year', fromYear: data.year, toYear: newYear, carriedDue: fmt(oldDue) });
                 const yearlyData = data.yearlyData || {};
-                if (yearlyData[data.year]) {
-                    yearlyData[data.year].status = 'transferred';
-                } else {
-                    yearlyData[data.year] = { ratePer33: data.ratePer33, totalCost: data.totalCost, paidAmount: data.paidAmount, dueAmount: oldDue, status: 'transferred' };
-                }
-
+                if (yearlyData[data.year]) yearlyData[data.year].status = 'transferred';
+                else yearlyData[data.year] = { ratePer33: data.ratePer33, totalCost: data.totalCost, paidAmount: data.paidAmount, dueAmount: oldDue, status: 'transferred' };
                 yearlyData[newYear] = { ratePer33: newRate, totalCost: fmt(totalNewCost), paidAmount: 0, dueAmount: fmt(totalNewCost), status: 'active', isPaused: false };
-
-                await updateDoc(ref, { 
-                    year: newYear, ratePer33: newRate, totalCost: fmt(totalNewCost), paidAmount: 0, dueAmount: fmt(totalNewCost), status: 'active', history, yearlyData 
-                });
-
-                expandedRows.add(id);
-                showToast('নতুন হিসাব বর্ষ সফলভাবে শুরু হয়েছে!', 'success');
-                document.getElementById('modalContainer').classList.add('hidden');
+                await updateDoc(ref, { year: newYear, ratePer33: newRate, totalCost: fmt(totalNewCost), paidAmount: 0, dueAmount: fmt(totalNewCost), status: 'active', history, yearlyData });
+                expandedRows.add(id); showToast('নতুন হিসাব বর্ষ সফলভাবে শুরু হয়েছে!', 'success'); document.getElementById('modalContainer').classList.add('hidden');
             };
         }
 
         async function openHistoryModal(farmerName) {
-            const modal = document.getElementById('modalContainer');
-            modal.classList.remove('hidden');
+            const modal = document.getElementById('modalContainer'); modal.classList.remove('hidden');
             modal.innerHTML = `<div class="bg-white rounded-2xl p-6 w-full max-w-md fade-in relative h-[80vh] flex flex-col"><div class="animate-pulse text-center py-10">লোড হচ্ছে...</div></div>`;
             modal.onclick = (e) => { if (e.target.id === 'modalContainer') modal.classList.add('hidden'); };
-
-            const q = query(collection(db, "leases"), where("farmerName", "==", farmerName));
-            const snap = await getDocs(q);
-            
+            const q = query(collection(db, "leases"), where("farmerName", "==", farmerName)); const snap = await getDocs(q);
             let allHistory = [];
-            snap.forEach(doc => {
-                const data = doc.data();
-                (data.history || []).forEach(h => {
-                    allHistory.push({ ...h, context: `${data.year} (${data.amount} শতাংশ)` });
-                });
-            });
-
-            let historyPage = 1;
-            const historyPerPage = 8;
-
+            snap.forEach(doc => { const data = doc.data(); (data.history || []).forEach(h => allHistory.push({ ...h, context: `${data.year} (${data.amount} শতাংশ)` })); });
+            let historyPage = 1; const historyPerPage = 8;
             function renderHistoryPage() {
-                const totalPages = Math.ceil(allHistory.length / historyPerPage);
-                const start = (historyPage - 1) * historyPerPage;
-                const end = start + historyPerPage;
-                const paginatedHistory = allHistory.slice(start, end);
-
+                const totalPages = Math.ceil(allHistory.length / historyPerPage); const start = (historyPage - 1) * historyPerPage; const end = start + historyPerPage; const paginatedHistory = allHistory.slice(start, end);
                 let historyHTML = '';
                 paginatedHistory.forEach(h => {
-                    historyHTML += `<div class="mb-3 border-l-4 border-indigo-200 pl-3">
-                        <p class="font-bold text-xs text-slate-400">${h.context}</p>`;
-                    historyHTML += `<ul class="mt-1 space-y-1 text-xs">`;
+                    historyHTML += `<div class="mb-3 border-l-4 border-indigo-200 pl-3"><p class="font-bold text-xs text-slate-400">${h.context}</p><ul class="mt-1 space-y-1 text-xs">`;
                     if(h.type === 'payment') historyHTML += `<li class="text-green-600 flex justify-between"><span>${h.date}</span> <span>+${fmt(h.amount)} টাকা জমা</span></li>`;
                     else if(h.type === 'transfer_out') historyHTML += `<li class="text-yellow-600 flex justify-between"><span>${h.date}</span> <span>${h.amount} শতাংশ হস্তান্তর (${h.to})</span></li>`;
                     else if(h.type === 'transfer_in') historyHTML += `<li class="text-blue-600 flex justify-between"><span>${h.date}</span> <span>${h.amount} শতাংশ পেয়েছেন (${h.from})</span></li>`;
                     else if(h.type === 'edit') historyHTML += `<li class="text-gray-500 flex justify-between"><span>${h.date}</span> <span>দর/বছর পরিবর্তন: ${h.oldRate}->${h.newRate}</span></li>`;
-                    else if(h.type === 'manage') {
-                        let action = h.paused ? 'হিসাব স্থগিত করা হয়েছে' : 'হিসাব চালু করা হয়েছে';
-                        historyHTML += `<li class="text-orange-500 flex justify-between"><span>${h.date}</span> <span>${action} (মোট: ${h.total}, জমা: ${h.paid})</span></li>`;
-                    }
+                    else if(h.type === 'manage') { let action = h.paused ? 'হিসাব স্থগিত করা হয়েছে' : 'হিসাব চালু করা হয়েছে'; historyHTML += `<li class="text-orange-500 flex justify-between"><span>${h.date}</span> <span>${action} (মোট: ${h.total}, জমা: ${h.paid})</span></li>`; }
                     else if(h.type === 'auto_rollover') historyHTML += `<li class="text-purple-600 flex justify-between"><span>${h.date}</span> <span>${h.fromYear} থেকে ${h.toYear} সালে ${h.carriedDue} টাকা স্বয়ংক্রিয়ভাবে যোগ হয়েছে</span></li>`;
                     else if(h.type === 'new_year') historyHTML += `<li class="text-indigo-600 flex justify-between"><span>${h.date}</span> <span>${h.fromYear} থেকে ${h.toYear} সালে ${h.carriedDue} টাকা যোগ হয়েছে</span></li>`;
                     historyHTML += `</ul></div>`;
                 });
-
                 let paginationHTML = '';
-                if (totalPages > 1) {
-                    paginationHTML = `<div class="flex justify-center items-center gap-2 mt-4 pt-3 border-t">
-                        <button id="prevHist" class="px-3 py-1 bg-slate-200 rounded text-sm ${historyPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-300'}">পূর্ববর্তী</button>
-                        <span class="text-sm">${historyPage} / ${totalPages}</span>
-                        <button id="nextHist" class="px-3 py-1 bg-slate-200 rounded text-sm ${historyPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-300'}">পরবর্তী</button>
-                    </div>`;
-                }
-
-                modal.innerHTML = `
-                    <div class="bg-white rounded-2xl p-6 w-full max-w-md fade-in relative h-[80vh] flex flex-col">
-                        <button class="absolute top-4 right-4 text-slate-400 hover:text-red-500 text-2xl" onclick="document.getElementById('modalContainer').classList.add('hidden')">&times;</button>
-                        <h3 class="text-lg font-bold mb-4 text-slate-800">${farmerName} এর ইতিহাস</h3>
-                        <div class="flex-1 overflow-y-auto pr-2">
-                            ${historyHTML || '<p class="text-slate-500 text-center py-4">কোনো ইতিহাস নেই।</p>'}
-                        </div>
-                        ${paginationHTML}
-                    </div>
-                `;
-
-                const prevBtn = document.getElementById('prevHist');
-                const nextBtn = document.getElementById('nextHist');
+                if (totalPages > 1) { paginationHTML = `<div class="flex justify-center items-center gap-2 mt-4 pt-3 border-t"><button id="prevHist" class="px-3 py-1 bg-slate-200 rounded text-sm ${historyPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-300'}">পূর্ববর্তী</button><span class="text-sm">${historyPage} / ${totalPages}</span><button id="nextHist" class="px-3 py-1 bg-slate-200 rounded text-sm ${historyPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-300'}">পরবর্তী</button></div>`; }
+                modal.innerHTML = `<div class="bg-white rounded-2xl p-6 w-full max-w-md fade-in relative h-[80vh] flex flex-col"><button class="absolute top-4 right-4 text-slate-400 hover:text-red-500 text-2xl" onclick="document.getElementById('modalContainer').classList.add('hidden')">&times;</button><h3 class="text-lg font-bold mb-4 text-slate-800">${farmerName} এর ইতিহাস</h3><div class="flex-1 overflow-y-auto pr-2">${historyHTML || '<p class="text-slate-500 text-center py-4">কোনো ইতিহাস নেই।</p>'}</div>${paginationHTML}</div>`;
+                const prevBtn = document.getElementById('prevHist'); const nextBtn = document.getElementById('nextHist');
                 if(prevBtn) prevBtn.onclick = () => { if(historyPage > 1) { historyPage--; renderHistoryPage(); } };
                 if(nextBtn) nextBtn.onclick = () => { if(historyPage < totalPages) { historyPage++; renderHistoryPage(); } };
             }
             renderHistoryPage();
         }
-
     </script>
 </head>
 <body class="bg-slate-50 text-slate-800">
