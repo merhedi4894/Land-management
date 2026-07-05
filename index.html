@@ -211,7 +211,7 @@
                     <div class="w-full max-w-md flex-1 flex flex-col justify-center">
                         <div class="text-center mb-8">
                             <div class="inline-block p-4 bg-white rounded-2xl shadow-lg mb-4 border border-slate-200">
-                                <svg class="w-10 h-10 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21l1.65-3.8a9 9 0 113.4 2.9L3 21"></path></svg>
+                                <svg class="w-10 h-10 text-slate-700" fill="none, stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21l1.65-3.8a9 9 0 113.4 2.9L3 21"></path></svg>
                             </div>
                             <h1 class="text-3xl font-bold text-slate-800 tracking-tight">জমি লিজ ম্যানেজমেন্ট</h1>
                             <p class="text-slate-500 mt-2 text-sm">নিরাপদ ও স্মার্ট হিসাব ব্যবস্থাপনা</p>
@@ -539,13 +539,11 @@
                         <label for="pauseToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
                     </div>
                 </div>
-
                 <div class="bg-slate-50 p-3 rounded-lg mb-4 text-sm space-y-1">
                     <div class="flex justify-between text-slate-500"><span>জমির হারি:</span> <b>${fmt(currentYearCost)}</b></div>
                     <div class="flex justify-between text-slate-500"><span>পূর্বের বকেয়া:</span> <b>${fmt(carriedDue)}</b></div>
                     <div class="flex justify-between text-slate-500"><span>মোট হারি:</span> <b class="text-indigo-600">${fmt(data.totalCost)}</b></div>
                 </div>
-
                 <div class="space-y-3 border-t pt-4">
                     <p class="text-xs text-slate-500 font-bold">ভুল এন্ট্রি সংশোধন (যদি প্রয়োজন হয়)</p>
                     <div>
@@ -579,17 +577,15 @@
                 if (isNaN(inputTotal) || isNaN(inputPaid)) { hideSpinner(btn); return showToast('সঠিক সংখ্যা লিখুন'); }
 
                 let finalTotal, finalCarriedDue, finalDue;
-
                 if (newPaused) {
                     finalCarriedDue = inputTotal;
-                    finalTotal = finalCarriedDue;
+                    finalTotal = finalCarriedDue; // Paused means total is just the previous due
                     finalDue = finalTotal - inputPaid;
                 } else {
-                    finalTotal = inputTotal;
+                    finalTotal = inputTotal; // Total includes land cost
                     finalCarriedDue = finalTotal - currentYearCost;
                     finalDue = finalTotal - inputPaid;
                 }
-                
                 if (finalDue < 0) finalDue = 0;
                 if (finalCarriedDue < 0) finalCarriedDue = 0;
 
@@ -609,7 +605,6 @@
                 <input type="date" id="payDate" class="w-full p-3 border rounded-lg mb-4" value="${new Date().toISOString().split('T')[0]}">
                 <button id="confirmPay" class="w-full bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 flex justify-center">নিশ্চিত করুন</button>
                 <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>`);
-
             document.getElementById('confirmPay').onclick = async () => {
                 const btn = document.getElementById('confirmPay'); showSpinner(btn);
                 const amount = parseFloat(document.getElementById('payAmount').value); const date = document.getElementById('payDate').value;
@@ -644,17 +639,26 @@
                 const tAmount = parseFloat(document.getElementById('transferAmount').value); const newName = document.getElementById('newFarmerName').value;
                 if(isNaN(tAmount) || tAmount <= 0 || tAmount > totalAmount) { hideSpinner(btn); return showToast('সঠিক জমির পরিমাণ দিন'); }
                 if(!newName) { hideSpinner(btn); return showToast('নতুন চাষীর নাম দিন'); }
+                
                 const oldRef = doc(db, "leases", id); const oldSnap = await getDoc(oldRef); const oldData = oldSnap.data();
                 const q2 = query(collection(db, "leases"), where("farmerName", "==", newName), where("status", "==", "active")); const newFarmerSnap = await getDocs(q2);
                 
                 const oldYearlyData = oldData.yearlyData || {}; const oldYear = oldData.year; const oldYData = oldYearlyData[oldYear] || {};
+                const isPaused = oldYData.isPaused === true;
                 const oldCarriedDue = oldYData.carriedDue !== undefined ? parseFloat(oldYData.carriedDue) : (parseFloat(oldData.totalCost) - (parseFloat(oldData.amount) / 33 * parseFloat(oldData.ratePer33)));
                 
                 const oldNewAmount = parseFloat(oldData.amount) - tAmount;
                 const oldNewCurrentCost = (oldNewAmount / 33) * parseFloat(oldData.ratePer33);
-                const oldNewTotal = oldCarriedDue + oldNewCurrentCost;
-                const oldNewDue = oldNewTotal - parseFloat(oldData.paidAmount);
                 
+                let oldNewTotal;
+                if (isPaused) {
+                    oldNewTotal = oldCarriedDue; // If paused, total cost remains exactly the previous due. Current land cost is NOT added.
+                } else {
+                    oldNewTotal = oldCarriedDue + oldNewCurrentCost; // If active, current land cost is added.
+                }
+                let oldNewDue = oldNewTotal - parseFloat(oldData.paidAmount);
+                if (oldNewDue < 0) oldNewDue = 0;
+
                 const oldHistory = oldData.history || []; oldHistory.push({ date: new Date().toLocaleDateString('bn-BD'), amount: tAmount, type: 'transfer_out', to: newName });
                 if (oldYearlyData[oldYear]) { oldYearlyData[oldYear].carriedDue = oldCarriedDue.toFixed(2); oldYearlyData[oldYear].totalCost = oldNewTotal.toFixed(2); oldYearlyData[oldYear].dueAmount = oldNewDue.toFixed(2); }
                 await updateDoc(oldRef, { amount: oldNewAmount, totalCost: oldNewTotal.toFixed(2), dueAmount: oldNewDue.toFixed(2), history: oldHistory, yearlyData: oldYearlyData });
