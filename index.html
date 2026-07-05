@@ -35,6 +35,7 @@
             .table-fixed td { padding: 0; margin: 0; border: none; text-align: right; font-size: 12px; }
             .table-fixed td::before { display: none; }
             .table-fixed td.collapsible { display: none; }
+            .table-fixed td.mobile-hide { display: none !important; } /* মোবাইল ভিউতে ৪ নং কলাম লুকানোর জন্য */
             .table-fixed td[data-label="চাষীর নাম ও সাল"] { padding: 0; cursor: pointer; }
             .collapsed-name { color: #dc2626; font-weight: 800; font-size: 15px; line-height: 1.1; }
             .collapsed-year { color: #0891b2; font-weight: 700; font-size: 11px; display: block; margin-top: -2px; }
@@ -635,21 +636,26 @@
                     totalHtml = `<div><span class="text-slate-400">মোট হারি:</span> <b class="text-slate-800">${fmt(lease.totalCost)} টাকা</b></div><div><span class="text-slate-400">মোট জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)} টাকা</b></div>`;
                 }
 
-                // Add mobile-only net due/paid info inside the 3rd column block
-                if (lease.status === 'active' && !isTransferred) {
-                    let mobileDueHtml = `<div class="md:hidden mt-2 border-t pt-2">`;
-                    if (isPaid) {
-                        mobileDueHtml += `<span class="font-bold text-green-600 text-base">পরিশোধ</span>`;
+                // Mobile-only Net Due block (appended to totalHtml to avoid duplicate line in mobile)
+                if (lease.status === 'active' || isTransferred) {
+                    totalHtml += `<div class="md:hidden mt-2 border-t pt-2">`;
+                    if (isPaused) {
+                        if (isPaid) totalHtml += `<span class="font-bold text-green-600 text-base">পরিশোধ</span>`;
+                        else totalHtml += `<span class="font-bold text-orange-500 text-base">${netDueYearsLabel} = ${fmt(lease.dueAmount)}</span> <span class="text-xs">টাকা</span>`;
+                    } else if (isPaid && lease.status === 'active') {
+                        totalHtml += `<span class="font-bold text-green-600 text-base">পরিশোধ</span>`;
+                    } else if (isTransferred) {
+                        totalHtml += `<span class="text-indigo-600 text-xs font-bold">নতুন বছরে যোগ হয়েছে</span>`;
+                    } else if (lease.status === 'active') {
+                        totalHtml += `<span class="font-bold text-red-600 text-base">নিট বকেয়া = ${fmt(lease.dueAmount)}</span> <span class="text-xs">টাকা</span>`;
                     } else {
-                        if (isPaused) {
-                            mobileDueHtml += `<span class="font-bold text-orange-500 text-base">${netDueYearsLabel} = ${fmt(lease.dueAmount)}</span> <span class="text-xs">টাকা</span>`;
-                        } else {
-                            mobileDueHtml += `<span class="font-bold text-red-600 text-base">নিট বকেয়া = ${fmt(lease.dueAmount)}</span> <span class="text-xs">টাকা</span>`;
-                        }
-                        mobileDueHtml += `<button data-id="${id}" data-name="${lease.farmerName}" data-year="${lease.year}" data-due="${lease.dueAmount}" class="adjustBtn block mt-1 text-xs text-indigo-500 hover:underline">নতুন বছরে নিন</button>`;
+                        totalHtml += `<span class="block text-xs text-red-400 mt-1">নিষ্ক্রিয়</span>`;
                     }
-                    mobileDueHtml += `</div>`;
-                    totalHtml += mobileDueHtml;
+                    
+                    if (lease.status === 'active' && !isTransferred && !isPaid) {
+                        totalHtml += `<button data-id="${id}" data-name="${lease.farmerName}" data-year="${lease.year}" data-due="${lease.dueAmount}" class="adjustBtn block mt-1 text-xs text-indigo-500 hover:underline">নতুন বছরে নিন</button>`;
+                    }
+                    totalHtml += `</div>`;
                 }
 
                 let dueHtml = '', collapsedDueHtml = '';
@@ -664,10 +670,12 @@
                     dueHtml = `<span class="font-bold text-red-600 text-base">নিট বকেয়া = ${fmt(lease.dueAmount)}</span> <span class="text-xs">টাকা</span>`; collapsedDueHtml = `<span class="collapsed-due">বকেয়া: ${fmt(lease.dueAmount)}</span>`;
                 } else { dueHtml = `<span class="block text-xs text-red-400 mt-1">নিষ্ক্রিয়</span>`; collapsedDueHtml = `<span class="collapsed-due">নিষ্ক্রিয়</span>`; }
 
-                // Add desktop-only "নতুন বছরে নিন" button to 4th column
+                // Desktop-only "নতুন বছরে নিন" button appended to dueHtml
                 if (lease.status === 'active' && !isTransferred && !isPaid) {
-                    dueHtml += `<button data-id="${id}" data-name="${lease.farmerName}" data-year="${lease.year}" data-due="${lease.dueAmount}" class="adjustBtn hidden md:block mt-1 text-xs text-indigo-500 hover:underline">নতুন বছরে নিন</button>`;
+                    dueHtml += `<button data-id="${id}" data-name="${lease.farmerName}" data-year="${lease.year}" data-due="${lease.dueAmount}" class="adjustBtn block mt-1 text-xs text-indigo-500 hover:underline">নতুন বছরে নিন</button>`;
                 }
+                // Wrap dueHtml in a desktop-only div
+                dueHtml = `<div class="hidden md:block">${dueHtml}</div>`;
 
                 tr.innerHTML = `
                     <td data-label="চাষীর নাম ও সাল" class="p-3 align-top">
@@ -676,7 +684,7 @@
                     </td>
                     <td data-label="জমি / দর" class="p-3 align-top text-xs space-y-1 collapsible"><div><span class="text-slate-400">জমি:</span> <b>${lease.amount}</b> শতাংশ</div><div><span class="text-slate-400">দর:</span> <b>${lease.ratePer33}</b> টাকা</div></td>
                     <td data-label="মোট হারি / পরিশোধিত" class="p-3 align-top text-xs space-y-1 collapsible">${totalHtml}</td>
-                    <td data-label="বকেয়া" class="p-3 align-top collapsible hidden md:table-cell">${dueHtml}</td>
+                    <td data-label="বকেয়া" class="p-3 align-top collapsible mobile-hide md:table-cell">${dueHtml}</td>
                     <td data-label="অ্যাকশন" class="p-3 align-top collapsible">
                         <div class="flex items-center gap-1 justify-end flex-wrap">
                             <button data-id="${id}" class="manageBtn text-slate-500 hover:bg-slate-100 p-2 rounded-lg transition" title="হিসাব ব্যবস্থাপনা"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></button>
