@@ -16,7 +16,6 @@
         ::-webkit-scrollbar-thumb { background: #888; border-radius: 5px; }
         .premium-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
         
-        /* View Controllers */
         .expanded-view-content { display: none; }
         .collapsed-view { display: none; }
 
@@ -25,28 +24,15 @@
             .collapsed-view { display: none !important; }
         }
 
-        /* Mobile Responsive Table (Slim 3D Collapsible Cards) */
         @media (max-width: 767px) {
             .collapsed-view { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 2px 0; }
-            
             .table-fixed thead { display: none; }
             .table-fixed, .table-fixed tbody, .table-fixed tr, .table-fixed td { display: block; width: 100%; }
-            .table-fixed tbody tr { 
-                margin-bottom: 0.5rem; 
-                border: 1px solid #94a3b8; 
-                border-radius: 0.5rem; 
-                background: white; 
-                padding: 0.35rem 0.75rem; 
-                box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-                cursor: pointer;
-                transition: all 0.2s;
-            }
+            .table-fixed tbody tr { margin-bottom: 0.5rem; border: 1px solid #94a3b8; border-radius: 0.5rem; background: white; padding: 0.35rem 0.75rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.2s; }
             .table-fixed tbody tr.bg-red-50 { background-color: #fef2f2 !important; border-color: #ef4444 !important; }
             .table-fixed tbody tr.bg-orange-50 { background-color: #fff7ed !important; border-color: #f97316 !important; }
             .table-fixed td { padding: 0; margin: 0; border: none; text-align: right; font-size: 12px; }
             .table-fixed td::before { display: none; }
-            
-            /* Collapsed State */
             .table-fixed td.collapsible { display: none; }
             .table-fixed td[data-label="চাষীর নাম ও সাল"] { padding: 0; cursor: pointer; }
             .collapsed-name { color: #dc2626; font-weight: 800; font-size: 15px; line-height: 1.1; }
@@ -56,24 +42,18 @@
             .collapsed-paid { color: #16a34a; font-weight: 700; font-size: 13px; }
             .collapsed-transferred { color: #4f46e5; font-weight: 700; font-size: 13px; }
             .collapsed-paused { color: #d97706; font-weight: 700; font-size: 13px; }
-
-            /* Expanded State */
             .table-fixed tbody tr.expanded .collapsed-view { display: none !important; }
             .table-fixed tbody tr.expanded .expanded-view-content { display: block !important; }
             .table-fixed tbody tr.expanded { box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
             .table-fixed tbody tr.expanded td.collapsible { display: block; padding-top: 8px; border-top: 1px solid #e2e8f0; margin-top: 8px; }
-            .table-fixed tbody tr.expanded td[data-label="অ্যাকশন"] { 
-                justify-content: flex-end; gap: 0.5rem; padding-top: 8px; border-top: 1px solid #e2e8f0; margin-top: 8px; display: flex;
-            }
+            .table-fixed tbody tr.expanded td[data-label="অ্যাকশন"] { justify-content: flex-end; gap: 0.5rem; padding-top: 8px; border-top: 1px solid #e2e8f0; margin-top: 8px; display: flex; }
         }
 
-        /* Toggle Switch CSS */
         .toggle-checkbox:checked { right: 0; border-color: #6366f1; transform: translateX(100%); }
         .toggle-checkbox:checked + .toggle-label { background-color: #6366f1; }
         .toggle-checkbox { transition: all 0.3s ease; right: 0; }
         .toggle-label { transition: background-color 0.3s ease; }
 
-        /* Colorful Dots Spinner */
         .lds-spinner { display: inline-block; position: relative; width: 80px; height: 80px; }
         .lds-spinner div { transform-origin: 40px 40px; animation: lds-spinner 1.2s linear infinite; }
         .lds-spinner div:after { content: " "; display: block; position: absolute; top: 3px; left: 37px; width: 6px; height: 18px; border-radius: 20%; }
@@ -132,7 +112,6 @@
             en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
         };
 
-        // Standard Soft Alert Sound Generator
         let audioCtx;
         function playSound(type) {
             try {
@@ -224,11 +203,9 @@
 
         onAuthStateChanged(auth, (user) => { if (user) renderDashboard(); else renderAuth(); });
 
-        // ---------- ১. প্রফেশনাল অ্যাশ কালার লগইন পেজ ----------
         function renderAuth() {
             const savedIds = JSON.parse(localStorage.getItem('savedIdentifiers') || '[]');
             const optionsHtml = savedIds.map(id => `<option value="${id}">`).join('');
-
             appContainer.innerHTML = `
                 <div class="min-h-screen flex flex-col items-center justify-center bg-slate-200 p-4">
                     <div class="w-full max-w-md flex-1 flex flex-col justify-center">
@@ -239,7 +216,6 @@
                             <h1 class="text-3xl font-bold text-slate-800 tracking-tight">জমি লিজ ম্যানেজমেন্ট</h1>
                             <p class="text-slate-500 mt-2 text-sm">নিরাপদ ও স্মার্ট হিসাব ব্যবস্থাপনা</p>
                         </div>
-                        
                         <div class="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
                             <div class="flex border-b border-slate-200">
                                 <button id="tabLogin" class="flex-1 py-4 font-bold text-white bg-slate-800 transition relative">লগইন <span class="absolute bottom-0 left-1/4 right-1/4 h-1 bg-cyan-500"></span></button>
@@ -315,7 +291,6 @@
             };
         }
 
-        // ---------- ২. ড্যাশবোর্ড ----------
         function renderDashboard() {
             appContainer.innerHTML = `
                 <div class="min-h-screen bg-slate-100 flex flex-col">
@@ -342,7 +317,7 @@
                             <div class="p-4 border-b flex flex-col md:flex-row justify-between items-start md:items-center gap-3"><h2 class="text-md font-bold text-slate-700">চলমান হিসাব সমূহ</h2><input type="text" id="searchInput" placeholder="নাম দিয়ে সার্চ করুন..." class="p-2 border rounded-lg text-sm w-full md:w-64 outline-none focus:border-indigo-500"></div>
                             <div class="p-2 md:p-4">
                                 <table class="w-full text-left text-slate-600 table-fixed">
-                                    <thead class="bg-slate-50 text-slate-500 text-xs uppercase"><tr><th class="p-3 w-1/5">চাষীর নাম ও সাল</th><th class="p-3 w-1/5">জমি / দর</th><th class="p-3 w-1/5">মোট / পরিশোধিত</th><th class="p-3 w-1/5">বকেয়া</th><th class="p-3 w-1/5 text-right">অ্যাকশন</th></tr></thead>
+                                    <thead class="bg-slate-50 text-slate-500 text-xs uppercase"><tr><th class="p-3 w-1/5">চাষীর নাম ও সাল</th><th class="p-3 w-1/5">জমি / দর</th><th class="p-3 w-1/5">মোট হারি / পরিশোধিত</th><th class="p-3 w-1/5">বকেয়া</th><th class="p-3 w-1/5 text-right">অ্যাকশন</th></tr></thead>
                                     <tbody id="leasesTable" class="divide-y divide-slate-100"></tbody>
                                 </table>
                             </div>
@@ -386,7 +361,6 @@
                         if (yearlyData[newYear]) {
                             const yData = yearlyData[newYear];
                             lease.year = newYear; lease.ratePer33 = yData.ratePer33; lease.totalCost = yData.totalCost; lease.paidAmount = yData.paidAmount; lease.dueAmount = yData.dueAmount;
-                            // লোকাল স্টেট আপডেট করে রেন্ডার করবে। ডাটাবেজে সেভ করবে না যাতে রিফ্রেশ দিলে মূল সালে ফিরে যায়।
                             renderTable();
                             showToast(`${newYear} সালের হিসাব লোড হয়েছে!`, 'success', true);
                             expandedRows.add(id);
@@ -412,10 +386,10 @@
                         while (parseInt(year) < activeCycleYear) {
                             let nextYear = (parseInt(year) + 1).toString();
                             if (yearlyData[nextYear]) { year = nextYear; let yData = yearlyData[nextYear]; due = parseFloat(yData.dueAmount); rate = parseFloat(yData.ratePer33); totalCost = parseFloat(yData.totalCost); paidAmount = parseFloat(yData.paidAmount); continue; }
-                            let nextRate = rate; let nextCost = (amount / 33) * nextRate; let nextTotal = due + nextCost;
+                            let nextRate = rate; let nextCarriedDue = due; let nextCost = (amount / 33) * nextRate; let nextTotal = nextCarriedDue + nextCost;
                             if (!yearlyData[year]) { yearlyData[year] = { ratePer33: rate, totalCost: totalCost.toFixed(2), paidAmount: paidAmount.toFixed(2), dueAmount: due.toFixed(2), status: 'transferred' }; } else { yearlyData[year].status = 'transferred'; }
-                            yearlyData[nextYear] = { ratePer33: nextRate, totalCost: nextTotal.toFixed(2), paidAmount: 0, dueAmount: nextTotal.toFixed(2), status: 'active', isPaused: false };
-                            history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'auto_rollover', fromYear: year, toYear: nextYear, carriedDue: due.toFixed(2) });
+                            yearlyData[nextYear] = { ratePer33: nextRate, totalCost: nextTotal.toFixed(2), paidAmount: 0, dueAmount: nextTotal.toFixed(2), status: 'active', isPaused: false, carriedDue: nextCarriedDue.toFixed(2) };
+                            history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'auto_rollover', fromYear: year, toYear: nextYear, carriedDue: nextCarriedDue.toFixed(2) });
                             year = nextYear; due = nextTotal; rate = nextRate; totalCost = nextTotal; paidAmount = 0; updated = true;
                         }
                         if (updated) updates.push(updateDoc(doc(db, "leases", lease.id), { year: year, ratePer33: rate, totalCost: totalCost.toFixed(2), paidAmount: 0, dueAmount: due.toFixed(2), history: history, yearlyData: yearlyData }));
@@ -429,8 +403,6 @@
             const q = collection(db, "leases");
             onSnapshot(q, (snapshot) => {
                 allLeases = []; snapshot.forEach(d => allLeases.push({ id: d.id, ...d.data() }));
-                
-                // রিফ্রেশ দিলে সাম্প্রতিক সালে ফিরে যাওয়ার লজিক
                 let corrections = [];
                 for (let lease of allLeases) {
                     if (lease.status === 'active') {
@@ -451,12 +423,7 @@
                     }
                 }
                 if (corrections.length > 0) Promise.all(corrections);
-
-                allLeases.sort((a, b) => {
-                    const aYear = parseInt(normalizeYear(a.year)) || 0; const bYear = parseInt(normalizeYear(b.year)) || 0;
-                    if (a.status !== b.status) return a.status === 'active' ? -1 : 1;
-                    return bYear - aYear;
-                });
+                allLeases.sort((a, b) => { const aYear = parseInt(normalizeYear(a.year)) || 0; const bYear = parseInt(normalizeYear(b.year)) || 0; if (a.status !== b.status) return a.status === 'active' ? -1 : 1; return bYear - aYear; });
                 autoRollover(); renderTable();
             });
         }
@@ -468,9 +435,7 @@
             if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
             if (currentPage === 0 && totalPages > 0) currentPage = 1;
             const start = (currentPage - 1) * itemsPerPage; const end = start + itemsPerPage; const paginatedLeases = filteredLeases.slice(start, end);
-
             if (paginatedLeases.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="text-center text-slate-400 py-6">কোনো হিসাব পাওয়া যায়নি</td></tr>`; paginationDiv.innerHTML = ''; return; } 
-            
             tbody.innerHTML = '';
             paginatedLeases.forEach(lease => {
                 const id = lease.id; const tr = document.createElement('tr'); tr.dataset.id = id;
@@ -507,8 +472,8 @@
                     <td data-label="জমি / দর" class="p-3 align-top text-xs space-y-1 collapsible">
                         <div><span class="text-slate-400">জমি:</span> <b>${lease.amount}</b> শতাংশ</div><div><span class="text-slate-400">দর:</span> <b>${lease.ratePer33}</b> টাকা</div>
                     </td>
-                    <td data-label="মোট / পরিশোধিত" class="p-3 align-top text-xs space-y-1 collapsible">
-                        <div><span class="text-slate-400">মোট:</span> <b class="text-slate-800">${fmt(lease.totalCost)}</b> টাকা</div><div><span class="text-slate-400">জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)}</b> টাকা</div>
+                    <td data-label="মোট হারি / পরিশোধিত" class="p-3 align-top text-xs space-y-1 collapsible">
+                        <div><span class="text-slate-400">মোট হারি:</span> <b class="text-slate-800">${fmt(lease.totalCost)}</b> টাকা</div><div><span class="text-slate-400">জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)}</b> টাকা</div>
                     </td>
                     <td data-label="বকেয়া" class="p-3 align-top collapsible">${dueHtml}</td>
                     <td data-label="অ্যাকশন" class="p-3 align-top collapsible">
@@ -544,7 +509,7 @@
 
         async function addLease(e) {
             e.preventDefault(); const farmerName = document.getElementById('farmerName').value; const amount = parseFloat(document.getElementById('amount').value); const ratePer33 = parseFloat(document.getElementById('ratePer33').value); const cycleType = document.getElementById('cycleType').value; const year = normalizeYear(document.getElementById('year').value); const totalCost = fmt((amount / 33) * ratePer33);
-            const yearlyData = {}; yearlyData[year] = { ratePer33, totalCost: parseFloat(totalCost), paidAmount: 0, dueAmount: parseFloat(totalCost), status: 'active', isPaused: false };
+            const yearlyData = {}; yearlyData[year] = { ratePer33, totalCost: parseFloat(totalCost), paidAmount: 0, dueAmount: parseFloat(totalCost), status: 'active', isPaused: false, carriedDue: 0 };
             await addDoc(collection(db, "leases"), { farmerName, amount, cycleType, year, ratePer33, totalCost: parseFloat(totalCost), paidAmount: 0, dueAmount: parseFloat(totalCost), status: 'active', history: [], yearlyData: yearlyData });
             showToast('নতুন হিসাব যুক্ত হয়েছে!', 'success'); document.getElementById('leaseForm').reset(); populateMonths(document.getElementById('monthLang').value);
         }
@@ -562,6 +527,9 @@
 
         async function openManageAccountModal(id) {
             const ref = doc(db, "leases", id); const snap = await getDoc(ref); const data = snap.data(); const currentYear = data.year; const yearlyData = data.yearlyData || {}; const yData = yearlyData[currentYear] || {}; const isPaused = yData.isPaused === true;
+            const currentYearCost = (parseFloat(data.amount) / 33) * parseFloat(data.ratePer33);
+            const carriedDue = yData.carriedDue !== undefined ? parseFloat(yData.carriedDue) : (parseFloat(data.totalCost) - currentYearCost);
+
             openModal(`
                 <h3 class="text-lg font-bold mb-4 text-slate-800">হিসাব ব্যবস্থাপনা (${data.farmerName})</h3>
                 <div class="flex items-center justify-between bg-slate-50 p-3 rounded-lg mb-4">
@@ -571,33 +539,63 @@
                         <label for="pauseToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
                     </div>
                 </div>
+
+                <div class="bg-slate-50 p-3 rounded-lg mb-4 text-sm space-y-1">
+                    <div class="flex justify-between text-slate-500"><span>জমির হারি:</span> <b>${fmt(currentYearCost)}</b></div>
+                    <div class="flex justify-between text-slate-500"><span>পূর্বের বকেয়া:</span> <b>${fmt(carriedDue)}</b></div>
+                    <div class="flex justify-between text-slate-500"><span>মোট হারি:</span> <b class="text-indigo-600">${fmt(data.totalCost)}</b></div>
+                </div>
+
                 <div class="space-y-3 border-t pt-4">
                     <p class="text-xs text-slate-500 font-bold">ভুল এন্ট্রি সংশোধন (যদি প্রয়োজন হয়)</p>
-                    <div><label class="text-xs text-slate-500">মোট খরচ (টাকা)</label><input type="number" id="adjTotalCost" value="${data.totalCost}" class="w-full p-2 border rounded-lg mt-1" step="0.01"></div>
-                    <div><label class="text-xs text-slate-500">জমা পরিমাণ (টাকা)</label><input type="number" id="adjPaidAmount" value="${data.paidAmount}" class="w-full p-2 border rounded-lg mt-1" step="0.01"></div>
+                    <div>
+                        <label id="totalLabel" class="text-xs text-slate-500">${isPaused ? 'সংশোধিত পূর্বের বকেয়া (টাকা)' : 'সংশোধিত মোট হারি (টাকা)'}</label>
+                        <input type="number" id="adjTotalCost" value="${isPaused ? carriedDue : data.totalCost}" class="w-full p-2 border rounded-lg mt-1" step="0.01">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500">সংশোধিত জমা পরিমাণ (টাকা)</label>
+                        <input type="number" id="adjPaidAmount" value="${data.paidAmount}" class="w-full p-2 border rounded-lg mt-1" step="0.01">
+                    </div>
                 </div>
                 <button id="confirmManage" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700 flex justify-center mt-6">আপডেট সেভ করুন</button>
                 <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>`);
             
+            document.getElementById('pauseToggle').addEventListener('change', function() {
+                const totalInput = document.getElementById('adjTotalCost');
+                const totalLabel = document.getElementById('totalLabel');
+                if (this.checked) {
+                    totalInput.value = (parseFloat(carriedDue) + parseFloat(currentYearCost)).toFixed(2);
+                    totalLabel.innerText = 'সংশোধিত মোট হারি (টাকা)';
+                } else {
+                    totalInput.value = parseFloat(carriedDue).toFixed(2);
+                    totalLabel.innerText = 'সংশোধিত পূর্বের বকেয়া (টাকা)';
+                }
+            });
+
             document.getElementById('confirmManage').onclick = async () => {
                 const btn = document.getElementById('confirmManage'); showSpinner(btn);
                 const newPaused = !document.getElementById('pauseToggle').checked;
-                const newTotal = parseFloat(document.getElementById('adjTotalCost').value); const newPaid = parseFloat(document.getElementById('adjPaidAmount').value);
-                if (isNaN(newTotal) || isNaN(newPaid)) { hideSpinner(btn); return showToast('সঠিক সংখ্যা লিখুন'); }
+                const inputTotal = parseFloat(document.getElementById('adjTotalCost').value); const inputPaid = parseFloat(document.getElementById('adjPaidAmount').value);
+                if (isNaN(inputTotal) || isNaN(inputPaid)) { hideSpinner(btn); return showToast('সঠিক সংখ্যা লিখুন'); }
 
-                let finalTotal = newTotal; let finalPaid = newPaid; let finalDue = finalTotal - finalPaid;
-                const currentYearCost = (parseFloat(data.amount) / 33) * parseFloat(data.ratePer33);
+                let finalTotal, finalCarriedDue, finalDue;
 
-                if (newPaused && !yData.isPaused) {
-                    let carriedDue = finalTotal - currentYearCost; if (carriedDue < 0) carriedDue = 0;
-                    finalTotal = carriedDue; finalDue = finalTotal - finalPaid; if (finalDue < 0) finalDue = 0;
-                } else if (!newPaused && yData.isPaused) {
-                    finalTotal = finalTotal + currentYearCost; finalDue = finalTotal - finalPaid;
+                if (newPaused) {
+                    finalCarriedDue = inputTotal;
+                    finalTotal = finalCarriedDue;
+                    finalDue = finalTotal - inputPaid;
+                } else {
+                    finalTotal = inputTotal;
+                    finalCarriedDue = finalTotal - currentYearCost;
+                    finalDue = finalTotal - inputPaid;
                 }
                 
-                yearlyData[currentYear] = { ...yData, totalCost: finalTotal.toFixed(2), paidAmount: finalPaid.toFixed(2), dueAmount: finalDue.toFixed(2), isPaused: newPaused };
-                const history = data.history || []; history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'manage', paused: newPaused, total: finalTotal.toFixed(2), paid: finalPaid.toFixed(2) });
-                await updateDoc(ref, { totalCost: finalTotal.toFixed(2), paidAmount: finalPaid.toFixed(2), dueAmount: finalDue.toFixed(2), yearlyData: yearlyData, history: history });
+                if (finalDue < 0) finalDue = 0;
+                if (finalCarriedDue < 0) finalCarriedDue = 0;
+
+                yearlyData[currentYear] = { ...yData, carriedDue: finalCarriedDue.toFixed(2), totalCost: finalTotal.toFixed(2), paidAmount: inputPaid.toFixed(2), dueAmount: finalDue.toFixed(2), isPaused: newPaused };
+                const history = data.history || []; history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'manage', paused: newPaused, total: finalTotal.toFixed(2), paid: inputPaid.toFixed(2) });
+                await updateDoc(ref, { totalCost: finalTotal.toFixed(2), paidAmount: inputPaid.toFixed(2), dueAmount: finalDue.toFixed(2), yearlyData: yearlyData, history: history });
                 showToast('হিসাব আপডেট হয়েছে!', 'success'); document.getElementById('modalContainer').classList.add('hidden');
             };
         }
@@ -648,22 +646,30 @@
                 if(!newName) { hideSpinner(btn); return showToast('নতুন চাষীর নাম দিন'); }
                 const oldRef = doc(db, "leases", id); const oldSnap = await getDoc(oldRef); const oldData = oldSnap.data();
                 const q2 = query(collection(db, "leases"), where("farmerName", "==", newName), where("status", "==", "active")); const newFarmerSnap = await getDocs(q2);
+                
+                const oldYearlyData = oldData.yearlyData || {}; const oldYear = oldData.year; const oldYData = oldYearlyData[oldYear] || {};
+                const oldCarriedDue = oldYData.carriedDue !== undefined ? parseFloat(oldYData.carriedDue) : (parseFloat(oldData.totalCost) - (parseFloat(oldData.amount) / 33 * parseFloat(oldData.ratePer33)));
+                
                 const oldNewAmount = parseFloat(oldData.amount) - tAmount;
-                const oldFullCurrentCost = (parseFloat(oldData.amount) / 33) * parseFloat(oldData.ratePer33); const oldCarriedDue = parseFloat(oldData.totalCost) - oldFullCurrentCost;
-                const oldNewCurrentCost = (oldNewAmount / 33) * parseFloat(oldData.ratePer33); const oldNewTotal = oldCarriedDue + oldNewCurrentCost; const oldNewDue = oldNewTotal - parseFloat(oldData.paidAmount);
+                const oldNewCurrentCost = (oldNewAmount / 33) * parseFloat(oldData.ratePer33);
+                const oldNewTotal = oldCarriedDue + oldNewCurrentCost;
+                const oldNewDue = oldNewTotal - parseFloat(oldData.paidAmount);
+                
                 const oldHistory = oldData.history || []; oldHistory.push({ date: new Date().toLocaleDateString('bn-BD'), amount: tAmount, type: 'transfer_out', to: newName });
-                const oldYearlyData = oldData.yearlyData || {}; const oldYear = oldData.year;
-                if (oldYearlyData[oldYear]) { oldYearlyData[oldYear].totalCost = oldNewTotal.toFixed(2); oldYearlyData[oldYear].dueAmount = oldNewDue.toFixed(2); }
+                if (oldYearlyData[oldYear]) { oldYearlyData[oldYear].carriedDue = oldCarriedDue.toFixed(2); oldYearlyData[oldYear].totalCost = oldNewTotal.toFixed(2); oldYearlyData[oldYear].dueAmount = oldNewDue.toFixed(2); }
                 await updateDoc(oldRef, { amount: oldNewAmount, totalCost: oldNewTotal.toFixed(2), dueAmount: oldNewDue.toFixed(2), history: oldHistory, yearlyData: oldYearlyData });
+
                 if (!newFarmerSnap.empty) {
-                    const newDoc = newFarmerSnap.docs[0]; const newData = newDoc.data(); const newAmount = parseFloat(newData.amount) + tAmount; const newTotal = fmt((newAmount / 33) * parseFloat(newData.ratePer33));
+                    const newDoc = newFarmerSnap.docs[0]; const newData = newDoc.data(); const newAmount = parseFloat(newData.amount) + tAmount; const newCurrentCost = (newAmount / 33) * parseFloat(newData.ratePer33);
+                    const newYearlyData = newData.yearlyData || {}; const newYear = newData.year; const newYData = newYearlyData[newYear] || {};
+                    const newCarriedDue = newYData.carriedDue !== undefined ? parseFloat(newYData.carriedDue) : (parseFloat(newData.totalCost) - (parseFloat(newData.amount) / 33 * parseFloat(newData.ratePer33)));
+                    const newTotal = newCarriedDue + newCurrentCost;
                     const newHistory = newData.history || []; newHistory.push({ date: new Date().toLocaleDateString('bn-BD'), amount: tAmount, type: 'transfer_in', from: oldData.farmerName });
-                    const newYearlyData = newData.yearlyData || {}; const newYear = newData.year;
-                    if (newYearlyData[newYear]) { newYearlyData[newYear].totalCost = parseFloat(newTotal); newYearlyData[newYear].dueAmount = fmt(parseFloat(newTotal) - parseFloat(newData.paidAmount)); }
-                    await updateDoc(doc(db, "leases", newDoc.id), { amount: newAmount, totalCost: parseFloat(newTotal), dueAmount: fmt(parseFloat(newTotal) - parseFloat(newData.paidAmount)), history: newHistory, yearlyData: newYearlyData });
+                    if (newYearlyData[newYear]) { newYearlyData[newYear].carriedDue = newCarriedDue.toFixed(2); newYearlyData[newYear].totalCost = parseFloat(newTotal).toFixed(2); newYearlyData[newYear].dueAmount = (parseFloat(newTotal) - parseFloat(newData.paidAmount)).toFixed(2); }
+                    await updateDoc(doc(db, "leases", newDoc.id), { amount: newAmount, totalCost: parseFloat(newTotal).toFixed(2), dueAmount: (parseFloat(newTotal) - parseFloat(newData.paidAmount)).toFixed(2), history: newHistory, yearlyData: newYearlyData });
                 } else {
-                    const newTotal = fmt((tAmount / 33) * parseFloat(oldData.ratePer33)); const newYearlyData = {};
-                    newYearlyData[oldData.year] = { ratePer33: oldData.ratePer33, totalCost: parseFloat(newTotal), paidAmount: 0, dueAmount: parseFloat(newTotal), status: 'active', isPaused: false };
+                    const newTotal = fmt((tAmount / 33) * parseFloat(oldData.ratePer33));
+                    const newYearlyData = {}; newYearlyData[oldData.year] = { ratePer33: oldData.ratePer33, totalCost: parseFloat(newTotal), paidAmount: 0, dueAmount: parseFloat(newTotal), status: 'active', isPaused: false, carriedDue: 0 };
                     await addDoc(collection(db, "leases"), { farmerName: newName, amount: tAmount, ratePer33: oldData.ratePer33, cycleType: oldData.cycleType, year: oldData.year, totalCost: parseFloat(newTotal), paidAmount: 0, dueAmount: parseFloat(newTotal), status: 'active', history: [{ date: new Date().toLocaleDateString('bn-BD'), amount: tAmount, type: 'transfer_in', from: oldData.farmerName }], yearlyData: newYearlyData });
                 }
                 showToast('জমি সফলভাবে হস্তান্তর হয়েছে!', 'success'); document.getElementById('modalContainer').classList.add('hidden');
@@ -684,12 +690,13 @@
                 const newRate = parseFloat(document.getElementById('newRate').value); const newYear = normalizeYear(document.getElementById('editYear').value);
                 if(isNaN(newRate) || newRate <= 0 || !newYear) { hideSpinner(btn); return showToast('সঠিক তথ্য দিন'); }
                 const ref = doc(db, "leases", id); const snap = await getDoc(ref); const data = snap.data();
-                const newTotal = fmt((data.amount / 33) * newRate); const history = data.history || [];
-                history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'edit', oldYear: data.year, newYear: newYear, oldRate: data.ratePer33, newRate: newRate });
+                const newCost = (data.amount / 33) * newRate; const carriedDue = data.yearlyData?.[data.year]?.carriedDue || 0;
+                const newTotal = parseFloat(carriedDue) + newCost; const newDue = newTotal - parseFloat(data.paidAmount);
+                const history = data.history || []; history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'edit', oldYear: data.year, newYear: newYear, oldRate: data.ratePer33, newRate: newRate });
                 const yearlyData = data.yearlyData || {};
-                if (yearlyData[newYear]) { yearlyData[newYear].ratePer33 = newRate; yearlyData[newYear].totalCost = parseFloat(newTotal); yearlyData[newYear].dueAmount = fmt(parseFloat(newTotal) - yearlyData[newYear].paidAmount); } 
-                else { yearlyData[newYear] = { ratePer33: newRate, totalCost: parseFloat(newTotal), paidAmount: 0, dueAmount: parseFloat(newTotal), status: 'active', isPaused: false }; }
-                await updateDoc(ref, { ratePer33: newRate, year: newYear, totalCost: yearlyData[newYear].totalCost, paidAmount: yearlyData[newYear].paidAmount, dueAmount: yearlyData[newYear].dueAmount, history, yearlyData });
+                if (yearlyData[newYear]) { yearlyData[newYear].ratePer33 = newRate; yearlyData[newYear].totalCost = parseFloat(newTotal).toFixed(2); yearlyData[newYear].dueAmount = fmt(newDue); } 
+                else { yearlyData[newYear] = { ratePer33: newRate, totalCost: parseFloat(newTotal).toFixed(2), paidAmount: data.paidAmount, dueAmount: fmt(newDue), status: 'active', isPaused: false, carriedDue: parseFloat(carriedDue).toFixed(2) }; }
+                await updateDoc(ref, { ratePer33: newRate, year: newYear, totalCost: parseFloat(newTotal).toFixed(2), dueAmount: fmt(newDue), history, yearlyData });
                 expandedRows.add(id); showToast('দর এবং বছর আপডেট হয়েছে!', 'success'); document.getElementById('modalContainer').classList.add('hidden');
             };
         }
@@ -713,7 +720,7 @@
                 const yearlyData = data.yearlyData || {};
                 if (yearlyData[data.year]) yearlyData[data.year].status = 'transferred';
                 else yearlyData[data.year] = { ratePer33: data.ratePer33, totalCost: data.totalCost, paidAmount: data.paidAmount, dueAmount: oldDue, status: 'transferred' };
-                yearlyData[newYear] = { ratePer33: newRate, totalCost: fmt(totalNewCost), paidAmount: 0, dueAmount: fmt(totalNewCost), status: 'active', isPaused: false };
+                yearlyData[newYear] = { ratePer33: newRate, totalCost: fmt(totalNewCost), paidAmount: 0, dueAmount: fmt(totalNewCost), status: 'active', isPaused: false, carriedDue: fmt(oldDue) };
                 await updateDoc(ref, { year: newYear, ratePer33: newRate, totalCost: fmt(totalNewCost), paidAmount: 0, dueAmount: fmt(totalNewCost), status: 'active', history, yearlyData });
                 expandedRows.add(id); showToast('নতুন হিসাব বর্ষ সফলভাবে শুরু হয়েছে!', 'success'); document.getElementById('modalContainer').classList.add('hidden');
             };
