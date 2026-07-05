@@ -406,65 +406,53 @@
                 const carriedDueVal = currentYearData.carriedDue !== undefined ? parseFloat(currentYearData.carriedDue) : 0;
                 const carriedDueYearsStr = currentYearData.carriedDueYears || '';
                 
-                const yearLabel = carriedDueYearsStr ? `${carriedDueYearsStr} সালের` : 'পূর্বের';
-                const dueYearsLabel = `${yearLabel} মোট বকেয়া`;
-                const netDueYearsLabel = `${yearLabel} নিট বকেয়া`;
-                
                 if (lease.status === 'inactive' || isTransferred) tr.className = 'bg-red-50 text-red-400';
                 if (isPaused) tr.className = 'bg-orange-50 text-orange-500';
                 if (expandedRows.has(id)) tr.classList.add('expanded');
                 
+                // 3rd Column: Total Hari / Paid (No Net Due here)
                 let totalHtml = '';
                 if (isPaused) {
-                    totalHtml = `
-                        <div><span class="text-slate-400">${dueYearsLabel}:</span> <b class="text-slate-800">${fmt(lease.totalCost)} টাকা</b></div>
-                        <div><span class="text-slate-400">মোট জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)} টাকা</b></div>
-                    `;
-                    if (isPaid) {
-                        totalHtml += `<div class="mt-1"><span class="font-bold text-green-600 text-base">পরিশোধ</span></div>`;
-                    } else {
-                        totalHtml += `<div><span class="text-red-600 font-bold">${netDueYearsLabel} =</span> <b class="text-red-600">${fmt(lease.dueAmount)} টাকা</b></div>`;
-                    }
+                    totalHtml = `<div><span class="text-slate-400">মোট জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)} টাকা</b></div>`;
+                } else if (isTransferred || lease.status === 'inactive') {
+                    totalHtml = `<div><span class="text-slate-400">মোট হারি:</span> <b class="text-slate-800">${fmt(lease.totalCost)} টাকা</b></div>`;
                 } else if (carriedDueVal > 0) {
                     let activeDueLabel = carriedDueYearsStr ? `${carriedDueYearsStr} সালের বকেয়াসহ মোট হারি` : 'বকেয়াসহ মোট হারি';
                     totalHtml = `
                         <div><span class="text-indigo-600 font-bold">${activeDueLabel}:</span> <b class="text-indigo-600">${fmt(lease.totalCost)} টাকা</b></div>
                         <div><span class="text-slate-400">মোট জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)} টাকা</b></div>
                     `;
-                    if (isPaid) {
-                        totalHtml += `<div class="mt-1"><span class="font-bold text-green-600 text-base">পরিশোধ</span></div>`;
-                    } else {
-                        totalHtml += `<div><span class="text-red-600 font-bold">নিট বকেয়া =</span> <b class="text-red-600">${fmt(lease.dueAmount)} টাকা</b></div>`;
-                    }
                 } else {
                     totalHtml = `
                         <div><span class="text-slate-400">মোট হারি:</span> <b class="text-slate-800">${fmt(lease.totalCost)} টাকা</b></div>
                         <div><span class="text-slate-400">মোট জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)} টাকা</b></div>
                     `;
-                    if (isPaid) {
-                        totalHtml += `<div class="mt-1"><span class="font-bold text-green-600 text-base">পরিশোধ</span></div>`;
-                    } else {
-                        totalHtml += `<div><span class="text-red-600 font-bold">নিট বকেয়া =</span> <b class="text-red-600">${fmt(lease.dueAmount)} টাকা</b></div>`;
-                    }
                 }
 
+                // 4th Column: Due (Net Due goes here)
                 let dueHtml = '', collapsedDueHtml = '';
                 if (isPaused) {
                     if (isPaid) {
                         dueHtml = `<span class="font-bold text-green-600 text-base">পরিশোধ</span>`;
                         collapsedDueHtml = `<span class="collapsed-paid">পরিশোধ</span>`;
                     } else {
-                        dueHtml = `<span class="font-bold text-orange-500 text-base">${dueYearsLabel}: ${fmt(lease.dueAmount)}</span> <span class="text-xs">টাকা</span>`;
-                        collapsedDueHtml = `<span class="collapsed-paused">${dueYearsLabel}: ${fmt(lease.dueAmount)}</span>`;
+                        let netDueYearsLabel = carriedDueYearsStr ? `${carriedDueYearsStr} সালের নিট বকেয়া` : 'পূর্বের নিট বকেয়া';
+                        dueHtml = `<span class="font-bold text-orange-500 text-base">${netDueYearsLabel} = ${fmt(lease.dueAmount)}</span> <span class="text-xs">টাকা</span>`;
+                        collapsedDueHtml = `<span class="collapsed-paused">বকেয়া: ${fmt(lease.dueAmount)}</span>`;
                     }
-                } else if (isPaid && lease.status === 'active' && !isTransferred) {
-                    dueHtml = `<span class="font-bold text-green-600 text-base">পরিশোধ</span>`; collapsedDueHtml = `<span class="collapsed-paid">পরিশোধ</span>`;
+                } else if (isPaid && lease.status === 'active') {
+                    dueHtml = `<span class="font-bold text-green-600 text-base">পরিশোধ</span>`;
+                    collapsedDueHtml = `<span class="collapsed-paid">পরিশোধ</span>`;
                 } else if (isTransferred) {
-                    dueHtml = `<span class="text-indigo-600 text-xs font-bold">নতুন বছরে যোগ হয়েছে</span>`; collapsedDueHtml = `<span class="collapsed-transferred">ট্রান্সফার্ড</span>`;
+                    dueHtml = `<span class="text-indigo-600 text-xs font-bold">নতুন বছরে যোগ হয়েছে</span>`;
+                    collapsedDueHtml = `<span class="collapsed-transferred">ট্রান্সফার্ড</span>`;
                 } else if (lease.status === 'active') {
-                    dueHtml = `<span class="font-bold text-red-600 text-base">${fmt(lease.dueAmount)}</span> <span class="text-xs">টাকা</span><button data-id="${id}" data-name="${lease.farmerName}" data-year="${lease.year}" data-due="${lease.dueAmount}" class="adjustBtn block mt-1 text-xs text-indigo-500 hover:underline">নতুন বছরে নিন</button>`;
+                    dueHtml = `<span class="font-bold text-red-600 text-base">নিট বকেয়া = ${fmt(lease.dueAmount)}</span> <span class="text-xs">টাকা</span><button data-id="${id}" data-name="${lease.farmerName}" data-year="${lease.year}" data-due="${lease.dueAmount}" class="adjustBtn block mt-1 text-xs text-indigo-500 hover:underline">নতুন বছরে নিন</button>`;
                     collapsedDueHtml = `<span class="collapsed-due">বকেয়া: ${fmt(lease.dueAmount)}</span>`;
-                } else { dueHtml = `<span class="block text-xs text-red-400 mt-1">নিষ্ক্রিয়</span>`; collapsedDueHtml = `<span class="collapsed-due">নিষ্ক্রিয়</span>`; }
+                } else {
+                    dueHtml = `<span class="block text-xs text-red-400 mt-1">নিষ্ক্রিয়</span>`;
+                    collapsedDueHtml = `<span class="collapsed-due">নিষ্ক্রিয়</span>`;
+                }
 
                 tr.innerHTML = `
                     <td data-label="চাষীর নাম ও সাল" class="p-3 align-top">
@@ -483,7 +471,9 @@
                     <td data-label="মোট হারি / পরিশোধিত" class="p-3 align-top text-xs space-y-1 collapsible">
                         ${totalHtml}
                     </td>
-                    <td data-label="বকেয়া" class="p-3 align-top collapsible">${dueHtml}</td>
+                    <td data-label="বকেয়া" class="p-3 align-top collapsible">
+                        ${dueHtml}
+                    </td>
                     <td data-label="অ্যাকশন" class="p-3 align-top collapsible">
                         <div class="flex items-center gap-1 justify-end flex-wrap">
                             <button data-id="${id}" class="manageBtn text-slate-500 hover:bg-slate-100 p-2 rounded-lg transition" title="হিসাব ব্যবস্থাপনা">
