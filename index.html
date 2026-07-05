@@ -6,6 +6,8 @@
     <title>জমি লিজ ম্যানেজমেন্ট সিস্টেম</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Excel and PDF Export Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { font-family: 'Hind Siliguri', sans-serif; }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
@@ -296,7 +298,19 @@
                 <div class="min-h-screen bg-slate-100 flex flex-col">
                     <nav class="bg-slate-800 text-white p-4 flex justify-between items-center sticky top-0 z-10 shadow-md">
                         <div class="flex items-center gap-2"><svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21l1.65-3.8a9 9 0 113.4 2.9L3 21"></path></svg><h1 class="text-base md:text-xl font-bold">জমির লিজ ব্যবস্থাপনা</h1></div>
-                        <button id="logoutBtn" class="bg-red-500 text-white px-3 md:px-4 py-2 rounded-lg text-sm hover:bg-red-600 transition flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="hidden md:inline">লগআউট</span></button>
+                        <div class="flex items-center gap-2">
+                            <div class="relative" id="exportDropdownContainer">
+                                <button id="exportBtn" class="bg-cyan-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-cyan-700 transition flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                    <span class="hidden md:inline">রিপোর্ট</span>
+                                </button>
+                                <div id="exportDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border z-20 py-1">
+                                    <button id="exportPdfBtn" class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">PDF ডাউনলোড</button>
+                                    <button id="exportExcelBtn" class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">Excel (XLSX) ডাউনলোড</button>
+                                </div>
+                            </div>
+                            <button id="logoutBtn" class="bg-red-500 text-white px-3 md:px-4 py-2 rounded-lg text-sm hover:bg-red-600 transition flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="hidden md:inline">লগআউট</span></button>
+                        </div>
                     </nav>
                     <div class="container mx-auto p-3 md:p-6 flex-1">
                         <div class="bg-white p-4 md:p-6 rounded-xl shadow-sm mb-6 border border-slate-200">
@@ -335,6 +349,14 @@
             document.getElementById('leaseForm').addEventListener('submit', addLease);
             document.getElementById('searchInput').addEventListener('input', (e) => { currentPage = 1; renderTable(); });
             
+            // Export Dropdown Logic
+            const exportBtn = document.getElementById('exportBtn');
+            const exportDropdown = document.getElementById('exportDropdown');
+            exportBtn.addEventListener('click', (e) => { e.stopPropagation(); exportDropdown.classList.toggle('hidden'); });
+            window.addEventListener('click', () => exportDropdown.classList.add('hidden'));
+            document.getElementById('exportPdfBtn').addEventListener('click', () => exportData('pdf'));
+            document.getElementById('exportExcelBtn').addEventListener('click', () => exportData('excel'));
+
             document.getElementById('leasesTable').addEventListener('click', (e) => {
                 const btn = e.target.closest('button');
                 if (btn) {
@@ -372,7 +394,73 @@
             loadLeases();
         }
 
-        // স্বয়ংক্রিয়ভাবে নতুন বছরে বকেয়া ট্রান্সফার (মাস অনুযায়ী)
+        async function exportData(type) {
+            showToast('ডেটা প্রস্তুত হচ্ছে...', 'info');
+            const snap = await getDocs(collection(db, "leases"));
+            let allData = [];
+            let historyData = [];
+            
+            snap.forEach(d => {
+                const data = d.data();
+                allData.push({
+                    name: data.farmerName,
+                    year: data.year,
+                    amount: data.amount,
+                    rate: data.ratePer33,
+                    total: data.totalCost,
+                    paid: data.paidAmount,
+                    due: data.dueAmount,
+                    status: data.status === 'deleted' ? 'ডিলিট করা' : (data.yearlyData?.[data.year]?.isPaused ? 'স্থগিত' : 'সক্রিয়')
+                });
+                
+                (data.history || []).forEach(h => {
+                    let desc = '';
+                    if (h.type === 'payment') desc = `${h.year || ''} সালের জমা: ${h.amount} টাকা`;
+                    else if (h.type === 'transfer_out') desc = `${h.amount} শতাংশ ${h.to} কে হস্তান্তর`;
+                    else if (h.type === 'transfer_in') desc = `${h.from} থেকে ${h.amount} শতাংশ পেয়েছেন`;
+                    else if (h.type === 'edit') desc = `দর পরিবর্তন: ${h.oldRate} -> ${h.newRate}`;
+                    else if (h.type === 'manage') desc = h.paused ? 'হিসাব স্থগিত' : 'হিসাব চালু';
+                    else if (h.type === 'new_year') desc = `${h.fromYear} থেকে ${h.toYear} সালে ট্রান্সফার (বকেয়া: ${h.carriedDue})`;
+                    else if (h.type === 'deleted') desc = 'হিসাব ডিলিট করা হয়েছে';
+                    
+                    historyData.push({ name: data.farmerName, date: h.date, description: desc });
+                });
+            });
+
+            if (type === 'excel') {
+                const wb = XLSX.utils.book_new();
+                const ws1 = XLSX.utils.json_to_sheet(allData.map(d => ({
+                    "চাষীর নাম": d.name, "বর্তমান সাল": d.year, "জমির পরিমাণ": d.amount, "দর": d.rate,
+                    "মোট হারি": d.total, "জমা": d.paid, "বকেয়া": d.due, "স্ট্যাটাস": d.status
+                })));
+                XLSX.utils.book_append_sheet(wb, ws1, "সারাংশ");
+                const ws2 = XLSX.utils.json_to_sheet(historyData.map(d => ({
+                    "চাষীর নাম": d.name, "তারিখ": d.date, "বিবরণ": d.description
+                })));
+                XLSX.utils.book_append_sheet(wb, ws2, "বিস্তারিত ইতিহাস");
+                XLSX.writeFile(wb, "জমির_হিসাব_রিপোর্ট.xlsx");
+            } else if (type === 'pdf') {
+                const win = window.open('', '_blank');
+                let html = `<html><head><title>জমির হিসাব রিপোর্ট</title><style>
+                    body { font-family: 'Hind Siliguri', sans-serif; padding: 20px; }
+                    h1 { text-align: center; color: #1e293b; } h2 { margin-top: 30px; border-bottom: 2px solid #cbd5e1; padding-bottom: 5px; color: #334155; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+                    th, td { border: 1px solid #cbd5e1; padding: 6px; text-align: left; }
+                    th { background-color: #f1f5f9; font-weight: bold; }
+                </style><link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600&display=swap" rel="stylesheet"></head><body>
+                <h1>জমির হিসাব ব্যবস্থাপনা রিপোর্ট</h1>
+                <p style="text-align:center; color:#64748b;">তারিখ: ${new Date().toLocaleDateString('bn-BD')}</p>
+                <h2>১. সারাংশ</h2><table><tr><th>নাম</th><th>সাল</th><th>জমি</th><th>দর</th><th>মোট হারি</th><th>জমা</th><th>বকেয়া</th><th>স্ট্যাটাস</th></tr>`;
+                allData.forEach(d => { html += `<tr><td>${d.name}</td><td>${d.year}</td><td>${d.amount}</td><td>${d.rate}</td><td>${d.total}</td><td>${d.paid}</td><td>${d.due}</td><td>${d.status}</td></tr>`; });
+                html += `</table><h2>২. বিস্তারিত ইতিহাস</h2><table><tr><th>নাম</th><th>তারিখ</th><th>বিবরণ</th></tr>`;
+                historyData.forEach(d => { html += `<tr><td>${d.name}</td><td>${d.date}</td><td>${d.description}</td></tr>`; });
+                html += `</table><script>window.onload = function() { window.print(); }<\/script></body></html>`;
+                win.document.write(html);
+                win.document.close();
+            }
+            showToast('রিপোর্ট ডাউনলোড হয়েছে!', 'success');
+        }
+
         async function autoRollover() {
             let currentYear = new Date().getFullYear();
             let currentMonth = new Date().getMonth();
@@ -398,19 +486,13 @@
 
                         while (parseInt(year) < activeCycleYear) {
                             let nextYear = (parseInt(year) + 1).toString();
-                            
-                            if (yearlyData[nextYear]) {
-                                year = nextYear;
-                                continue; // সাল আগে থেকেই তৈরি আছে
-                            }
+                            if (yearlyData[nextYear]) { year = nextYear; continue; }
                             
                             let currentDue = parseFloat(lease.dueAmount);
                             if (currentDue < 0) currentDue = 0;
-                            
-                            let nextCarriedDue = currentDue; // বকেয়া থাকলে যুক্ত হবে, নাহলে 0
+                            let nextCarriedDue = currentDue; 
                             let oldCarriedDueYears = yearlyData[year]?.carriedDueYears || '';
                             let newCarriedDueYears = nextCarriedDue > 0 ? (oldCarriedDueYears ? `${oldCarriedDueYears}, ${year}` : year) : '';
-                            
                             let amount = yearlyData[year]?.amount !== undefined ? parseFloat(yearlyData[year].amount) : parseFloat(lease.amount);
                             let rate = yearlyData[year]?.ratePer33 !== undefined ? parseFloat(yearlyData[year].ratePer33) : parseFloat(lease.ratePer33);
                             let nextCost = (amount / 33) * rate;
@@ -418,70 +500,34 @@
                             
                             if (yearlyData[year]) yearlyData[year].status = 'transferred';
                             else yearlyData[year] = { ratePer33: rate, amount: amount, totalCost: parseFloat(lease.totalCost).toFixed(2), paidAmount: parseFloat(lease.paidAmount).toFixed(2), dueAmount: currentDue.toFixed(2), status: 'transferred' };
-                            
-                            yearlyData[nextYear] = { 
-                                ratePer33: rate, 
-                                amount: amount, 
-                                totalCost: nextTotal.toFixed(2), 
-                                paidAmount: 0, 
-                                dueAmount: nextTotal.toFixed(2), 
-                                status: 'active', 
-                                isPaused: false, 
-                                carriedDue: nextCarriedDue.toFixed(2), 
-                                carriedDueYears: newCarriedDueYears 
-                            };
-                            
+                            yearlyData[nextYear] = { ratePer33: rate, amount: amount, totalCost: nextTotal.toFixed(2), paidAmount: 0, dueAmount: nextTotal.toFixed(2), status: 'active', isPaused: false, carriedDue: nextCarriedDue.toFixed(2), carriedDueYears: newCarriedDueYears };
                             history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'new_year', fromYear: year, toYear: nextYear, carriedDue: nextCarriedDue.toFixed(2) });
                             
-                            // লুপের পরবর্তী ইটারেশনের জন্য lease অবজেক্ট আপডেট
-                            lease.year = nextYear;
-                            lease.totalCost = nextTotal.toFixed(2);
-                            lease.paidAmount = 0;
-                            lease.dueAmount = nextTotal.toFixed(2);
-                            lease.ratePer33 = rate;
-                            lease.amount = amount;
-                            
-                            year = nextYear;
-                            updated = true;
+                            lease.year = nextYear; lease.totalCost = nextTotal.toFixed(2); lease.paidAmount = 0; lease.dueAmount = nextTotal.toFixed(2); lease.ratePer33 = rate; lease.amount = amount;
+                            year = nextYear; updated = true;
                         }
-                        
-                        if (updated) {
-                            updates.push(updateDoc(doc(db, "leases", lease.id), {
-                                year: year,
-                                ratePer33: lease.ratePer33,
-                                amount: lease.amount,
-                                totalCost: lease.totalCost,
-                                paidAmount: 0,
-                                dueAmount: lease.dueAmount,
-                                history: history,
-                                yearlyData: yearlyData
-                            }));
-                        }
+                        if (updated) updates.push(updateDoc(doc(db, "leases", lease.id), { year: year, ratePer33: lease.ratePer33, amount: lease.amount, totalCost: lease.totalCost, paidAmount: 0, dueAmount: lease.dueAmount, history: history, yearlyData: yearlyData }));
                     }
                 }
             }
-            
-            if (updates.length > 0) {
-                await Promise.all(updates);
-                showToast(`${updates.length} টি হিসাব স্বয়ংক্রিয়ভাবে নতুন হিসাব বর্ষে আপডেট হয়েছে।`, 'info');
-            }
+            if (updates.length > 0) { await Promise.all(updates); showToast(`${updates.length} টি হিসাব স্বয়ংক্রিয়ভাবে নতুন হিসাব বর্ষে আপডেট হয়েছে।`, 'info'); }
         }
 
         function loadLeases() {
             const q = collection(db, "leases");
             onSnapshot(q, (snapshot) => {
-                allLeases = []; snapshot.forEach(d => allLeases.push({ id: d.id, ...d.data() }));
-                
-                autoRollover(); // মাস অনুযায়ী নতুন সালে ট্রান্সফার হবে
-                
+                allLeases = []; 
+                snapshot.forEach(d => {
+                    const data = d.data();
+                    if (data.status !== 'deleted') { // ডিলিট করা হিসাব তালিকায় দেখাবে না
+                        allLeases.push({ id: d.id, ...data });
+                    }
+                });
+                autoRollover(); 
                 for (let lease of allLeases) {
                     if (lease.status === 'active') {
                         const yearlyData = lease.yearlyData || {}; let maxYear = 0;
-                        for (let y in yearlyData) {
-                            if (yearlyData[y].status === 'active' || yearlyData[y].isPaused === true) {
-                                let yNum = parseInt(y); if (yNum > maxYear) maxYear = yNum;
-                            }
-                        }
+                        for (let y in yearlyData) { if (yearlyData[y].status === 'active' || yearlyData[y].isPaused === true) { let yNum = parseInt(y); if (yNum > maxYear) maxYear = yNum; } }
                         if (maxYear > 0) {
                             let maxYearStr = maxYear.toString();
                             if (lease.year !== maxYearStr) {
@@ -512,6 +558,9 @@
                 const isTransferred = currentYearData.status === 'transferred'; const isPaused = currentYearData.isPaused === true; const isPaid = parseFloat(lease.dueAmount) === 0;
                 const carriedDueVal = currentYearData.carriedDue !== undefined ? parseFloat(currentYearData.carriedDue) : 0;
                 const carriedDueYearsStr = currentYearData.carriedDueYears || '';
+                const yearLabel = carriedDueYearsStr ? `${carriedDueYearsStr} সালের` : 'পূর্বের';
+                const dueYearsLabel = `${yearLabel} মোট বকেয়া`;
+                const netDueYearsLabel = `${yearLabel} নিট বকেয়া`;
                 
                 if (lease.status === 'inactive' || isTransferred) tr.className = 'bg-red-50 text-red-400';
                 if (isPaused) tr.className = 'bg-orange-50 text-orange-500';
@@ -519,84 +568,56 @@
                 
                 let totalHtml = '';
                 if (isPaused) {
-                    totalHtml = `<div><span class="text-slate-400">মোট জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)} টাকা</b></div>`;
+                    const currentAmount = currentYearData.amount !== undefined ? parseFloat(currentYearData.amount) : parseFloat(lease.amount);
+                    const currentRate = currentYearData.ratePer33 !== undefined ? parseFloat(currentYearData.ratePer33) : parseFloat(lease.ratePer33);
+                    const remainingLandCost = (currentAmount / 33) * currentRate;
+                    totalHtml = `
+                        <div><span class="text-slate-400">অবশিষ্ট জমির হারি:</span> <b>${fmt(remainingLandCost)} টাকা</b></div>
+                        <div><span class="text-slate-400">${dueYearsLabel}:</span> <b>${fmt(lease.totalCost)} টাকা</b></div>
+                        <div><span class="text-slate-400">মোট জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)} টাকা</b></div>`;
+                    if (isPaid) { totalHtml += `<div class="mt-1"><span class="font-bold text-green-600 text-base">পরিশোধ</span></div>`; } 
+                    else { totalHtml += `<div><span class="text-red-600 font-bold">${netDueYearsLabel} =</span> <b class="text-red-600">${fmt(lease.dueAmount)} টাকা</b></div>`; }
                 } else if (isTransferred || lease.status === 'inactive') {
                     totalHtml = `<div><span class="text-slate-400">মোট হারি:</span> <b class="text-slate-800">${fmt(lease.totalCost)} টাকা</b></div>`;
                 } else if (carriedDueVal > 0) {
                     let activeDueLabel = carriedDueYearsStr ? `${carriedDueYearsStr} সালের বকেয়াসহ মোট হারি` : 'বকেয়াসহ মোট হারি';
-                    totalHtml = `
-                        <div><span class="text-indigo-600 font-bold">${activeDueLabel}:</span> <b class="text-indigo-600">${fmt(lease.totalCost)} টাকা</b></div>
-                        <div><span class="text-slate-400">মোট জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)} টাকা</b></div>
-                    `;
+                    totalHtml = `<div><span class="text-indigo-600 font-bold">${activeDueLabel}:</span> <b class="text-indigo-600">${fmt(lease.totalCost)} টাকা</b></div><div><span class="text-slate-400">মোট জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)} টাকা</b></div>`;
+                    if (isPaid) { totalHtml += `<div class="mt-1"><span class="font-bold text-green-600 text-base">পরিশোধ</span></div>`; } 
+                    else { totalHtml += `<div><span class="text-red-600 font-bold">নিট বকেয়া =</span> <b class="text-red-600">${fmt(lease.dueAmount)} টাকা</b></div>`; }
                 } else {
-                    totalHtml = `
-                        <div><span class="text-slate-400">মোট হারি:</span> <b class="text-slate-800">${fmt(lease.totalCost)} টাকা</b></div>
-                        <div><span class="text-slate-400">মোট জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)} টাকা</b></div>
-                    `;
+                    totalHtml = `<div><span class="text-slate-400">মোট হারি:</span> <b class="text-slate-800">${fmt(lease.totalCost)} টাকা</b></div><div><span class="text-slate-400">মোট জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)} টাকা</b></div>`;
+                    if (isPaid) { totalHtml += `<div class="mt-1"><span class="font-bold text-green-600 text-base">পরিশোধ</span></div>`; } 
+                    else { totalHtml += `<div><span class="text-red-600 font-bold">নিট বকেয়া =</span> <b class="text-red-600">${fmt(lease.dueAmount)} টাকা</b></div>`; }
                 }
 
                 let dueHtml = '', collapsedDueHtml = '';
                 if (isPaused) {
-                    if (isPaid) {
-                        dueHtml = `<span class="font-bold text-green-600 text-base">পরিশোধ</span>`;
-                        collapsedDueHtml = `<span class="collapsed-paid">পরিশোধ</span>`;
-                    } else {
-                        let netDueYearsLabel = carriedDueYearsStr ? `${carriedDueYearsStr} সালের নিট বকেয়া` : 'পূর্বের নিট বকেয়া';
-                        dueHtml = `<span class="font-bold text-orange-500 text-base">${netDueYearsLabel} = ${fmt(lease.dueAmount)}</span> <span class="text-xs">টাকা</span>`;
-                        collapsedDueHtml = `<span class="collapsed-paused">বকেয়া: ${fmt(lease.dueAmount)}</span>`;
-                    }
+                    if (isPaid) { dueHtml = `<span class="font-bold text-green-600 text-base">পরিশোধ</span>`; collapsedDueHtml = `<span class="collapsed-paid">পরিশোধ</span>`; } 
+                    else { dueHtml = `<span class="font-bold text-orange-500 text-base">${netDueYearsLabel} = ${fmt(lease.dueAmount)}</span> <span class="text-xs">টাকা</span>`; collapsedDueHtml = `<span class="collapsed-paused">বকেয়া: ${fmt(lease.dueAmount)}</span>`; }
                 } else if (isPaid && lease.status === 'active') {
-                    dueHtml = `<span class="font-bold text-green-600 text-base">পরিশোধ</span>`;
-                    collapsedDueHtml = `<span class="collapsed-paid">পরিশোধ</span>`;
+                    dueHtml = `<span class="font-bold text-green-600 text-base">পরিশোধ</span>`; collapsedDueHtml = `<span class="collapsed-paid">পরিশোধ</span>`;
                 } else if (isTransferred) {
-                    dueHtml = `<span class="text-indigo-600 text-xs font-bold">নতুন বছরে যোগ হয়েছে</span>`;
-                    collapsedDueHtml = `<span class="collapsed-transferred">ট্রান্সফার্ড</span>`;
+                    dueHtml = `<span class="text-indigo-600 text-xs font-bold">নতুন বছরে যোগ হয়েছে</span>`; collapsedDueHtml = `<span class="collapsed-transferred">ট্রান্সফার্ড</span>`;
                 } else if (lease.status === 'active') {
-                    dueHtml = `<span class="font-bold text-red-600 text-base">নিট বকেয়া = ${fmt(lease.dueAmount)}</span> <span class="text-xs">টাকা</span><button data-id="${id}" data-name="${lease.farmerName}" data-year="${lease.year}" data-due="${lease.dueAmount}" class="adjustBtn block mt-1 text-xs text-indigo-500 hover:underline">নতুন বছরে নিন</button>`;
-                    collapsedDueHtml = `<span class="collapsed-due">বকেয়া: ${fmt(lease.dueAmount)}</span>`;
-                } else {
-                    dueHtml = `<span class="block text-xs text-red-400 mt-1">নিষ্ক্রিয়</span>`;
-                    collapsedDueHtml = `<span class="collapsed-due">নিষ্ক্রিয়</span>`;
-                }
+                    dueHtml = `<span class="font-bold text-red-600 text-base">নিট বকেয়া = ${fmt(lease.dueAmount)}</span> <span class="text-xs">টাকা</span><button data-id="${id}" data-name="${lease.farmerName}" data-year="${lease.year}" data-due="${lease.dueAmount}" class="adjustBtn block mt-1 text-xs text-indigo-500 hover:underline">নতুন বছরে নিন</button>`; collapsedDueHtml = `<span class="collapsed-due">বকেয়া: ${fmt(lease.dueAmount)}</span>`;
+                } else { dueHtml = `<span class="block text-xs text-red-400 mt-1">নিষ্ক্রিয়</span>`; collapsedDueHtml = `<span class="collapsed-due">নিষ্ক্রিয়</span>`; }
 
                 tr.innerHTML = `
                     <td data-label="চাষীর নাম ও সাল" class="p-3 align-top">
-                        <div class="collapsed-view">
-                            <div><span class="collapsed-name" data-name="${lease.farmerName}">${lease.farmerName}</span><span class="collapsed-year">${lease.year} (${lease.cycleType})</span></div>
-                            <span class="collapsed-amount">জমি: ${lease.amount} শতাংশ</span>${collapsedDueHtml}
-                        </div>
-                        <div class="expanded-view-content">
-                            <span class="farmer-name text-red-600 font-bold cursor-pointer block" data-name="${lease.farmerName}">${lease.farmerName}</span>
-                            <div class="flex items-center gap-1 mt-1"><input type="text" value="${lease.year}" data-id="${id}" class="yearInput text-xs text-cyan-600 font-bold bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 w-16 focus:outline-none p-0"><span class="text-xs text-cyan-600 font-bold">(${lease.cycleType})</span></div>
-                        </div>
+                        <div class="collapsed-view"><div><span class="collapsed-name" data-name="${lease.farmerName}">${lease.farmerName}</span><span class="collapsed-year">${lease.year} (${lease.cycleType})</span></div><span class="collapsed-amount">জমি: ${lease.amount} শতাংশ</span>${collapsedDueHtml}</div>
+                        <div class="expanded-view-content"><span class="farmer-name text-red-600 font-bold cursor-pointer block" data-name="${lease.farmerName}">${lease.farmerName}</span><div class="flex items-center gap-1 mt-1"><input type="text" value="${lease.year}" data-id="${id}" class="yearInput text-xs text-cyan-600 font-bold bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 w-16 focus:outline-none p-0"><span class="text-xs text-cyan-600 font-bold">(${lease.cycleType})</span></div></div>
                     </td>
-                    <td data-label="জমি / দর" class="p-3 align-top text-xs space-y-1 collapsible">
-                        <div><span class="text-slate-400">জমি:</span> <b>${lease.amount}</b> শতাংশ</div><div><span class="text-slate-400">দর:</span> <b>${lease.ratePer33}</b> টাকা</div>
-                    </td>
-                    <td data-label="মোট হারি / পরিশোধিত" class="p-3 align-top text-xs space-y-1 collapsible">
-                        ${totalHtml}
-                    </td>
-                    <td data-label="বকেয়া" class="p-3 align-top collapsible">
-                        ${dueHtml}
-                    </td>
+                    <td data-label="জমি / দর" class="p-3 align-top text-xs space-y-1 collapsible"><div><span class="text-slate-400">জমি:</span> <b>${lease.amount}</b> শতাংশ</div><div><span class="text-slate-400">দর:</span> <b>${lease.ratePer33}</b> টাকা</div></td>
+                    <td data-label="মোট হারি / পরিশোধিত" class="p-3 align-top text-xs space-y-1 collapsible">${totalHtml}</td>
+                    <td data-label="বকেয়া" class="p-3 align-top collapsible">${dueHtml}</td>
                     <td data-label="অ্যাকশন" class="p-3 align-top collapsible">
                         <div class="flex items-center gap-1 justify-end flex-wrap">
-                            <button data-id="${id}" class="manageBtn text-slate-500 hover:bg-slate-100 p-2 rounded-lg transition" title="হিসাব ব্যবস্থাপনা">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                            </button>
+                            <button data-id="${id}" class="manageBtn text-slate-500 hover:bg-slate-100 p-2 rounded-lg transition" title="হিসাব ব্যবস্থাপনা"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></button>
                             ${(lease.status === 'active' && !isTransferred) ? `
-                            <button data-id="${id}" data-name="${lease.farmerName}" class="payBtn text-green-500 hover:bg-green-100 p-2 rounded-lg transition" title="পরিশোধ">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            </button>
-                            <button data-id="${id}" data-amount="${lease.amount}" class="transferBtn text-yellow-500 hover:bg-yellow-100 p-2 rounded-lg transition" title="ছেড়ে দিন">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-                            </button>
-                            <button data-id="${id}" data-year="${lease.year}" data-rate="${lease.ratePer33}" class="editBtn text-blue-500 hover:bg-blue-100 p-2 rounded-lg transition" title="এডিট দর">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                            </button>` : ''}
-                            <button data-id="${id}" class="delBtn text-red-500 hover:bg-red-100 p-2 rounded-lg transition" title="ডিলিট">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            </button>
+                            <button data-id="${id}" data-name="${lease.farmerName}" class="payBtn text-green-500 hover:bg-green-100 p-2 rounded-lg transition" title="পরিশোধ"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></button>
+                            <button data-id="${id}" data-amount="${lease.amount}" class="transferBtn text-yellow-500 hover:bg-yellow-100 p-2 rounded-lg transition" title="ছেড়ে দিন"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg></button>
+                            <button data-id="${id}" data-year="${lease.year}" data-rate="${lease.ratePer33}" class="editBtn text-blue-500 hover:bg-blue-100 p-2 rounded-lg transition" title="এডিট দর"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>` : ''}
+                            <button data-id="${id}" class="delBtn text-red-500 hover:bg-red-100 p-2 rounded-lg transition" title="ডিলিট"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
                         </div>
                     </td>`;
                 tbody.appendChild(tr);
@@ -618,8 +639,16 @@
         }
 
         async function handleDelete(id) {
-            const isConfirmed = await customConfirm("আপনি কি এই হিসাবটি ডিলিট করতে চান?", "delete");
-            if (isConfirmed) { try { await deleteDoc(doc(db, "leases", id)); showToast('হিসাব ডিলিট করা হয়েছে!', 'success'); } catch(err) { showToast(cleanError(err), 'error'); } }
+            const isConfirmed = await customConfirm("আপনি কি এই হিসাবটি ডিলিট করতে চান? ডিলিট করলে এটি তালিকা থেকে চলে যাবে, তবে রিপোর্টে ইতিহাস থাকবে।", "delete");
+            if (isConfirmed) {
+                try {
+                    const ref = doc(db, "leases", id); const snap = await getDoc(ref); const data = snap.data();
+                    const history = data.history || [];
+                    history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'deleted', note: 'হিসাব ডিলিট করা হয়েছে' });
+                    await updateDoc(ref, { status: 'deleted', history }); // সফট-ডিলিট
+                    showToast('হিসাব ডিলিট করা হয়েছে!', 'success');
+                } catch(err) { showToast(cleanError(err), 'error'); }
+            }
         }
 
         function openModal(htmlContent) {
@@ -630,99 +659,38 @@
 
         async function openManageAccountModal(id) {
             const ref = doc(db, "leases", id); const snap = await getDoc(ref); const data = snap.data(); const currentYear = data.year; const yearlyData = data.yearlyData || {}; const yData = yearlyData[currentYear] || {}; const isPaused = yData.isPaused === true;
-            
             const currentAmount = yData.amount !== undefined && yData.amount !== '' ? parseFloat(yData.amount) : (data.amount !== undefined && data.amount !== '' ? parseFloat(data.amount) : 0);
             const currentRate = yData.ratePer33 !== undefined && yData.ratePer33 !== '' ? parseFloat(yData.ratePer33) : (data.ratePer33 !== undefined && data.ratePer33 !== '' ? parseFloat(data.ratePer33) : 0);
             const currentYearCost = (currentAmount / 33) * currentRate; 
-            
-            // মূল carriedDue এর পরিবর্তে বর্তমান অবস্থার উপর ভিত্তি করে বাকি carriedDue বের করা হচ্ছে
             const currentDue = parseFloat(data.dueAmount);
             const actualCarriedDue = isPaused ? currentDue : Math.max(0, currentDue - currentYearCost);
-            
             const carriedDueYears = yData.carriedDueYears || '';
             const isDuePaid = currentDue === 0;
-
             const yearLabel = carriedDueYears ? `${carriedDueYears} সালের` : 'পূর্বের';
             const dueYearsLabel = `${yearLabel} মোট বকেয়া`;
             const netDueYearsLabel = `${yearLabel} নিট বকেয়া`;
-
             let manageTotalLabel = actualCarriedDue > 0 ? (carriedDueYears ? `${carriedDueYears} সালের বকেয়াসহ মোট হারি` : 'বকেয়াসহ মোট হারি') : 'মোট হারি';
-
-            let manageInfoHTML = `
-                <div class="bg-slate-50 p-3 rounded-lg mb-4 text-sm space-y-1">
-                    <div class="flex justify-between text-slate-500"><span>জমির পরিমাণ:</span> <b>${currentAmount} শতাংশ</b></div>
-                    <div class="flex justify-between text-slate-500"><span>প্রতি ৩৩ শতাংশ দর:</span> <b>${currentRate} টাকা</b></div>
-                    <div class="flex justify-between text-slate-500"><span>জমির হারি:</span> <b>${fmt(currentYearCost)} টাকা</b></div>`;
-
+            let manageInfoHTML = `<div class="bg-slate-50 p-3 rounded-lg mb-4 text-sm space-y-1"><div class="flex justify-between text-slate-500"><span>জমির পরিমাণ:</span> <b>${currentAmount} শতাংশ</b></div><div class="flex justify-between text-slate-500"><span>প্রতি ৩৩ শতাংশ দর:</span> <b>${currentRate} টাকা</b></div><div class="flex justify-between text-slate-500"><span>অবশিষ্ট জমির হারি:</span> <b>${fmt(currentYearCost)} টাকা</b></div>`;
             if (isPaused) {
-                manageInfoHTML += `
-                    <div class="flex justify-between text-slate-500"><span>${dueYearsLabel}:</span> <b>${fmt(data.totalCost)} টাকা</b></div>
-                    <div class="flex justify-between text-slate-500"><span>মোট জমা:</span> <b class="text-green-600">${fmt(data.paidAmount)} টাকা</b></div>
-                    <div class="flex justify-between text-slate-500"><span>${netDueYearsLabel}:</span> <b class="text-red-600">${isDuePaid ? 'পরিশোধ' : fmt(data.dueAmount) + ' টাকা'}</b></div>
-                </div>`;
+                manageInfoHTML += `<div class="flex justify-between text-slate-500"><span>${dueYearsLabel}:</span> <b>${fmt(data.totalCost)} টাকা</b></div><div class="flex justify-between text-slate-500"><span>মোট জমা:</span> <b class="text-green-600">${fmt(data.paidAmount)} টাকা</b></div><div class="flex justify-between text-slate-500"><span>${netDueYearsLabel}:</span> <b class="text-red-600">${isDuePaid ? 'পরিশোধ' : fmt(data.dueAmount) + ' টাকা'}</b></div></div>`;
             } else {
-                manageInfoHTML += `
-                    <div class="flex justify-between text-slate-500"><span>${dueYearsLabel}:</span> <b>${actualCarriedDue > 0 ? fmt(actualCarriedDue) + ' টাকা' : 'নেই'}</b></div>
-                    <div class="flex justify-between text-slate-500"><span>${manageTotalLabel}:</span> <b class="text-indigo-600">${fmt(data.totalCost)} টাকা</b></div>
-                    <div class="flex justify-between text-slate-500"><span>মোট জমা:</span> <b class="text-green-600">${fmt(data.paidAmount)} টাকা</b></div>
-                    <div class="flex justify-between text-slate-500"><span>নিট বকেয়া:</span> <b class="text-red-600">${isDuePaid ? 'পরিশোধ' : fmt(data.dueAmount) + ' টাকা'}</b></div>
-                </div>`;
+                manageInfoHTML += `<div class="flex justify-between text-slate-500"><span>${dueYearsLabel}:</span> <b>${actualCarriedDue > 0 ? fmt(actualCarriedDue) + ' টাকা' : 'নেই'}</b></div><div class="flex justify-between text-slate-500"><span>${manageTotalLabel}:</span> <b class="text-indigo-600">${fmt(data.totalCost)} টাকা</b></div><div class="flex justify-between text-slate-500"><span>মোট জমা:</span> <b class="text-green-600">${fmt(data.paidAmount)} টাকা</b></div><div class="flex justify-between text-slate-500"><span>নিট বকেয়া:</span> <b class="text-red-600">${isDuePaid ? 'পরিশোধ' : fmt(data.dueAmount) + ' টাকা'}</b></div></div>`;
             }
-
-            openModal(`
-                <h3 class="text-lg font-bold mb-4 text-slate-800">হিসাব ব্যবস্থাপনা (${data.farmerName})</h3>
-                <div class="flex items-center justify-between bg-slate-50 p-3 rounded-lg mb-4">
-                    <span class="text-sm font-bold text-slate-700">চলতি বছরের হিসাব চালু রাখুন</span>
-                    <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
-                        <input type="checkbox" name="pauseToggle" id="pauseToggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" ${!isPaused ? 'checked' : ''}/>
-                        <label for="pauseToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
-                    </div>
-                </div>
-                ${manageInfoHTML}
-                <div class="space-y-3 border-t pt-4">
-                    <p class="text-xs text-slate-500 font-bold">ভুল এন্ট্রি সংশোধন (যদি প্রয়োজন হয়)</p>
-                    <div>
-                        <label id="totalLabel" class="text-xs text-slate-500">${isPaused ? 'সংশোধিত পূর্বের বকেয়া (টাকা)' : 'সংশোধিত মোট হারি (টাকা)'}</label>
-                        <input type="number" id="adjTotalCost" value="${isPaused ? currentDue : data.totalCost}" class="w-full p-2 border rounded-lg mt-1" step="0.01">
-                    </div>
-                    <div>
-                        <label class="text-xs text-slate-500">সংশোধিত জমা পরিমাণ (টাকা)</label>
-                        <input type="number" id="adjPaidAmount" value="${data.paidAmount}" class="w-full p-2 border rounded-lg mt-1" step="0.01">
-                    </div>
-                </div>
-                <button id="confirmManage" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700 flex justify-center mt-6">আপডেট সেভ করুন</button>
-                <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>`);
-            
+            openModal(`<h3 class="text-lg font-bold mb-4 text-slate-800">হিসাব ব্যবস্থাপনা (${data.farmerName})</h3><div class="flex items-center justify-between bg-slate-50 p-3 rounded-lg mb-4"><span class="text-sm font-bold text-slate-700">চলতি বছরের হিসাব চালু রাখুন</span><div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in"><input type="checkbox" name="pauseToggle" id="pauseToggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" ${!isPaused ? 'checked' : ''}/><label for="pauseToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label></div></div>${manageInfoHTML}<div class="space-y-3 border-t pt-4"><p class="text-xs text-slate-500 font-bold">ভুল এন্ট্রি সংশোধন (যদি প্রয়োজন হয়)</p><div><label id="totalLabel" class="text-xs text-slate-500">${isPaused ? 'সংশোধিত পূর্বের বকেয়া (টাকা)' : 'সংশোধিত মোট হারি (টাকা)'}</label><input type="number" id="adjTotalCost" value="${isPaused ? currentDue : data.totalCost}" class="w-full p-2 border rounded-lg mt-1" step="0.01"></div><div><label class="text-xs text-slate-500">সংশোধিত জমা পরিমাণ (টাকা)</label><input type="number" id="adjPaidAmount" value="${data.paidAmount}" class="w-full p-2 border rounded-lg mt-1" step="0.01"></div></div><button id="confirmManage" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700 flex justify-center mt-6">আপডেট সেভ করুন</button><button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>`);
             document.getElementById('pauseToggle').addEventListener('change', function() {
-                const totalInput = document.getElementById('adjTotalCost');
-                const totalLabel = document.getElementById('totalLabel');
-                if (this.checked) {
-                    // চালু করার সময় বাকি বকেয়া এবং চলতি বছরের হারি যোগ হবে
-                    totalInput.value = (actualCarriedDue + currentYearCost).toFixed(2);
-                    totalLabel.innerText = 'সংশোধিত মোট হারি (টাকা)';
-                } else {
-                    // বন্ধ করার সময় শুধু বাকি বকেয়া থাকবে
-                    totalInput.value = actualCarriedDue.toFixed(2);
-                    totalLabel.innerText = 'সংশোধিত পূর্বের বকেয়া (টাকা)';
-                }
+                const totalInput = document.getElementById('adjTotalCost'); const totalLabel = document.getElementById('totalLabel');
+                if (this.checked) { totalInput.value = (actualCarriedDue + currentYearCost).toFixed(2); totalLabel.innerText = 'সংশোধিত মোট হারি (টাকা)'; } 
+                else { totalInput.value = actualCarriedDue.toFixed(2); totalLabel.innerText = 'সংশোধিত পূর্বের বকেয়া (টাকা)'; }
             });
-
             document.getElementById('confirmManage').onclick = async () => {
                 const btn = document.getElementById('confirmManage'); showSpinner(btn);
                 const newPaused = !document.getElementById('pauseToggle').checked;
                 const inputTotal = parseFloat(document.getElementById('adjTotalCost').value); const inputPaid = parseFloat(document.getElementById('adjPaidAmount').value);
                 if (isNaN(inputTotal) || isNaN(inputPaid)) { hideSpinner(btn); return showToast('সঠিক সংখ্যা লিখুন'); }
-
                 let finalTotal, finalCarriedDue, finalDue;
-                if (newPaused) {
-                    finalCarriedDue = inputTotal; finalTotal = finalCarriedDue; finalDue = finalTotal - inputPaid;
-                } else {
-                    finalTotal = inputTotal; finalDue = finalTotal - inputPaid;
-                    finalCarriedDue = finalDue - currentYearCost; // জমা হওয়া টাকা বকেয়া থেকে কমে যাবে
-                }
-                if (finalDue < 0) finalDue = 0;
-                if (finalCarriedDue < 0) finalCarriedDue = 0;
-
+                if (newPaused) { finalCarriedDue = inputTotal; finalTotal = finalCarriedDue; finalDue = finalTotal - inputPaid; } 
+                else { finalTotal = inputTotal; finalDue = finalTotal - inputPaid; finalCarriedDue = finalDue - currentYearCost; }
+                if (finalDue < 0) finalDue = 0; if (finalCarriedDue < 0) finalCarriedDue = 0;
                 yearlyData[currentYear] = { ...yData, amount: currentAmount, ratePer33: currentRate, carriedDueYears: carriedDueYears, carriedDue: finalCarriedDue.toFixed(2), totalCost: finalTotal.toFixed(2), paidAmount: inputPaid.toFixed(2), dueAmount: finalDue.toFixed(2), isPaused: newPaused };
                 const history = data.history || []; history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'manage', paused: newPaused, total: finalTotal.toFixed(2), paid: inputPaid.toFixed(2) });
                 await updateDoc(ref, { totalCost: finalTotal.toFixed(2), paidAmount: inputPaid.toFixed(2), dueAmount: finalDue.toFixed(2), yearlyData: yearlyData, history: history });
@@ -733,21 +701,16 @@
         async function openPaymentModal(id, name) {
             const ref = doc(db, "leases", id); const snap = await getDoc(ref); const data = snap.data(); const yData = data.yearlyData?.[data.year] || {}; const isPaused = yData.isPaused === true;
             const carriedDueYears = yData.carriedDueYears || '';
-            openModal(`
-                <h3 class="text-lg font-bold mb-1 text-slate-800">${name} - ${isPaused ? 'পূর্বের বকেয়া' : 'টাকা'} পরিশোধ</h3>
-                <p class="text-xs text-slate-500 mb-4">বকেয়া: ${fmt(data.dueAmount)} টাকা</p>
-                <input type="number" id="payAmount" placeholder="পরিশোধের পরিমাণ" class="w-full p-3 border rounded-lg mb-3" autofocus>
-                <input type="date" id="payDate" class="w-full p-3 border rounded-lg mb-4" value="${new Date().toISOString().split('T')[0]}">
-                <button id="confirmPay" class="w-full bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 flex justify-center">নিশ্চিত করুন</button>
-                <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>`);
+            openModal(`<h3 class="text-lg font-bold mb-1 text-slate-800">${name} - ${isPaused ? 'পূর্বের বকেয়া' : 'টাকা'} পরিশোধ</h3><p class="text-xs text-slate-500 mb-4">বর্তমান বকেয়া: ${fmt(data.dueAmount)} টাকা</p><div class="grid grid-cols-2 gap-3"><input type="number" id="payAmount" placeholder="পরিশোধের পরিমাণ" class="p-3 border rounded-lg" autofocus><input type="text" id="payYear" class="p-3 border rounded-lg" value="${data.year}" placeholder="কোন সালের জমা?"></div><input type="date" id="payDate" class="w-full p-3 border rounded-lg mt-3" value="${new Date().toISOString().split('T')[0]}"><button id="confirmPay" class="w-full bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 flex justify-center mt-4">নিশ্চিত করুন</button><button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>`);
             document.getElementById('confirmPay').onclick = async () => {
                 const btn = document.getElementById('confirmPay'); showSpinner(btn);
                 const amount = parseFloat(document.getElementById('payAmount').value); const date = document.getElementById('payDate').value;
+                const payYear = document.getElementById('payYear').value || data.year;
                 if(isNaN(amount) || amount <= 0) { hideSpinner(btn); return showToast('সঠিক পরিমাণ লিখুন'); }
                 let newPaid = parseFloat(data.paidAmount) + amount; let newDue = parseFloat(data.totalCost) - newPaid;
                 let adjustedMsg = '';
                 if (newDue > 0 && newDue <= 30) { adjustedMsg = `${fmt(newDue)} টাকা ক্ষুদ্র বকেয়া সমন্বয় করা হয়েছে।`; newDue = 0; newPaid = parseFloat(data.totalCost); }
-                const history = data.history || []; history.push({ date, amount, type: 'payment', paused: isPaused, years: carriedDueYears, year: data.year });
+                const history = data.history || []; history.push({ date, amount, type: 'payment', paused: isPaused, years: carriedDueYears, year: payYear });
                 const yearlyData = data.yearlyData || {}; const currentYear = data.year;
                 if (yearlyData[currentYear]) { yearlyData[currentYear].paidAmount = fmt(newPaid); yearlyData[currentYear].dueAmount = fmt(newDue); }
                 await updateDoc(ref, { paidAmount: fmt(newPaid), dueAmount: fmt(newDue), history, yearlyData });
@@ -760,47 +723,30 @@
             const q = query(collection(db, "leases"), where("status", "==", "active")); const snap = await getDocs(q); let farmers = [];
             snap.forEach(d => { if(d.id !== id) farmers.push(d.data().farmerName); });
             const uniqueFarmers = [...new Set(farmers)]; const options = uniqueFarmers.map(f => `<option value="${f}">`).join('');
-            openModal(`
-                <h3 class="text-lg font-bold mb-4 text-slate-800">জমি হস্তান্তর / ছেড়ে দিন</h3>
-                <p class="text-sm text-slate-500 mb-3">মোট জমি: <b>${totalAmount}</b> শতাংশ</p>
-                <input type="number" step="0.01" id="transferAmount" placeholder="কত শতাংশ জমি দিবেন?" class="w-full p-3 border rounded-lg mb-3" autofocus>
-                <datalist id="farmerList">${options}</datalist>
-                <input type="text" id="newFarmerName" list="farmerList" placeholder="যাকে দিচ্ছেন তার নাম" class="w-full p-3 border rounded-lg mb-4">
-                <button id="confirmTransfer" class="w-full bg-yellow-500 text-white p-3 rounded-lg font-bold hover:bg-yellow-600 flex justify-center">হস্তান্তর করুন</button>
-                <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>`);
-
+            openModal(`<h3 class="text-lg font-bold mb-4 text-slate-800">জমি হস্তান্তর / ছেড়ে দিন</h3><p class="text-sm text-slate-500 mb-3">মোট জমি: <b>${totalAmount}</b> শতাংশ</p><input type="number" step="0.01" id="transferAmount" placeholder="কত শতাংশ জমি দিবেন?" class="w-full p-3 border rounded-lg mb-3" autofocus><datalist id="farmerList">${options}</datalist><input type="text" id="newFarmerName" list="farmerList" placeholder="যাকে দিচ্ছেন তার নাম" class="w-full p-3 border rounded-lg mb-4"><button id="confirmTransfer" class="w-full bg-yellow-500 text-white p-3 rounded-lg font-bold hover:bg-yellow-600 flex justify-center">হস্তান্তর করুন</button><button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>`);
             document.getElementById('confirmTransfer').onclick = async () => {
                 const btn = document.getElementById('confirmTransfer'); showSpinner(btn);
                 const tAmount = parseFloat(document.getElementById('transferAmount').value); const newName = document.getElementById('newFarmerName').value;
                 if(isNaN(tAmount) || tAmount <= 0 || tAmount > totalAmount) { hideSpinner(btn); return showToast('সঠিক জমির পরিমাণ দিন'); }
                 if(!newName) { hideSpinner(btn); return showToast('নতুন চাষীর নাম দিন'); }
-                
                 const oldRef = doc(db, "leases", id); const oldSnap = await getDoc(oldRef); const oldData = oldSnap.data();
                 const q2 = query(collection(db, "leases"), where("farmerName", "==", newName), where("status", "==", "active")); const newFarmerSnap = await getDocs(q2);
-                
                 const oldYearlyData = oldData.yearlyData || {}; const oldYear = oldData.year; const oldYData = oldYearlyData[oldYear] || {};
                 const isPaused = oldYData.isPaused === true;
                 const oldAmount = oldYData.amount !== undefined ? parseFloat(oldYData.amount) : parseFloat(oldData.amount);
                 const oldRate = oldYData.ratePer33 !== undefined ? parseFloat(oldYData.ratePer33) : parseFloat(oldData.ratePer33);
                 const oldCarriedDue = oldYData.carriedDue !== undefined ? parseFloat(oldYData.carriedDue) : (parseFloat(oldData.totalCost) - (oldAmount / 33 * oldRate));
                 const oldCarriedDueYears = oldYData.carriedDueYears || '';
-                
                 const oldNewAmount = oldAmount - tAmount;
                 const oldNewCurrentCost = (oldNewAmount / 33) * oldRate;
-                
                 let oldNewTotal;
-                if (isPaused) {
-                    oldNewTotal = oldCarriedDue;
-                } else {
-                    oldNewTotal = oldCarriedDue + oldNewCurrentCost;
-                }
+                if (isPaused) { oldNewTotal = oldCarriedDue; } 
+                else { oldNewTotal = oldCarriedDue + oldNewCurrentCost; }
                 let oldNewDue = oldNewTotal - parseFloat(oldData.paidAmount);
                 if (oldNewDue < 0) oldNewDue = 0;
-
                 const oldHistory = oldData.history || []; oldHistory.push({ date: new Date().toLocaleDateString('bn-BD'), amount: tAmount, type: 'transfer_out', to: newName });
                 if (oldYearlyData[oldYear]) { oldYearlyData[oldYear].amount = oldNewAmount; oldYearlyData[oldYear].carriedDueYears = oldCarriedDueYears; oldYearlyData[oldYear].carriedDue = oldCarriedDue.toFixed(2); oldYearlyData[oldYear].totalCost = oldNewTotal.toFixed(2); oldYearlyData[oldYear].dueAmount = oldNewDue.toFixed(2); }
                 await updateDoc(oldRef, { amount: oldNewAmount, totalCost: oldNewTotal.toFixed(2), dueAmount: oldNewDue.toFixed(2), history: oldHistory, yearlyData: oldYearlyData });
-
                 if (!newFarmerSnap.empty) {
                     const newDoc = newFarmerSnap.docs[0]; const newData = newDoc.data(); 
                     const newYearlyData = newData.yearlyData || {}; const newYear = newData.year; const newYData = newYearlyData[newYear] || {};
@@ -823,76 +769,59 @@
         }
 
         function openEditRateModal(id, currentYear, oldRate) {
-            openModal(`
-                <h3 class="text-lg font-bold mb-4 text-slate-800">দর এবং বছর পরিবর্তন</h3>
-                <label class="text-sm text-slate-500">বর্তমান বছর: ${currentYear}</label>
-                <input type="text" id="editYear" value="${currentYear}" placeholder="নতুন বছর" class="w-full p-3 border rounded-lg mb-3 mt-1">
-                <label class="text-sm text-slate-500">বর্তমান দর: ${oldRate}</label>
-                <input type="number" id="newRate" value="${oldRate}" placeholder="নতুন দর" class="w-full p-3 border rounded-lg mb-4 mt-1">
-                <button id="confirmEdit" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 flex justify-center">আপডেট করুন</button>
-                <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>`);
+            openModal(`<h3 class="text-lg font-bold mb-4 text-slate-800">দর এবং বছর পরিবর্তন</h3><label class="text-sm text-slate-500">বর্তমান বছর: ${currentYear}</label><input type="text" id="editYear" value="${currentYear}" placeholder="নতুন বছর" class="w-full p-3 border rounded-lg mb-3 mt-1"><label class="text-sm text-slate-500">বর্তমান দর: ${oldRate}</label><input type="number" id="newRate" value="${oldRate}" placeholder="নতুন দর" class="w-full p-3 border rounded-lg mb-4 mt-1"><button id="confirmEdit" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 flex justify-center">আপডেট করুন</button><button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>`);
             document.getElementById('confirmEdit').onclick = async () => {
                 const btn = document.getElementById('confirmEdit'); showSpinner(btn);
-                const newRate = parseFloat(document.getElementById('newRate').value); const newYear = normalizeYear(document.getElementById('editYear').value);
+                const newRate = parseFloat(document.getElementById('newRate').value); 
+                const newYear = normalizeYear(document.getElementById('editYear').value);
                 if(isNaN(newRate) || newRate <= 0 || !newYear) { hideSpinner(btn); return showToast('সঠিক তথ্য দিন'); }
                 const ref = doc(db, "leases", id); const snap = await getDoc(ref); const data = snap.data();
                 const yData = data.yearlyData?.[data.year] || {};
                 const currentAmount = yData.amount !== undefined ? parseFloat(yData.amount) : parseFloat(data.amount);
-                const newCost = (currentAmount / 33) * newRate; const carriedDue = yData.carriedDue || 0; const carriedDueYears = yData.carriedDueYears || '';
-                const newTotal = parseFloat(carriedDue) + newCost; const newDue = newTotal - parseFloat(data.paidAmount);
+                const newCost = (currentAmount / 33) * newRate;
                 const history = data.history || []; history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'edit', oldYear: data.year, newYear: newYear, oldRate: data.ratePer33, newRate: newRate });
                 const yearlyData = data.yearlyData || {};
-                if (yearlyData[newYear]) { yearlyData[newYear].amount = currentAmount; yearlyData[newYear].ratePer33 = newRate; yearlyData[newYear].carriedDueYears = carriedDueYears; yearlyData[newYear].totalCost = parseFloat(newTotal).toFixed(2); yearlyData[newYear].dueAmount = fmt(newDue); } 
-                else { yearlyData[newYear] = { amount: currentAmount, ratePer33: newRate, totalCost: parseFloat(newTotal).toFixed(2), paidAmount: data.paidAmount, dueAmount: fmt(newDue), status: 'active', isPaused: false, carriedDue: parseFloat(carriedDue).toFixed(2), carriedDueYears: carriedDueYears }; }
-                await updateDoc(ref, { ratePer33: newRate, year: newYear, totalCost: parseFloat(newTotal).toFixed(2), dueAmount: fmt(newDue), history, yearlyData });
+                if (yearlyData[newYear]) {
+                    let targetYData = yearlyData[newYear];
+                    let targetCarriedDue = targetYData.carriedDue !== undefined ? parseFloat(targetYData.carriedDue) : 0;
+                    let targetPaid = parseFloat(targetYData.paidAmount || 0);
+                    let newTotal = targetCarriedDue + newCost;
+                    let newDue = newTotal - targetPaid;
+                    yearlyData[newYear].ratePer33 = newRate; yearlyData[newYear].totalCost = newTotal.toFixed(2); yearlyData[newYear].dueAmount = newDue.toFixed(2);
+                    await updateDoc(ref, { ratePer33: newRate, year: newYear, totalCost: newTotal.toFixed(2), paidAmount: targetPaid.toFixed(2), dueAmount: newDue.toFixed(2), history, yearlyData });
+                } else {
+                    let currentDue = parseFloat(data.dueAmount); if (currentDue < 0) currentDue = 0;
+                    let carriedDue = currentDue > 0 ? currentDue : 0;
+                    let oldCarriedDueYears = yData.carriedDueYears || '';
+                    let newCarriedDueYears = carriedDue > 0 ? (oldCarriedDueYears ? `${oldCarriedDueYears}, ${data.year}` : data.year) : '';
+                    let newTotal = carriedDue + newCost;
+                    let newDue = newTotal; 
+                    yearlyData[newYear] = { amount: currentAmount, ratePer33: newRate, totalCost: newTotal.toFixed(2), paidAmount: 0, dueAmount: newDue.toFixed(2), status: 'active', isPaused: false, carriedDue: carriedDue.toFixed(2), carriedDueYears: newCarriedDueYears };
+                    if (yearlyData[data.year]) { yearlyData[data.year].status = 'transferred'; }
+                    await updateDoc(ref, { ratePer33: newRate, year: newYear, totalCost: newTotal.toFixed(2), paidAmount: 0, dueAmount: newDue.toFixed(2), history, yearlyData });
+                }
                 expandedRows.add(id); showToast('দর এবং বছর আপডেট হয়েছে!', 'success'); document.getElementById('modalContainer').classList.add('hidden');
             };
         }
 
         function openAdjustDueModal(id, name, oldYear, due) {
             let oldYearNum = parseInt(normalizeYear(oldYear)); if (isNaN(oldYearNum)) oldYearNum = new Date().getFullYear(); const nextYear = (oldYearNum + 1).toString();
-            openModal(`
-                <h3 class="text-lg font-bold mb-2 text-slate-800">${name} - বকেয়া ট্রান্সফার</h3>
-                <div class="bg-slate-50 p-3 rounded-lg mb-4 text-sm"><p>বর্তমান বছর: <b>${oldYear}</b></p><p>বর্তমান বকেয়া: <b class="text-red-600">${fmt(due)} টাকা</b></p></div>
-                <label class="text-sm text-slate-500">নতুন হিসাব বর্ষ</label><input type="text" id="adjustYear" value="${nextYear}" class="w-full p-3 border rounded-lg mb-3 mt-1">
-                <label class="text-sm text-slate-500">নতুন বছরের দর (৩৩ শতাংশ)</label><input type="number" id="adjustRate" placeholder="যেমন: ২০০০০" class="w-full p-3 border rounded-lg mb-4 mt-1">
-                <button id="confirmAdjust" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700 flex justify-center">নতুন বছরে নিন</button>
-                <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>`);
+            openModal(`<h3 class="text-lg font-bold mb-2 text-slate-800">${name} - বকেয়া ট্রান্সফার</h3><div class="bg-slate-50 p-3 rounded-lg mb-4 text-sm"><p>বর্তমান বছর: <b>${oldYear}</b></p><p>বর্তমান বকেয়া: <b class="text-red-600">${fmt(due)} টাকা</b></p></div><label class="text-sm text-slate-500">নতুন হিসাব বর্ষ</label><input type="text" id="adjustYear" value="${nextYear}" class="w-full p-3 border rounded-lg mb-3 mt-1"><label class="text-sm text-slate-500">নতুন বছরের দর (৩৩ শতাংশ)</label><input type="number" id="adjustRate" placeholder="যেমন: ২০০০০" class="w-full p-3 border rounded-lg mb-4 mt-1"><button id="confirmAdjust" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700 flex justify-center">নতুন বছরে নিন</button><button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>`);
             document.getElementById('confirmAdjust').onclick = async () => {
                 const btn = document.getElementById('confirmAdjust'); showSpinner(btn);
                 const newYear = normalizeYear(document.getElementById('adjustYear').value); const newRate = parseFloat(document.getElementById('adjustRate').value);
                 if(!newYear || isNaN(newRate)) { hideSpinner(btn); return showToast('সঠিক তথ্য দিন'); }
                 const ref = doc(db, "leases", id); const snap = await getDoc(ref); const data = snap.data();
-                
-                // বকয়া পরিশোধ হলে 0 হবে, নাহলে বকয়া থাকবে
-                let oldDue = parseFloat(data.dueAmount);
-                if (oldDue < 0) oldDue = 0;
-                
-                const newYearCost = ((data.amount / 33) * newRate); 
-                const totalNewCost = oldDue + newYearCost; // বকয়া 0 হলে শুধু নতুন হারি হবে
-                
+                let oldDue = parseFloat(data.dueAmount); if (oldDue < 0) oldDue = 0;
+                const newYearCost = ((data.amount / 33) * newRate); const totalNewCost = oldDue + newYearCost; 
                 const yData = data.yearlyData?.[data.year] || {};
                 const oldCarriedDueYears = yData.carriedDueYears || '';
-                // বকয়া থাকলে সাল যুক্ত হবে, নাহলে খালি থাকবে
                 const newCarriedDueYears = oldDue > 0 ? (oldCarriedDueYears ? `${oldCarriedDueYears}, ${data.year}` : data.year) : '';
-
                 const history = data.history || []; history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'new_year', fromYear: data.year, toYear: newYear, carriedDue: fmt(oldDue) });
                 const yearlyData = data.yearlyData || {};
                 if (yearlyData[data.year]) yearlyData[data.year].status = 'transferred';
                 else yearlyData[data.year] = { ratePer33: data.ratePer33, amount: data.amount, totalCost: data.totalCost, paidAmount: data.paidAmount, dueAmount: oldDue, status: 'transferred' };
-                
-                yearlyData[newYear] = { 
-                    ratePer33: newRate, 
-                    amount: data.amount, 
-                    totalCost: fmt(totalNewCost), 
-                    paidAmount: 0, 
-                    dueAmount: fmt(totalNewCost), 
-                    status: 'active', 
-                    isPaused: false, 
-                    carriedDue: fmt(oldDue), 
-                    carriedDueYears: newCarriedDueYears 
-                };
-                
+                yearlyData[newYear] = { ratePer33: newRate, amount: data.amount, totalCost: fmt(totalNewCost), paidAmount: 0, dueAmount: fmt(totalNewCost), status: 'active', isPaused: false, carriedDue: fmt(oldDue), carriedDueYears: newCarriedDueYears };
                 await updateDoc(ref, { year: newYear, ratePer33: newRate, totalCost: fmt(totalNewCost), paidAmount: 0, dueAmount: fmt(totalNewCost), status: 'active', history, yearlyData });
                 expandedRows.add(id); showToast('নতুন হিসাব বর্ষ সফলভাবে শুরু হয়েছে!', 'success'); document.getElementById('modalContainer').classList.add('hidden');
             };
@@ -913,11 +842,8 @@
                     historyHTML += `<div class="mb-3 border-l-4 border-indigo-200 pl-3"><p class="font-bold text-xs text-slate-400">${h.context}</p><ul class="mt-1 space-y-1 text-xs">`;
                     if(h.type === 'payment') {
                         let payLabel = 'জমা';
-                        if (h.paused) {
-                            payLabel = (h.years ? h.years + ' সালের বকেয়া বাবদ জমা' : 'পূর্বের বকেয়া বাবদ জমা');
-                        } else {
-                            payLabel = (h.year ? h.year + ' সালের জমা' : 'জমা');
-                        }
+                        if (h.paused) { payLabel = (h.years ? h.years + ' সালের বকেয়া বাবদ জমা' : 'পূর্বের বকেয়া বাবদ জমা'); } 
+                        else { payLabel = (h.year ? h.year + ' সালের জমা' : 'জমা'); }
                         historyHTML += `<li class="text-green-600 flex justify-between"><span>${h.date}</span> <span>+${fmt(h.amount)} টাকা ${payLabel}</span></li>`;
                     }
                     else if(h.type === 'transfer_out') historyHTML += `<li class="text-yellow-600 flex justify-between"><span>${h.date}</span> <span>${h.amount} শতাংশ হস্তান্তর (${h.to})</span></li>`;
@@ -925,6 +851,7 @@
                     else if(h.type === 'edit') historyHTML += `<li class="text-gray-500 flex justify-between"><span>${h.date}</span> <span>দর/বছর পরিবর্তন: ${h.oldRate}->${h.newRate}</span></li>`;
                     else if(h.type === 'manage') { let action = h.paused ? 'হিসাব স্থগিত করা হয়েছে' : 'হিসাব চালু করা হয়েছে'; historyHTML += `<li class="text-orange-500 flex justify-between"><span>${h.date}</span> <span>${action} (মোট: ${h.total}, জমা: ${h.paid})</span></li>`; }
                     else if(h.type === 'new_year') historyHTML += `<li class="text-indigo-600 flex justify-between"><span>${h.date}</span> <span>${h.fromYear} থেকে ${h.toYear} সালে ${h.carriedDue} টাকা যোগ হয়েছে</span></li>`;
+                    else if(h.type === 'deleted') historyHTML += `<li class="text-red-500 flex justify-between"><span>${h.date}</span> <span>হিসাব ডিলিট করা হয়েছে</span></li>`;
                     historyHTML += `</ul></div>`;
                 });
                 let paginationHTML = '';
