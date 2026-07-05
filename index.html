@@ -405,17 +405,47 @@
                 const isTransferred = currentYearData.status === 'transferred'; const isPaused = currentYearData.isPaused === true; const isPaid = parseFloat(lease.dueAmount) === 0;
                 const carriedDueVal = currentYearData.carriedDue !== undefined ? parseFloat(currentYearData.carriedDue) : 0;
                 const carriedDueYearsStr = currentYearData.carriedDueYears || '';
-                const dueYearsLabel = carriedDueYearsStr ? `${carriedDueYearsStr} সালের মোট বকেয়া` : 'পূর্বের বকেয়া';
+                
+                const yearLabel = carriedDueYearsStr ? `${carriedDueYearsStr} সালের` : 'পূর্বের';
+                const dueYearsLabel = `${yearLabel} মোট বকেয়া`;
+                const netDueYearsLabel = `${yearLabel} নিট বকেয়া`;
                 
                 if (lease.status === 'inactive' || isTransferred) tr.className = 'bg-red-50 text-red-400';
                 if (isPaused) tr.className = 'bg-orange-50 text-orange-500';
                 if (expandedRows.has(id)) tr.classList.add('expanded');
                 
-                let totalHtml = `<div><span class="text-slate-400">মোট হারি:</span> <b class="text-slate-800">${fmt(lease.totalCost)}</b> টাকা</div>`;
+                let totalHtml = '';
                 if (isPaused) {
-                    totalHtml = `<div><span class="text-slate-400">${dueYearsLabel}:</span> <b class="text-slate-800">${isPaid ? 'পরিশোধ' : fmt(lease.totalCost) + ' টাকা'}</b></div>`;
+                    totalHtml = `
+                        <div><span class="text-slate-400">${dueYearsLabel}:</span> <b class="text-slate-800">${fmt(lease.totalCost)} টাকা</b></div>
+                        <div><span class="text-slate-400">মোট জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)} টাকা</b></div>
+                    `;
+                    if (isPaid) {
+                        totalHtml += `<div class="mt-1"><span class="font-bold text-green-600 text-base">পরিশোধ</span></div>`;
+                    } else {
+                        totalHtml += `<div><span class="text-red-600 font-bold">${netDueYearsLabel} =</span> <b class="text-red-600">${fmt(lease.dueAmount)} টাকা</b></div>`;
+                    }
                 } else if (carriedDueVal > 0) {
-                    totalHtml = `<div><span class="text-indigo-600 font-bold">${carriedDueYearsStr ? carriedDueYearsStr + ' সালের বকেয়াসহ মোট হারি' : 'বকেয়াসহ মোট হারি'}:</span> <b class="text-indigo-600">${fmt(lease.totalCost)}</b> টাকা</div>`;
+                    let activeDueLabel = carriedDueYearsStr ? `${carriedDueYearsStr} সালের বকেয়াসহ মোট হারি` : 'বকেয়াসহ মোট হারি';
+                    totalHtml = `
+                        <div><span class="text-indigo-600 font-bold">${activeDueLabel}:</span> <b class="text-indigo-600">${fmt(lease.totalCost)} টাকা</b></div>
+                        <div><span class="text-slate-400">মোট জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)} টাকা</b></div>
+                    `;
+                    if (isPaid) {
+                        totalHtml += `<div class="mt-1"><span class="font-bold text-green-600 text-base">পরিশোধ</span></div>`;
+                    } else {
+                        totalHtml += `<div><span class="text-red-600 font-bold">নিট বকেয়া =</span> <b class="text-red-600">${fmt(lease.dueAmount)} টাকা</b></div>`;
+                    }
+                } else {
+                    totalHtml = `
+                        <div><span class="text-slate-400">মোট হারি:</span> <b class="text-slate-800">${fmt(lease.totalCost)} টাকা</b></div>
+                        <div><span class="text-slate-400">মোট জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)} টাকা</b></div>
+                    `;
+                    if (isPaid) {
+                        totalHtml += `<div class="mt-1"><span class="font-bold text-green-600 text-base">পরিশোধ</span></div>`;
+                    } else {
+                        totalHtml += `<div><span class="text-red-600 font-bold">নিট বকেয়া =</span> <b class="text-red-600">${fmt(lease.dueAmount)} টাকা</b></div>`;
+                    }
                 }
 
                 let dueHtml = '', collapsedDueHtml = '';
@@ -452,7 +482,6 @@
                     </td>
                     <td data-label="মোট হারি / পরিশোধিত" class="p-3 align-top text-xs space-y-1 collapsible">
                         ${totalHtml}
-                        <div><span class="text-slate-400">জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)}</b> টাকা</div>
                     </td>
                     <td data-label="বকেয়া" class="p-3 align-top collapsible">${dueHtml}</td>
                     <td data-label="অ্যাকশন" class="p-3 align-top collapsible">
@@ -512,12 +541,34 @@
             const currentYearCost = (currentAmount / 33) * currentRate; 
             const carriedDue = yData.carriedDue !== undefined ? parseFloat(yData.carriedDue) : (parseFloat(data.totalCost) - currentYearCost);
             const carriedDueYears = yData.carriedDueYears || '';
-            const dueYearsLabel = carriedDueYears ? `${carriedDueYears} সালের মোট বকেয়া` : 'পূর্বের বকেয়া';
             const isDuePaid = parseFloat(data.dueAmount) === 0;
 
-            let manageTotalLabel = 'মোট হারি';
-            if (isPaused) manageTotalLabel = dueYearsLabel;
-            else if (carriedDue > 0) manageTotalLabel = carriedDueYears ? `${carriedDueYears} সালের বকেয়াসহ মোট হারি` : 'বকেয়াসহ মোট হারি';
+            const yearLabel = carriedDueYears ? `${carriedDueYears} সালের` : 'পূর্বের';
+            const dueYearsLabel = `${yearLabel} মোট বকেয়া`;
+            const netDueYearsLabel = `${yearLabel} নিট বকেয়া`;
+
+            let manageTotalLabel = carriedDue > 0 ? (carriedDueYears ? `${carriedDueYears} সালের বকেয়াসহ মোট হারি` : 'বকেয়াসহ মোট হারি') : 'মোট হারি';
+
+            let manageInfoHTML = `
+                <div class="bg-slate-50 p-3 rounded-lg mb-4 text-sm space-y-1">
+                    <div class="flex justify-between text-slate-500"><span>জমির পরিমাণ:</span> <b>${currentAmount} শতাংশ</b></div>
+                    <div class="flex justify-between text-slate-500"><span>প্রতি ৩৩ শতাংশ দর:</span> <b>${currentRate} টাকা</b></div>
+                    <div class="flex justify-between text-slate-500"><span>জমির হারি:</span> <b>${fmt(currentYearCost)} টাকা</b></div>`;
+
+            if (isPaused) {
+                manageInfoHTML += `
+                    <div class="flex justify-between text-slate-500"><span>${dueYearsLabel}:</span> <b>${fmt(data.totalCost)} টাকা</b></div>
+                    <div class="flex justify-between text-slate-500"><span>মোট জমা:</span> <b class="text-green-600">${fmt(data.paidAmount)} টাকা</b></div>
+                    <div class="flex justify-between text-slate-500"><span>${netDueYearsLabel}:</span> <b class="text-red-600">${isDuePaid ? 'পরিশোধ' : fmt(data.dueAmount) + ' টাকা'}</b></div>
+                </div>`;
+            } else {
+                manageInfoHTML += `
+                    <div class="flex justify-between text-slate-500"><span>${dueYearsLabel}:</span> <b>${carriedDue > 0 ? fmt(carriedDue) + ' টাকা' : 'নেই'}</b></div>
+                    <div class="flex justify-between text-slate-500"><span>${manageTotalLabel}:</span> <b class="text-indigo-600">${fmt(data.totalCost)} টাকা</b></div>
+                    <div class="flex justify-between text-slate-500"><span>মোট জমা:</span> <b class="text-green-600">${fmt(data.paidAmount)} টাকা</b></div>
+                    <div class="flex justify-between text-slate-500"><span>নিট বকেয়া:</span> <b class="text-red-600">${isDuePaid ? 'পরিশোধ' : fmt(data.dueAmount) + ' টাকা'}</b></div>
+                </div>`;
+            }
 
             openModal(`
                 <h3 class="text-lg font-bold mb-4 text-slate-800">হিসাব ব্যবস্থাপনা (${data.farmerName})</h3>
@@ -528,13 +579,7 @@
                         <label for="pauseToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
                     </div>
                 </div>
-                <div class="bg-slate-50 p-3 rounded-lg mb-4 text-sm space-y-1">
-                    <div class="flex justify-between text-slate-500"><span>জমির পরিমাণ:</span> <b>${currentAmount} শতাংশ</b></div>
-                    <div class="flex justify-between text-slate-500"><span>প্রতি ৩৩ শতাংশ দর:</span> <b>${currentRate} টাকা</b></div>
-                    <div class="flex justify-between text-slate-500"><span>জমির হারি:</span> <b>${fmt(currentYearCost)} টাকা</b></div>
-                    <div class="flex justify-between text-slate-500"><span>${dueYearsLabel}:</span> <b>${carriedDue > 0 ? fmt(carriedDue) + ' টাকা' : 'পরিশোধ'}</b></div>
-                    <div class="flex justify-between text-slate-500"><span>${manageTotalLabel}:</span> <b class="text-indigo-600">${isDuePaid ? 'পরিশোধ' : fmt(data.totalCost) + ' টাকা'}</b></div>
-                </div>
+                ${manageInfoHTML}
                 <div class="space-y-3 border-t pt-4">
                     <p class="text-xs text-slate-500 font-bold">ভুল এন্ট্রি সংশোধন (যদি প্রয়োজন হয়)</p>
                     <div>
