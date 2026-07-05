@@ -45,6 +45,10 @@
                 background-color: #fef2f2 !important; 
                 border-color: #ef4444 !important; 
             }
+            .table-fixed tbody tr.bg-orange-50 { 
+                background-color: #fff7ed !important; 
+                border-color: #f97316 !important; 
+            }
             .table-fixed td { padding: 0; margin: 0; border: none; text-align: right; font-size: 12px; }
             .table-fixed td::before { display: none; }
             
@@ -57,6 +61,7 @@
             .collapsed-due { color: #dc2626; font-weight: 700; font-size: 13px; white-space: nowrap; text-align: right; }
             .collapsed-paid { color: #16a34a; font-weight: 700; font-size: 13px; }
             .collapsed-transferred { color: #4f46e5; font-weight: 700; font-size: 13px; }
+            .collapsed-paused { color: #d97706; font-weight: 700; font-size: 13px; }
 
             /* Expanded State */
             .table-fixed tbody tr.expanded .collapsed-view { display: none !important; }
@@ -67,6 +72,42 @@
                 justify-content: flex-end; gap: 0.5rem; padding-top: 8px; border-top: 1px solid #e2e8f0; margin-top: 8px; display: flex;
             }
         }
+
+        /* Toggle Switch CSS */
+        .toggle-checkbox:checked { right: 0; border-color: #6366f1; transform: translateX(100%); }
+        .toggle-checkbox:checked + .toggle-label { background-color: #6366f1; }
+        .toggle-checkbox { transition: all 0.3s ease; right: 0; }
+        .toggle-label { transition: background-color 0.3s ease; }
+
+        /* Colorful Dots Spinner */
+        .lds-spinner { display: inline-block; position: relative; width: 80px; height: 80px; }
+        .lds-spinner div { transform-origin: 40px 40px; animation: lds-spinner 1.2s linear infinite; }
+        .lds-spinner div:after { content: " "; display: block; position: absolute; top: 3px; left: 37px; width: 6px; height: 18px; border-radius: 20%; }
+        .lds-spinner div:nth-child(1) { transform: rotate(0deg); animation-delay: -1.1s; }
+        .lds-spinner div:nth-child(1):after { background: #ef4444; }
+        .lds-spinner div:nth-child(2) { transform: rotate(30deg); animation-delay: -1s; }
+        .lds-spinner div:nth-child(2):after { background: #f97316; }
+        .lds-spinner div:nth-child(3) { transform: rotate(60deg); animation-delay: -0.9s; }
+        .lds-spinner div:nth-child(3):after { background: #eab308; }
+        .lds-spinner div:nth-child(4) { transform: rotate(90deg); animation-delay: -0.8s; }
+        .lds-spinner div:nth-child(4):after { background: #22c55e; }
+        .lds-spinner div:nth-child(5) { transform: rotate(120deg); animation-delay: -0.7s; }
+        .lds-spinner div:nth-child(5):after { background: #14b8a6; }
+        .lds-spinner div:nth-child(6) { transform: rotate(150deg); animation-delay: -0.6s; }
+        .lds-spinner div:nth-child(6):after { background: #06b6d4; }
+        .lds-spinner div:nth-child(7) { transform: rotate(180deg); animation-delay: -0.5s; }
+        .lds-spinner div:nth-child(7):after { background: #3b82f6; }
+        .lds-spinner div:nth-child(8) { transform: rotate(210deg); animation-delay: -0.4s; }
+        .lds-spinner div:nth-child(8):after { background: #6366f1; }
+        .lds-spinner div:nth-child(9) { transform: rotate(240deg); animation-delay: -0.3s; }
+        .lds-spinner div:nth-child(9):after { background: #8b5cf6; }
+        .lds-spinner div:nth-child(10) { transform: rotate(270deg); animation-delay: -0.2s; }
+        .lds-spinner div:nth-child(10):after { background: #a855f7; }
+        .lds-spinner div:nth-child(11) { transform: rotate(300deg); animation-delay: -0.1s; }
+        .lds-spinner div:nth-child(11):after { background: #d946ef; }
+        .lds-spinner div:nth-child(12) { transform: rotate(330deg); animation-delay: 0s; }
+        .lds-spinner div:nth-child(12):after { background: #ec4899; }
+        @keyframes lds-spinner { 0% { opacity: 1; } 100% { opacity: 0; } }
     </style>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -74,12 +115,12 @@
         import { getFirestore, collection, addDoc, query, where, getDocs, setDoc, doc, onSnapshot, updateDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyDZhV6G0D-fTrH2auEqgtz72DGrBHpgFDU",
-            authDomain: "lease-management-c7c35.firebaseapp.com",
-            projectId: "lease-management-c7c35",
-            storageBucket: "lease-management-c7c35.firebasestorage.app",
-            messagingSenderId: "182624418687",
-            appId: "1:182624418687:web:6e5964459b5c2287f5384a"
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -95,44 +136,73 @@
 
         const fmt = (val) => (parseFloat(val) || 0).toFixed(2);
 
-        // মাসের নামের লিস্ট (বাংলা ও ইংরেজি)
+        const normalizeYear = (yearStr) => {
+            if (!yearStr) return '';
+            const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+            let str = String(yearStr);
+            for (let i = 0; i < 10; i++) {
+                str = str.replace(new RegExp(bnDigits[i], 'g'), i);
+            }
+            return str;
+        };
+
         const monthNames = {
             bn: ['বৈশাখ', 'জ্যৈষ্ঠ', 'আষাঢ়', 'শ্রাবণ', 'ভাদ্র', 'আশ্বিন', 'কার্তিক', 'অগ্রহায়ণ', 'পৌষ', 'মাঘ', 'ফাল্গুন', 'চৈত্র'],
             en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
         };
 
-        // Sound Generator
+        // Standard Soft Alert Sound Generator
         let audioCtx;
         function playSound(type) {
             try {
                 audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
                 
                 if (type === 'error' || type === 'delete') {
-                    oscillator.type = 'sawtooth';
-                    oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+                    const playTone = (freq, start, duration) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + start);
+                        gain.gain.setValueAtTime(0, audioCtx.currentTime + start);
+                        gain.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + start + 0.02);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + start + duration);
+                        osc.start(audioCtx.currentTime + start);
+                        osc.stop(audioCtx.currentTime + start + duration);
+                    };
+                    playTone(440, 0, 0.2); 
+                    playTone(349.23, 0.2, 0.3); 
                 } else if (type === 'success') {
-                    oscillator.type = 'sine';
-                    oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
                 } else {
-                    oscillator.type = 'triangle';
-                    oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.2);
                 }
-                
-                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-                oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.5);
             } catch(e) { console.error("Audio error", e); }
         }
 
-        // Custom Confirm Modal (No URL)
         function customConfirm(message, type = 'warning') {
             return new Promise((resolve) => {
-                playSound(type === 'delete' ? 'error' : 'success');
+                playSound(type === 'delete' ? 'delete' : 'error');
                 const colors = { delete: { bg: 'bg-red-50', border: 'border-red-500', btn: 'bg-red-500 hover:bg-red-600', icon: 'text-red-500' }, warning: { bg: 'bg-yellow-50', border: 'border-yellow-500', btn: 'bg-yellow-500 hover:bg-yellow-600', icon: 'text-yellow-500' }, info: { bg: 'bg-blue-50', border: 'border-blue-500', btn: 'bg-blue-500 hover:bg-blue-600', icon: 'text-blue-500' } };
                 const c = colors[type] || colors.warning;
                 
@@ -158,8 +228,8 @@
             });
         }
 
-        function showToast(msg, type = 'error') {
-            playSound(type);
+        function showToast(msg, type = 'error', silent = false) {
+            if (!silent) playSound(type);
             const colors = { error: 'bg-red-500', success: 'bg-green-500', info: 'bg-blue-500' };
             const toast = document.createElement('div');
             toast.className = `fixed top-5 right-5 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-xl z-[100] fade-in flex items-center`;
@@ -222,8 +292,8 @@
             const optionsHtml = savedIds.map(id => `<option value="${id}">`).join('');
 
             appContainer.innerHTML = `
-                <div class="min-h-screen flex items-center justify-center bg-slate-200 p-4">
-                    <div class="w-full max-w-md">
+                <div class="min-h-screen flex flex-col items-center justify-center bg-slate-200 p-4">
+                    <div class="w-full max-w-md flex-1 flex flex-col justify-center">
                         <div class="text-center mb-8">
                             <div class="inline-block p-4 bg-white rounded-2xl shadow-lg mb-4 border border-slate-200">
                                 <svg class="w-10 h-10 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21l1.65-3.8a9 9 0 113.4 2.9L3 21"></path></svg>
@@ -284,6 +354,9 @@
                             </div>
                         </div>
                     </div>
+                    <footer class="text-slate-500 text-center py-4 text-sm w-full">
+                        Mehedi hasan©2026
+                    </footer>
                 </div>
             `;
 
@@ -349,7 +422,7 @@
                         savedIds.push(identifier);
                         localStorage.setItem('savedIdentifiers', JSON.stringify(savedIds));
                     }
-                    showToast('সফলভাবে লগইন হয়েছে!', 'success');
+                    showToast('সফলভাবে লগইন হয়েছে!', 'success', true);
                 } catch (err) { showToast(cleanError(err)); }
                 hideSpinner(btn);
             };
@@ -371,7 +444,7 @@
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     await setDoc(doc(db, "users", userCredential.user.uid), { username, email, mobile });
-                    showToast('সাইন আপ সফল হয়েছে!', 'success');
+                    showToast('সাইন আপ সফল হয়েছে!', 'success', true);
                 } catch (err) { showToast(cleanError(err)); }
                 hideSpinner(btn);
             };
@@ -383,7 +456,7 @@
                 const email = document.getElementById('resetEmail').value;
                 try {
                     await sendPasswordResetEmail(auth, email);
-                    showToast('পাসওয়ার্ড রিসেট ইমেইল পাঠানো হয়েছে!', 'success');
+                    showToast('পাসওয়ার্ড রিসেট ইমেইল পাঠানো হয়েছে!', 'success', true);
                     document.getElementById('backToLogin').click();
                 } catch (err) { showToast(cleanError(err)); }
                 hideSpinner(btn);
@@ -458,12 +531,11 @@
                 <div id="modalContainer" class="hidden fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4"></div>
             `;
 
-            // Populate months based on language selection
             const populateMonths = (lang) => {
                 const cycleSelect = document.getElementById('cycleType');
                 cycleSelect.innerHTML = monthNames[lang].map(m => `<option value="${m}">${m}</option>`).join('');
             };
-            populateMonths('bn'); // Default
+            populateMonths('bn'); 
             document.getElementById('monthLang').addEventListener('change', (e) => populateMonths(e.target.value));
 
             document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
@@ -483,6 +555,7 @@
                     else if (btn.classList.contains('editBtn')) openEditRateModal(id, btn.dataset.year, btn.dataset.rate);
                     else if (btn.classList.contains('delBtn')) handleDelete(id);
                     else if (btn.classList.contains('adjustBtn')) openAdjustDueModal(id, btn.dataset.name, btn.dataset.year, btn.dataset.due);
+                    else if (btn.classList.contains('manageBtn')) openManageAccountModal(id);
                 } else if (e.target.closest('.collapsed-name') || e.target.closest('.farmer-name')) {
                     e.stopPropagation();
                     openHistoryModal(e.target.dataset.name);
@@ -506,7 +579,8 @@
             document.getElementById('leasesTable').addEventListener('change', async (e) => {
                 if (e.target.classList.contains('yearInput')) {
                     const id = e.target.dataset.id;
-                    const newYear = e.target.value;
+                    const newYearRaw = e.target.value;
+                    const newYear = normalizeYear(newYearRaw);
                     const ref = doc(db, "leases", id);
                     const snap = await getDoc(ref);
                     const data = snap.data();
@@ -536,8 +610,11 @@
             
             for (let lease of allLeases) {
                 if (lease.status === 'active') {
-                    let yearVal = parseInt(lease.year);
+                    let yearVal = parseInt(normalizeYear(lease.year));
                     if (isNaN(yearVal)) continue; 
+
+                    let currentYearData = lease.yearlyData?.[lease.year] || {};
+                    if (currentYearData.isPaused) continue;
                     
                     let cycleMonth = getMonthNumber(lease.cycleType);
                     let activeCycleYear = currentYear;
@@ -547,7 +624,7 @@
                     }
                     
                     if (yearVal < activeCycleYear) {
-                        let year = lease.year;
+                        let year = normalizeYear(lease.year);
                         let yearlyData = lease.yearlyData || {};
                         let history = lease.history || [];
                         let due = parseFloat(lease.dueAmount);
@@ -580,7 +657,7 @@
                                 yearlyData[year].status = 'transferred';
                             }
                             
-                            yearlyData[nextYear] = { ratePer33: nextRate, totalCost: nextTotal.toFixed(2), paidAmount: 0, dueAmount: nextTotal.toFixed(2), status: 'active' };
+                            yearlyData[nextYear] = { ratePer33: nextRate, totalCost: nextTotal.toFixed(2), paidAmount: 0, dueAmount: nextTotal.toFixed(2), status: 'active', isPaused: false };
                             history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'auto_rollover', fromYear: year, toYear: nextYear, carriedDue: due.toFixed(2) });
                             
                             year = nextYear;
@@ -617,6 +694,16 @@
             onSnapshot(q, (snapshot) => {
                 allLeases = [];
                 snapshot.forEach(d => allLeases.push({ id: d.id, ...d.data() }));
+                
+                allLeases.sort((a, b) => {
+                    const aYear = parseInt(normalizeYear(a.year)) || 0;
+                    const bYear = parseInt(normalizeYear(b.year)) || 0;
+                    if (a.status !== b.status) {
+                        return a.status === 'active' ? -1 : 1;
+                    }
+                    return bYear - aYear;
+                });
+
                 autoRollover();
                 renderTable();
             });
@@ -651,9 +738,11 @@
                 
                 const currentYearData = lease.yearlyData?.[lease.year] || {};
                 const isTransferred = currentYearData.status === 'transferred';
+                const isPaused = currentYearData.isPaused === true;
                 const isPaid = parseFloat(lease.dueAmount) === 0;
                 
                 if (lease.status === 'inactive' || isTransferred) tr.className = 'bg-red-50 text-red-400';
+                if (isPaused) tr.className = 'bg-orange-50 text-orange-500';
                 
                 if (expandedRows.has(id)) {
                     tr.classList.add('expanded');
@@ -661,7 +750,10 @@
                 
                 let dueHtml = '';
                 let collapsedDueHtml = '';
-                if (isPaid && lease.status === 'active' && !isTransferred) {
+                if (isPaused) {
+                    dueHtml = `<span class="font-bold text-orange-500 text-base">হিসাব স্থগিত</span>`;
+                    collapsedDueHtml = `<span class="collapsed-paused">স্থগিত</span>`;
+                } else if (isPaid && lease.status === 'active' && !isTransferred) {
                     dueHtml = `<span class="font-bold text-green-600 text-base">পরিশোধ</span>`;
                     collapsedDueHtml = `<span class="collapsed-paid">পরিশোধ</span>`;
                 } else if (isTransferred) {
@@ -705,22 +797,27 @@
                     </td>
                     <td data-label="বকেয়া" class="p-3 align-top collapsible">${dueHtml}</td>
                     <td data-label="অ্যাকশন" class="p-3 align-top collapsible">
-                        ${(lease.status === 'active' && !isTransferred) ? `
                         <div class="flex items-center gap-1 justify-end flex-wrap">
+                            <button data-id="${id}" class="manageBtn text-slate-500 hover:bg-slate-100 p-2 rounded-lg transition" title="হিসাব ব্যবস্থাপনা">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            </button>
+                            ${(lease.status === 'active' && !isTransferred) ? `
+                            ${!isPaused ? `
                             <button data-id="${id}" data-name="${lease.farmerName}" class="payBtn text-green-500 hover:bg-green-100 p-2 rounded-lg transition" title="পরিশোধ">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             </button>
+                            ` : ''}
                             <button data-id="${id}" data-amount="${lease.amount}" class="transferBtn text-yellow-500 hover:bg-yellow-100 p-2 rounded-lg transition" title="ছেড়ে দিন">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
                             </button>
                             <button data-id="${id}" data-year="${lease.year}" data-rate="${lease.ratePer33}" class="editBtn text-blue-500 hover:bg-blue-100 p-2 rounded-lg transition" title="এডিট দর">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                             </button>
+                            ` : ''}
                             <button data-id="${id}" class="delBtn text-red-500 hover:bg-red-100 p-2 rounded-lg transition" title="ডিলিট">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
                         </div>
-                        ` : ''}
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -755,11 +852,11 @@
             const amount = parseFloat(document.getElementById('amount').value);
             const ratePer33 = parseFloat(document.getElementById('ratePer33').value);
             const cycleType = document.getElementById('cycleType').value;
-            const year = document.getElementById('year').value;
+            const year = normalizeYear(document.getElementById('year').value);
             const totalCost = fmt((amount / 33) * ratePer33);
 
             const yearlyData = {};
-            yearlyData[year] = { ratePer33, totalCost: parseFloat(totalCost), paidAmount: 0, dueAmount: parseFloat(totalCost), status: 'active' };
+            yearlyData[year] = { ratePer33, totalCost: parseFloat(totalCost), paidAmount: 0, dueAmount: parseFloat(totalCost), status: 'active', isPaused: false };
 
             await addDoc(collection(db, "leases"), {
                 farmerName, amount, cycleType, year, ratePer33,
@@ -768,7 +865,7 @@
             });
             showToast('নতুন হিসাব যুক্ত হয়েছে!', 'success');
             document.getElementById('leaseForm').reset();
-            populateMonths(document.getElementById('monthLang').value); // Reset dropdown correctly
+            populateMonths(document.getElementById('monthLang').value);
         }
 
         async function handleDelete(id) {
@@ -795,6 +892,88 @@
             modal.onclick = (e) => { if (e.target.id === 'modalContainer') modal.classList.add('hidden'); };
         }
 
+        // হিসাব ব্যবস্থাপনা (চালু/বন্ধ এবং জমা সংশোধন) মডাল
+        async function openManageAccountModal(id) {
+            const ref = doc(db, "leases", id);
+            const snap = await getDoc(ref);
+            const data = snap.data();
+            const currentYear = data.year;
+            const yearlyData = data.yearlyData || {};
+            const yData = yearlyData[currentYear] || {};
+            const isPaused = yData.isPaused === true;
+
+            openModal(`
+                <h3 class="text-lg font-bold mb-4 text-slate-800">হিসাব ব্যবস্থাপনা (${data.farmerName})</h3>
+                
+                <div class="flex items-center justify-between bg-slate-50 p-3 rounded-lg mb-4">
+                    <span class="text-sm font-bold text-slate-700">চলতি বছরের হিসাব চালু রাখুন</span>
+                    <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" name="pauseToggle" id="pauseToggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" ${!isPaused ? 'checked' : ''}/>
+                        <label for="pauseToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                    </div>
+                </div>
+
+                <div class="space-y-3 border-t pt-4">
+                    <p class="text-xs text-slate-500 font-bold">ভুল এন্ট্রি সংশোধন (যদি প্রয়োজন হয়)</p>
+                    <div>
+                        <label class="text-xs text-slate-500">মোট খরচ (টাকা)</label>
+                        <input type="number" id="adjTotalCost" value="${data.totalCost}" class="w-full p-2 border rounded-lg mt-1" step="0.01">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500">জমা পরিমাণ (টাকা)</label>
+                        <input type="number" id="adjPaidAmount" value="${data.paidAmount}" class="w-full p-2 border rounded-lg mt-1" step="0.01">
+                    </div>
+                </div>
+                
+                <button id="confirmManage" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700 flex justify-center mt-6">আপডেট সেভ করুন</button>
+                <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-2" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল করুন</button>
+            `);
+
+            document.getElementById('confirmManage').onclick = async () => {
+                const btn = document.getElementById('confirmManage');
+                showSpinner(btn);
+                
+                const newPaused = !document.getElementById('pauseToggle').checked;
+                const newTotal = parseFloat(document.getElementById('adjTotalCost').value);
+                const newPaid = parseFloat(document.getElementById('adjPaidAmount').value);
+                
+                if (isNaN(newTotal) || isNaN(newPaid)) {
+                    hideSpinner(btn);
+                    return showToast('সঠিক সংখ্যা লিখুন');
+                }
+
+                const newDue = newTotal - newPaid;
+                
+                yearlyData[currentYear] = {
+                    ...yData,
+                    totalCost: newTotal.toFixed(2),
+                    paidAmount: newPaid.toFixed(2),
+                    dueAmount: newDue.toFixed(2),
+                    isPaused: newPaused
+                };
+
+                const history = data.history || [];
+                history.push({ 
+                    date: new Date().toLocaleDateString('bn-BD'), 
+                    type: 'manage', 
+                    paused: newPaused, 
+                    total: newTotal.toFixed(2), 
+                    paid: newPaid.toFixed(2) 
+                });
+
+                await updateDoc(ref, {
+                    totalCost: newTotal.toFixed(2),
+                    paidAmount: newPaid.toFixed(2),
+                    dueAmount: newDue.toFixed(2),
+                    yearlyData: yearlyData,
+                    history: history
+                });
+
+                showToast('হিসাব আপডেট হয়েছে!', 'success');
+                document.getElementById('modalContainer').classList.add('hidden');
+            };
+        }
+
         async function openPaymentModal(id, name) {
             const q = query(collection(db, "leases"), where("farmerName", "==", name), where("status", "==", "active"));
             const snap = await getDocs(q);
@@ -802,7 +981,7 @@
             snap.forEach(d => {
                 const data = d.data();
                 const currentYearData = data.yearlyData?.[data.year] || {};
-                if (currentYearData.status !== 'transferred') {
+                if (currentYearData.status !== 'transferred' && !currentYearData.isPaused) {
                     const selected = d.id === id ? 'selected' : '';
                     options += `<option value="${d.id}" ${selected}>${data.amount} শতাংশ (দর: ${data.ratePer33}) - বকেয়া: ${fmt(data.dueAmount)} টাকা</option>`;
                 }
@@ -941,7 +1120,7 @@
                 } else {
                     const newTotal = fmt((tAmount / 33) * parseFloat(oldData.ratePer33));
                     const newYearlyData = {};
-                    newYearlyData[oldData.year] = { ratePer33: oldData.ratePer33, totalCost: parseFloat(newTotal), paidAmount: 0, dueAmount: parseFloat(newTotal), status: 'active' };
+                    newYearlyData[oldData.year] = { ratePer33: oldData.ratePer33, totalCost: parseFloat(newTotal), paidAmount: 0, dueAmount: parseFloat(newTotal), status: 'active', isPaused: false };
                     
                     await addDoc(collection(db, "leases"), {
                         farmerName: newName, amount: tAmount, ratePer33: oldData.ratePer33, cycleType: oldData.cycleType, year: oldData.year,
@@ -970,7 +1149,7 @@
                 const btn = document.getElementById('confirmEdit');
                 showSpinner(btn);
                 const newRate = parseFloat(document.getElementById('newRate').value);
-                const newYear = document.getElementById('editYear').value;
+                const newYear = normalizeYear(document.getElementById('editYear').value);
                 if(isNaN(newRate) || newRate <= 0 || !newYear) { hideSpinner(btn); return showToast('সঠিক তথ্য দিন'); }
 
                 const ref = doc(db, "leases", id);
@@ -986,7 +1165,7 @@
                     yearlyData[newYear].totalCost = parseFloat(newTotal);
                     yearlyData[newYear].dueAmount = fmt(parseFloat(newTotal) - yearlyData[newYear].paidAmount);
                 } else {
-                    yearlyData[newYear] = { ratePer33: newRate, totalCost: parseFloat(newTotal), paidAmount: 0, dueAmount: parseFloat(newTotal), status: 'active' };
+                    yearlyData[newYear] = { ratePer33: newRate, totalCost: parseFloat(newTotal), paidAmount: 0, dueAmount: parseFloat(newTotal), status: 'active', isPaused: false };
                 }
 
                 await updateDoc(ref, { 
@@ -1000,7 +1179,7 @@
         }
 
         function openAdjustDueModal(id, name, oldYear, due) {
-            let oldYearNum = parseInt(oldYear);
+            let oldYearNum = parseInt(normalizeYear(oldYear));
             if (isNaN(oldYearNum)) {
                 oldYearNum = new Date().getFullYear();
             }
@@ -1023,7 +1202,7 @@
             document.getElementById('confirmAdjust').onclick = async () => {
                 const btn = document.getElementById('confirmAdjust');
                 showSpinner(btn);
-                const newYear = document.getElementById('adjustYear').value;
+                const newYear = normalizeYear(document.getElementById('adjustYear').value);
                 const newRate = parseFloat(document.getElementById('adjustRate').value);
                 if(!newYear || isNaN(newRate)) { hideSpinner(btn); return showToast('সঠিক তথ্য দিন'); }
 
@@ -1043,7 +1222,7 @@
                     yearlyData[data.year] = { ratePer33: data.ratePer33, totalCost: data.totalCost, paidAmount: data.paidAmount, dueAmount: oldDue, status: 'transferred' };
                 }
 
-                yearlyData[newYear] = { ratePer33: newRate, totalCost: fmt(totalNewCost), paidAmount: 0, dueAmount: fmt(totalNewCost), status: 'active' };
+                yearlyData[newYear] = { ratePer33: newRate, totalCost: fmt(totalNewCost), paidAmount: 0, dueAmount: fmt(totalNewCost), status: 'active', isPaused: false };
 
                 await updateDoc(ref, { 
                     year: newYear, ratePer33: newRate, totalCost: fmt(totalNewCost), paidAmount: 0, dueAmount: fmt(totalNewCost), status: 'active', history, yearlyData 
@@ -1073,7 +1252,7 @@
             });
 
             let historyPage = 1;
-            const historyPerPage = 8; // এক পেজে ৮টি তালিকা
+            const historyPerPage = 8;
 
             function renderHistoryPage() {
                 const totalPages = Math.ceil(allHistory.length / historyPerPage);
@@ -1090,6 +1269,10 @@
                     else if(h.type === 'transfer_out') historyHTML += `<li class="text-yellow-600 flex justify-between"><span>${h.date}</span> <span>${h.amount} শতাংশ হস্তান্তর (${h.to})</span></li>`;
                     else if(h.type === 'transfer_in') historyHTML += `<li class="text-blue-600 flex justify-between"><span>${h.date}</span> <span>${h.amount} শতাংশ পেয়েছেন (${h.from})</span></li>`;
                     else if(h.type === 'edit') historyHTML += `<li class="text-gray-500 flex justify-between"><span>${h.date}</span> <span>দর/বছর পরিবর্তন: ${h.oldRate}->${h.newRate}</span></li>`;
+                    else if(h.type === 'manage') {
+                        let action = h.paused ? 'হিসাব স্থগিত করা হয়েছে' : 'হিসাব চালু করা হয়েছে';
+                        historyHTML += `<li class="text-orange-500 flex justify-between"><span>${h.date}</span> <span>${action} (মোট: ${h.total}, জমা: ${h.paid})</span></li>`;
+                    }
                     else if(h.type === 'auto_rollover') historyHTML += `<li class="text-purple-600 flex justify-between"><span>${h.date}</span> <span>${h.fromYear} থেকে ${h.toYear} সালে ${h.carriedDue} টাকা স্বয়ংক্রিয়ভাবে যোগ হয়েছে</span></li>`;
                     else if(h.type === 'new_year') historyHTML += `<li class="text-indigo-600 flex justify-between"><span>${h.date}</span> <span>${h.fromYear} থেকে ${h.toYear} সালে ${h.carriedDue} টাকা যোগ হয়েছে</span></li>`;
                     historyHTML += `</ul></div>`;
@@ -1128,7 +1311,7 @@
 <body class="bg-slate-50 text-slate-800">
     <div id="app" class="min-h-screen">
         <div class="flex items-center justify-center min-h-screen">
-            <div class="text-slate-400 animate-pulse">লোড হচ্ছে...</div>
+            <div class="lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
         </div>
     </div>
 </body>
