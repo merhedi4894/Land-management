@@ -368,8 +368,6 @@
             const q = collection(db, "leases");
             onSnapshot(q, (snapshot) => {
                 allLeases = []; snapshot.forEach(d => allLeases.push({ id: d.id, ...d.data() }));
-                
-                // সাম্প্রতিক সালে ফিরে যাওয়ার লজিক (শুধু ভিউ আপডেট, ডাটাবেজে সেভ করবে না যাতে ইউজারের দেওয়া সাল থেকে না বদলায়)
                 for (let lease of allLeases) {
                     if (lease.status === 'active') {
                         const yearlyData = lease.yearlyData || {}; let maxYear = 0;
@@ -388,7 +386,6 @@
                         }
                     }
                 }
-                
                 allLeases.sort((a, b) => { const aYear = parseInt(normalizeYear(a.year)) || 0; const bYear = parseInt(normalizeYear(b.year)) || 0; if (a.status !== b.status) return a.status === 'active' ? -1 : 1; return bYear - aYear; });
                 renderTable();
             });
@@ -407,10 +404,19 @@
                 const id = lease.id; const tr = document.createElement('tr'); tr.dataset.id = id;
                 const currentYearData = lease.yearlyData?.[lease.year] || {};
                 const isTransferred = currentYearData.status === 'transferred'; const isPaused = currentYearData.isPaused === true; const isPaid = parseFloat(lease.dueAmount) === 0;
+                const carriedDueVal = currentYearData.carriedDue !== undefined ? parseFloat(currentYearData.carriedDue) : 0;
+                
                 if (lease.status === 'inactive' || isTransferred) tr.className = 'bg-red-50 text-red-400';
                 if (isPaused) tr.className = 'bg-orange-50 text-orange-500';
                 if (expandedRows.has(id)) tr.classList.add('expanded');
                 
+                let totalHtml = `<div><span class="text-slate-400">মোট হারি:</span> <b class="text-slate-800">${fmt(lease.totalCost)}</b> টাকা</div>`;
+                if (isPaused) {
+                    totalHtml = `<div><span class="text-slate-400">পূর্বের মোট বকেয়া:</span> <b class="text-slate-800">${fmt(lease.totalCost)}</b> টাকা</div>`;
+                } else if (carriedDueVal > 0) {
+                    totalHtml = `<div class="text-indigo-600 font-bold">বকেয়া সহ মোট হারি = ${fmt(lease.totalCost)} টাকা</div>`;
+                }
+
                 let dueHtml = '', collapsedDueHtml = '';
                 if (isPaused) {
                     dueHtml = `<span class="font-bold text-orange-500 text-base">পূর্বের বকেয়া: ${fmt(lease.dueAmount)}</span> <span class="text-xs">টাকা</span>`;
@@ -439,7 +445,8 @@
                         <div><span class="text-slate-400">জমি:</span> <b>${lease.amount}</b> শতাংশ</div><div><span class="text-slate-400">দর:</span> <b>${lease.ratePer33}</b> টাকা</div>
                     </td>
                     <td data-label="মোট হারি / পরিশোধিত" class="p-3 align-top text-xs space-y-1 collapsible">
-                        <div><span class="text-slate-400">${isPaused ? 'পূর্বের মোট বকেয়া' : 'মোট হারি'}:</span> <b class="text-slate-800">${fmt(lease.totalCost)}</b> টাকা</div><div><span class="text-slate-400">জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)}</b> টাকা</div>
+                        ${totalHtml}
+                        <div><span class="text-slate-400">জমা:</span> <b class="text-green-600">${fmt(lease.paidAmount)}</b> টাকা</div>
                     </td>
                     <td data-label="বকেয়া" class="p-3 align-top collapsible">${dueHtml}</td>
                     <td data-label="অ্যাকশন" class="p-3 align-top collapsible">
@@ -496,6 +503,10 @@
             const currentAmount = yData.amount !== undefined ? parseFloat(yData.amount) : parseFloat(data.amount);
             const currentYearCost = (currentAmount / 33) * parseFloat(data.ratePer33);
             const carriedDue = yData.carriedDue !== undefined ? parseFloat(yData.carriedDue) : (parseFloat(data.totalCost) - currentYearCost);
+            
+            let manageTotalLabel = 'মোট হারি';
+            if (isPaused) manageTotalLabel = 'পূর্বের মোট বকেয়া';
+            else if (carriedDue > 0) manageTotalLabel = 'বকেয়া সহ মোট হারি';
 
             openModal(`
                 <h3 class="text-lg font-bold mb-4 text-slate-800">হিসাব ব্যবস্থাপনা (${data.farmerName})</h3>
@@ -510,7 +521,7 @@
                     <div class="flex justify-between text-slate-500"><span>জমির পরিমাণ:</span> <b>${currentAmount} শতাংশ</b></div>
                     <div class="flex justify-between text-slate-500"><span>জমির হারি:</span> <b>${fmt(currentYearCost)}</b></div>
                     <div class="flex justify-between text-slate-500"><span>পূর্বের বকেয়া:</span> <b>${fmt(carriedDue)}</b></div>
-                    <div class="flex justify-between text-slate-500"><span>মোট হারি:</span> <b class="text-indigo-600">${fmt(data.totalCost)}</b></div>
+                    <div class="flex justify-between text-slate-500"><span>${manageTotalLabel}:</span> <b class="text-indigo-600">${fmt(data.totalCost)} টাকা</b></div>
                 </div>
                 <div class="space-y-3 border-t pt-4">
                     <p class="text-xs text-slate-500 font-bold">ভুল এন্ট্রি সংশোধন (যদি প্রয়োজন হয়)</p>
@@ -612,12 +623,12 @@
                 const oldAmount = oldYData.amount !== undefined ? parseFloat(oldYData.amount) : parseFloat(oldData.amount);
                 const oldCarriedDue = oldYData.carriedDue !== undefined ? parseFloat(oldYData.carriedDue) : (parseFloat(oldData.totalCost) - (oldAmount / 33 * parseFloat(oldData.ratePer33)));
                 
-                const oldNewAmount = oldAmount - tAmount;
+                const oldNewAmount = oldAmount - tAmount; // চলতি সালের জমি কমানো হলো
                 const oldNewCurrentCost = (oldNewAmount / 33) * parseFloat(oldData.ratePer33);
                 
                 let oldNewTotal;
                 if (isPaused) {
-                    oldNewTotal = oldCarriedDue;
+                    oldNewTotal = oldCarriedDue; // স্থগিত অবস্থায় জমি কমলেও পূর্বের বকেয়াই মোট হিসাব হিসেবে থাকবে
                 } else {
                     oldNewTotal = oldCarriedDue + oldNewCurrentCost;
                 }
@@ -625,6 +636,8 @@
                 if (oldNewDue < 0) oldNewDue = 0;
 
                 const oldHistory = oldData.history || []; oldHistory.push({ date: new Date().toLocaleDateString('bn-BD'), amount: tAmount, type: 'transfer_out', to: newName });
+                
+                // শুধু চলতি সালের (oldYear) amount আপডেট হবে, পুরোনো সালের ডাটা অপরিবর্তিত থাকবে
                 if (oldYearlyData[oldYear]) { oldYearlyData[oldYear].amount = oldNewAmount; oldYearlyData[oldYear].carriedDue = oldCarriedDue.toFixed(2); oldYearlyData[oldYear].totalCost = oldNewTotal.toFixed(2); oldYearlyData[oldYear].dueAmount = oldNewDue.toFixed(2); }
                 await updateDoc(oldRef, { amount: oldNewAmount, totalCost: oldNewTotal.toFixed(2), dueAmount: oldNewDue.toFixed(2), history: oldHistory, yearlyData: oldYearlyData });
 
