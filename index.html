@@ -91,6 +91,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const ADMIN_PASSWORD = "admin123"; // কার্ড ডিলিট করার জন্য অ্যাডমিন পাসওয়ার্ড
 
         const appContainer = document.getElementById('app');
         let idleTimer = null;
@@ -167,6 +168,34 @@
                 document.body.appendChild(modal);
                 modal.querySelector('#cancelBtn').onclick = () => { modal.remove(); resolve(false); };
                 modal.querySelector('#confirmBtn').onclick = () => { modal.remove(); resolve(true); };
+            });
+        }
+
+        function promptAdminPassword(message) {
+            return new Promise((resolve) => {
+                playSound('error');
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-[200] flex items-center justify-center p-4 fade-in';
+                modal.innerHTML = `
+                    <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm text-center border-t-4 border-red-500">
+                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-50 mb-4">
+                            <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                        </div>
+                        <h3 class="text-lg font-bold mb-2 text-slate-800">অ্যাডমিন পাসওয়ার্ড</h3>
+                        <p class="text-sm text-slate-600 mb-4">${message}</p>
+                        <input type="password" id="adminPassInput" class="w-full p-2 border rounded-lg mb-4 text-center" autofocus>
+                        <div class="flex gap-3">
+                            <button id="confirmBtn" class="flex-1 bg-red-500 text-white p-2 rounded-lg font-bold hover:bg-red-600">ওকে</button>
+                            <button id="cancelBtn" class="flex-1 bg-slate-200 text-slate-700 p-2 rounded-lg font-bold hover:bg-slate-300">বাতিল</button>
+                        </div>
+                    </div>`;
+                document.body.appendChild(modal);
+                modal.querySelector('#cancelBtn').onclick = () => { modal.remove(); resolve(false); };
+                modal.querySelector('#confirmBtn').onclick = () => {
+                    const pass = document.getElementById('adminPassInput').value;
+                    if (pass === ADMIN_PASSWORD) { modal.remove(); resolve(true); }
+                    else { showToast('ভুল পাসওয়ার্ড!', 'error'); }
+                };
             });
         }
 
@@ -398,34 +427,35 @@
 
         function openDatabaseModal() {
             openModal(`
-                <h3 class="text-lg font-bold mb-4 text-slate-800">ডেটাবেস ম্যানেজমেন্ট</h3>
+                <h3 class="text-lg font-bold mb-6 text-slate-800">ডেটাবেস ম্যানেজমেন্ট</h3>
                 
-                <div class="mb-6 border-b pb-6">
-                    <h4 class="font-bold text-sm mb-3 text-slate-700">রিপোর্ট ডাউনলোড</h4>
-                    <div class="grid grid-cols-2 gap-3">
-                        <button id="modalExportPdf" class="bg-red-500 text-white p-3 rounded-lg font-bold hover:bg-red-600 flex items-center justify-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                <div class="mb-8 border-b pb-6">
+                    <h4 class="font-bold text-sm mb-3 text-slate-600 flex items-center gap-2"><svg class="w-4 h-4 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> রিপোর্ট ডাউনলোড</h4>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="modalExportPdf" class="bg-red-500 text-white p-2 rounded-lg font-semibold text-xs hover:bg-red-600 flex items-center justify-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                             PDF ডাউনলোড
                         </button>
-                        <button id="modalExportExcel" class="bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 flex items-center justify-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <button id="modalExportExcel" class="bg-green-600 text-white p-2 rounded-lg font-semibold text-xs hover:bg-green-700 flex items-center justify-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             Excel ডাউনলোড
                         </button>
                     </div>
                 </div>
 
                 <div>
-                    <h4 class="font-bold text-sm mb-3 text-slate-700">ডেটা স্থায়ীভাবে মুছুন (Delete Data)</h4>
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <input type="text" id="delStartYear" placeholder="শুরু সাল (যেমন: ২০২৩)" class="p-3 border rounded-lg">
-                        <input type="text" id="delEndYear" placeholder="শেষ সাল (যেমন: ২০২৪)" class="p-3 border rounded-lg">
+                    <h4 class="font-bold text-sm mb-3 text-slate-600 flex items-center gap-2"><svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> ডেটা স্থায়ীভাবে মুছুন</h4>
+                    <p class="text-xs text-red-500 mb-3 bg-red-50 p-2 rounded">সতর্কতা: এখানে সাল দিয়ে ডিলিট করলে তা ডাটাবেজ থেকে চিরতরে মুছে যাবে এবং পরবর্তীতে কোনো রিপোর্টে দেখা যাবে না।</p>
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <input type="text" id="delStartYear" placeholder="শুরু সাল (যেমন: ২০২৩)" class="p-2 border rounded-lg text-sm">
+                        <input type="text" id="delEndYear" placeholder="শেষ সাল (যেমন: ২০২৪)" class="p-2 border rounded-lg text-sm">
                     </div>
-                    <button id="modalDeleteBtn" class="w-full bg-red-600 text-white p-3 rounded-lg font-bold hover:bg-red-700 flex items-center justify-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    <button id="modalDeleteBtn" class="w-full bg-red-600 text-white p-2 rounded-lg font-semibold text-xs hover:bg-red-700 flex items-center justify-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         নির্বাচিত সালের ডেটা ডিলিট করুন
                     </button>
                 </div>
-                <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-6" onclick="document.getElementById('modalContainer').classList.add('hidden')">বন্ধ করুন</button>
+                <button class="w-full bg-slate-200 text-slate-700 p-2 rounded-lg font-bold hover:bg-slate-300 mt-8 text-sm" onclick="document.getElementById('modalContainer').classList.add('hidden')">বন্ধ করুন</button>
             `);
 
             document.getElementById('modalExportPdf').addEventListener('click', () => exportData('pdf'));
@@ -445,17 +475,18 @@
 
             showToast('ডেটা ডিলিট করা হচ্ছে...', 'info');
             
+            // Fetch ALL docs directly from Firestore, including soft-deleted ones
+            const snap = await getDocs(collection(db, "leases"));
             let deletePromises = [];
             
-            for (let lease of allLeases) {
-                let leaseYearNum = parseInt(normalizeYear(lease.year));
+            snap.forEach(d => {
+                const data = d.data();
+                let leaseYearNum = parseInt(normalizeYear(data.year));
                 
-                // If current active year is in range, delete the entire document
                 if (leaseYearNum >= startYear && leaseYearNum <= endYear) {
-                    deletePromises.push(deleteDoc(doc(db, "leases", lease.id)));
+                    deletePromises.push(deleteDoc(doc(db, "leases", d.id)));
                 } else {
-                    // Check yearlyData
-                    let yearlyData = lease.yearlyData || {};
+                    let yearlyData = data.yearlyData || {};
                     let updated = false;
                     for (let y in yearlyData) {
                         let yNum = parseInt(normalizeYear(y));
@@ -465,10 +496,10 @@
                         }
                     }
                     if (updated) {
-                        deletePromises.push(updateDoc(doc(db, "leases", lease.id), { yearlyData }));
+                        deletePromises.push(updateDoc(doc(db, "leases", d.id), { yearlyData }));
                     }
                 }
-            }
+            });
 
             try {
                 await Promise.all(deletePromises);
@@ -490,7 +521,7 @@
                 allData.push({
                     name: data.farmerName, year: data.year, amount: data.amount, rate: data.ratePer33,
                     total: data.totalCost, paid: data.paidAmount, due: data.dueAmount,
-                    status: data.status === 'deleted' ? 'ডিলিট করা' : (data.yearlyData?.[data.year]?.isPaused ? 'স্থগিত' : 'সক্রিয়')
+                    status: data.status === 'deleted' ? 'কার্ড থেকে ডিলিট করা' : (data.yearlyData?.[data.year]?.isPaused ? 'স্থগিত' : 'সক্রিয়')
                 });
                 (data.history || []).forEach(h => {
                     let desc = '';
@@ -500,7 +531,7 @@
                     else if (h.type === 'edit') desc = `দর পরিবর্তন: ${h.oldRate} -> ${h.newRate}`;
                     else if (h.type === 'manage') desc = h.paused ? 'হিসাব স্থগিত' : 'হিসাব চালু';
                     else if (h.type === 'new_year') desc = `${h.fromYear} থেকে ${h.toYear} সালে ট্রান্সফার (বকেয়া: ${h.carriedDue})`;
-                    else if (h.type === 'deleted') desc = 'হিসাব ডিলিট করা হয়েছে';
+                    else if (h.type === 'deleted') desc = 'তালিকা থেকে মুছে ফেলা হয়েছে';
                     historyData.push({ name: data.farmerName, date: h.date, description: desc });
                 });
             });
@@ -805,16 +836,16 @@
         }
 
         async function handleDelete(id) {
-            const isConfirmed = await customConfirm("আপনি কি এই হিসাবটি ডিলিট করতে চান? ডিলিট করলে এটি তালিকা থেকে চলে যাবে, তবে রিপোর্টে ইতিহাস থাকবে।", "delete");
-            if (isConfirmed) {
-                try {
-                    const ref = doc(db, "leases", id); const snap = await getDoc(ref); const data = snap.data();
-                    const history = data.history || [];
-                    history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'deleted', note: 'হিসাব ডিলিট করা হয়েছে' });
-                    await updateDoc(ref, { status: 'deleted', history }); 
-                    showToast('হিসাব ডিলিট করা হয়েছে!', 'success');
-                } catch(err) { showToast(cleanError(err), 'error'); }
-            }
+            const isConfirmed = await promptAdminPassword("কার্ড ডিলিট করার জন্য অ্যাডমিন পাসওয়ার্ড দিন।");
+            if (!isConfirmed) return;
+            
+            try {
+                const ref = doc(db, "leases", id); const snap = await getDoc(ref); const data = snap.data();
+                const history = data.history || [];
+                history.push({ date: new Date().toLocaleDateString('bn-BD'), type: 'deleted', note: 'কার্ড থেকে ডিলিট করা হয়েছে' });
+                await updateDoc(ref, { status: 'deleted', history }); 
+                showToast('হিসাব তালিকা থেকে মুছে ফেলা হয়েছে! (ডাটাবেজে সেভ আছে)', 'success');
+            } catch(err) { showToast(cleanError(err), 'error'); }
         }
 
         function openModal(htmlContent) {
@@ -1139,7 +1170,7 @@
                     else if(h.type === 'edit') historyHTML += `<li class="text-gray-500 flex justify-between"><span>${h.date}</span> <span>দর/বছর পরিবর্তন: ${h.oldRate}->${h.newRate}</span></li>`;
                     else if(h.type === 'manage') { let action = h.paused ? 'হিসাব স্থগিত করা হয়েছে' : 'হিসাব চালু করা হয়েছে'; historyHTML += `<li class="text-orange-500 flex justify-between"><span>${h.date}</span> <span>${action} (মোট: ${h.total}, জমা: ${h.paid})</span></li>`; }
                     else if(h.type === 'new_year') historyHTML += `<li class="text-indigo-600 flex justify-between"><span>${h.date}</span> <span>${h.fromYear} থেকে ${h.toYear} সালে ${h.carriedDue} টাকা যোগ হয়েছে</span></li>`;
-                    else if(h.type === 'deleted') historyHTML += `<li class="text-red-500 flex justify-between"><span>${h.date}</span> <span>হিসাব ডিলিট করা হয়েছে</span></li>`;
+                    else if(h.type === 'deleted') historyHTML += `<li class="text-red-500 flex justify-between"><span>${h.date}</span> <span>তালিকা থেকে মুছে ফেলা হয়েছে</span></li>`;
                     historyHTML += `</ul></div>`;
                 });
                 let paginationHTML = '';
