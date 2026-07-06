@@ -160,8 +160,8 @@
                         <h3 class="text-lg font-bold mb-2 text-slate-800">নিশ্চিত করুন</h3>
                         <p class="text-sm text-slate-600 mb-6">${message}</p>
                         <div class="flex gap-3">
-                            <button id="cancelBtn" class="flex-1 bg-slate-200 text-slate-700 p-2 rounded-lg font-bold hover:bg-slate-300">বাতিল করুন</button>
-                            <button id="confirmBtn" class="flex-1 ${c.btn} text-white p-2 rounded-lg font-bold">নিশ্চিত করুন</button>
+                            <button id="confirmBtn" class="flex-1 ${c.btn} text-white p-2 rounded-lg font-bold">ওকে</button>
+                            <button id="cancelBtn" class="flex-1 bg-slate-200 text-slate-700 p-2 rounded-lg font-bold hover:bg-slate-300">বাতিল</button>
                         </div>
                     </div>`;
                 document.body.appendChild(modal);
@@ -303,16 +303,10 @@
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                                 <span class="hidden md:inline">নতুন হিসাব</span>
                             </button>
-                            <div class="relative" id="exportDropdownContainer">
-                                <button id="exportBtn" class="bg-cyan-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-cyan-700 transition flex items-center gap-1">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                    <span class="hidden md:inline">রিপোর্ট</span>
-                                </button>
-                                <div id="exportDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border z-20 py-1">
-                                    <button id="exportPdfBtn" class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">PDF ডাউনলোড</button>
-                                    <button id="exportExcelBtn" class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">Excel (XLSX) ডাউনলোড</button>
-                                </div>
-                            </div>
+                            <button id="dbBtn" class="bg-cyan-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-cyan-700 transition flex items-center gap-1" title="ডেটাবেস ম্যানেজমেন্ট">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"></path></svg>
+                                <span class="hidden md:inline">ডেটাবেস</span>
+                            </button>
                             <button id="logoutBtn" class="bg-red-500 text-white px-3 md:px-4 py-2 rounded-lg text-sm hover:bg-red-600 transition flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="hidden md:inline">লগআউট</span></button>
                         </div>
                     </nav>
@@ -335,13 +329,7 @@
             document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
             document.getElementById('searchInput').addEventListener('input', (e) => { currentPage = 1; renderTable(); });
             document.getElementById('addLeaseBtn').addEventListener('click', openAddLeaseModal);
-
-            const exportBtn = document.getElementById('exportBtn');
-            const exportDropdown = document.getElementById('exportDropdown');
-            exportBtn.addEventListener('click', (e) => { e.stopPropagation(); exportDropdown.classList.toggle('hidden'); });
-            window.addEventListener('click', () => exportDropdown.classList.add('hidden'));
-            document.getElementById('exportPdfBtn').addEventListener('click', () => exportData('pdf'));
-            document.getElementById('exportExcelBtn').addEventListener('click', () => exportData('excel'));
+            document.getElementById('dbBtn').addEventListener('click', openDatabaseModal);
 
             document.getElementById('leasesTable').addEventListener('click', (e) => {
                 const btn = e.target.closest('button');
@@ -406,6 +394,89 @@
             populateMonths('bn');
             document.getElementById('monthLang').addEventListener('change', (e) => populateMonths(e.target.value));
             document.getElementById('leaseForm').addEventListener('submit', addLease);
+        }
+
+        function openDatabaseModal() {
+            openModal(`
+                <h3 class="text-lg font-bold mb-4 text-slate-800">ডেটাবেস ম্যানেজমেন্ট</h3>
+                
+                <div class="mb-6 border-b pb-6">
+                    <h4 class="font-bold text-sm mb-3 text-slate-700">রিপোর্ট ডাউনলোড</h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button id="modalExportPdf" class="bg-red-500 text-white p-3 rounded-lg font-bold hover:bg-red-600 flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                            PDF ডাউনলোড
+                        </button>
+                        <button id="modalExportExcel" class="bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Excel ডাউনলোড
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-sm mb-3 text-slate-700">ডেটা স্থায়ীভাবে মুছুন (Delete Data)</h4>
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <input type="text" id="delStartYear" placeholder="শুরু সাল (যেমন: ২০২৩)" class="p-3 border rounded-lg">
+                        <input type="text" id="delEndYear" placeholder="শেষ সাল (যেমন: ২০২৪)" class="p-3 border rounded-lg">
+                    </div>
+                    <button id="modalDeleteBtn" class="w-full bg-red-600 text-white p-3 rounded-lg font-bold hover:bg-red-700 flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        নির্বাচিত সালের ডেটা ডিলিট করুন
+                    </button>
+                </div>
+                <button class="w-full bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300 mt-6" onclick="document.getElementById('modalContainer').classList.add('hidden')">বন্ধ করুন</button>
+            `);
+
+            document.getElementById('modalExportPdf').addEventListener('click', () => exportData('pdf'));
+            document.getElementById('modalExportExcel').addEventListener('click', () => exportData('excel'));
+            document.getElementById('modalDeleteBtn').addEventListener('click', handleDataDelete);
+        }
+
+        async function handleDataDelete() {
+            let startYear = parseInt(normalizeYear(document.getElementById('delStartYear').value));
+            let endYear = parseInt(normalizeYear(document.getElementById('delEndYear').value));
+            
+            if (isNaN(startYear) || isNaN(endYear)) return showToast('সঠিক সাল লিখুন।');
+            if (startYear > endYear) return showToast('শুরুর সাল শেষের সালের চেয়ে বড় হতে পারবে না।');
+
+            const isConfirmed = await customConfirm(`আপনি কি ${startYear} থেকে ${endYear} সাল পর্যন্ত সকল ডেটা স্থায়ীভাবে মুছে ফেলতে চান?`, "delete");
+            if (!isConfirmed) return;
+
+            showToast('ডেটা ডিলিট করা হচ্ছে...', 'info');
+            
+            let deletePromises = [];
+            
+            for (let lease of allLeases) {
+                let leaseYearNum = parseInt(normalizeYear(lease.year));
+                
+                // If current active year is in range, delete the entire document
+                if (leaseYearNum >= startYear && leaseYearNum <= endYear) {
+                    deletePromises.push(deleteDoc(doc(db, "leases", lease.id)));
+                } else {
+                    // Check yearlyData
+                    let yearlyData = lease.yearlyData || {};
+                    let updated = false;
+                    for (let y in yearlyData) {
+                        let yNum = parseInt(normalizeYear(y));
+                        if (yNum >= startYear && yNum <= endYear) {
+                            delete yearlyData[y];
+                            updated = true;
+                        }
+                    }
+                    if (updated) {
+                        deletePromises.push(updateDoc(doc(db, "leases", lease.id), { yearlyData }));
+                    }
+                }
+            }
+
+            try {
+                await Promise.all(deletePromises);
+                showToast('নির্বাচিত সালের ডেটা সফলভাবে মুছে ফেলা হয়েছে।', 'success');
+                document.getElementById('modalContainer').classList.add('hidden');
+            } catch (err) {
+                showToast(cleanError(err));
+            }
         }
 
         async function exportData(type) {
@@ -824,14 +895,12 @@
                 const yearlyData = data.yearlyData || {};
                 const currentYear = data.year;
 
-                // Logic for Paused State
                 if (isPaused && payYear == currentYear) {
                     hideSpinner(btn);
                     return showToast(`${payYear} সালের হিসাব স্থগিত আছে`);
                 }
 
                 if (payYear !== currentYear) {
-                    // Logic for paying past due year
                     if (!yearlyData[payYear]) {
                         hideSpinner(btn);
                         return showToast("এই সালের কোনো হিসাব পাওয়া যায়নি।");
@@ -850,16 +919,13 @@
                         return showToast(`${payYear} সালের বকেয়া ${pastDue} টাকা। এর বেশি পরিশোধ করা যাবে না।`);
                     }
 
-                    // Deduct from past year in yearlyData
                     pastYearData.paidAmount = fmt(parseFloat(pastYearData.paidAmount || 0) + amount);
                     pastYearData.dueAmount = fmt(pastDue - amount);
 
-                    // Deduct from current overall due
                     let currentDue = parseFloat(data.dueAmount);
                     let newTotalDue = Math.max(0, currentDue - amount);
                     let newTotalPaid = parseFloat(data.paidAmount) + amount;
 
-                    // Update carriedDue for the current year if it exists
                     if (yearlyData[currentYear] && yearlyData[currentYear].carriedDue !== undefined) {
                         let curCarried = parseFloat(yearlyData[currentYear].carriedDue);
                         yearlyData[currentYear].carriedDue = fmt(Math.max(0, curCarried - amount));
@@ -878,7 +944,6 @@
                     showToast(`${payYear} সালের বকেয়া থেকে ${amount} টাকা পরিশোধ করা হয়েছে।`, 'success');
                     document.getElementById('modalContainer').classList.add('hidden');
                 } else {
-                    // Normal payment for the current active year
                     let newPaid = parseFloat(data.paidAmount) + amount; 
                     let newDue = parseFloat(data.totalCost) - newPaid;
                     let adjustedMsg = '';
