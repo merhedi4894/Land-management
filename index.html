@@ -121,36 +121,32 @@
             return dues;
         }
 
-        /* ===== ডিসপ্লের জন্য মোট বকেয়া ও সালের তালিকা ===== */
+        /* ===== ডিসপ্লের জন্য মোট বকেয়া ও সালের তালিকা (নতুন লজিক) ===== */
         function getDisplayDues(lease) {
             const isPaused = lease.isPaused || false;
             let totalDue = 0;
             let yearsWithDues = [];
 
-            const yearlyData = lease.yearlyData || {};
-            for (let y in yearlyData) {
-                if ((yearlyData[y].dueAmount || 0) > 0) {
-                    yearsWithDues.push(y);
-                }
-            }
+            const prevDues = getPreviousYearsDues(lease);
+            const totalPrevDue = prevDues.reduce((sum, d) => sum + d.due, 0);
 
-            if (isPaused) {
-                const currentYearDue = Math.max(0, (lease.totalCost || 0) - (lease.paidAmount || 0));
-                totalDue = Math.max(0, (lease.dueAmount || 0) - currentYearDue);
-            } else {
-                totalDue = lease.dueAmount || 0;
-                if (totalDue > 0) {
+            prevDues.forEach(d => {
+                yearsWithDues.push(d.year);
+            });
+
+            if (!isPaused) {
+                // বর্তমান সালের বকেয়া হলো মোট বকেয়া থেকে পূর্বের বকেয়া বাদ দিলে যা থাকে
+                const currentYearDue = Math.max(0, (lease.dueAmount || 0) - totalPrevDue);
+                if (currentYearDue > 0) {
                     yearsWithDues.push(lease.year);
                 }
+                totalDue = lease.dueAmount || 0;
+            } else {
+                // স্থগিত থাকলে শুধু পূর্বের বকেয়া দেখাবে
+                totalDue = totalPrevDue;
             }
 
-            if (totalDue <= 0) {
-                yearsWithDues = [];
-            } else {
-                yearsWithDues = [...new Set(yearsWithDues)];
-                yearsWithDues.sort((a, b) => parseInt(a) - parseInt(b));
-            }
-            
+            yearsWithDues.sort((a, b) => parseInt(a) - parseInt(b));
             return { totalDue, yearsWithDues };
         }
 
@@ -448,7 +444,7 @@
                     const rc = isP ? 'bg-orange-50' : '';
                     const dd = getDisplayDues(lease);
 
-                    /* ===== কলাপসড ভিউ ===== */
+                    /* ===== কলাপসড ভিউ (Expand না করা অবস্থা) ===== */
                     const colDue = `নিট বকেয়া :${fmt(dd.totalDue)}`;
 
                     /* ===== এক্সপান্ডেড ভিউ — কলাম ২: জমি/দর ===== */
@@ -467,11 +463,10 @@
                     let col4 = '';
                     if (dd.totalDue > 0) {
                         const ys = formatYearsList(dd.yearsWithDues);
-                        col4 = `<span class="font-bold text-red-600 text-xs leading-relaxed">${ys} সালের মোট বকেয়া:${fmt(dd.totalDue)} টাকা</span>`;
+                        col4 = `<span class="font-bold text-red-600 text-xs leading-relaxed">${ys} সালের মোট বকেয়া: ${fmt(dd.totalDue)} টাকা</span>`;
                     } else {
                         col4 = `<span class="font-bold text-green-600 text-xs">শূন্য</span>`;
                     }
-
                     if (isP) {
                         col4 += `<span class="block text-xs text-orange-600 font-bold mt-1">স্থগিত</span>`;
                     }
@@ -514,12 +509,42 @@
                 if (pd.length === 0) { showToast('হিসাব স্থগিত এবং পূর্বের কোনো বকেয়া নেই।', 'info'); return; }
                 const opts = pd.map(d => `<option value="${d.year}">${d.year} সাল — বকেয়া: ${fmt(d.due)} টাকা</option>`).join('');
                 openModal(`<h3 class="text-lg font-bold mb-4">${name} - জমা</h3><div class="text-xs text-amber-700 bg-amber-50 p-2 rounded mb-4 border border-amber-200"><strong>স্থগিত অবস্থা:</strong> বর্তমান সালে জমা বন্ধ। পূর্বের সালের বকেয়া জমা দিন।</div><form id="paymentForm" class="space-y-4"><div><label class="block text-sm font-medium mb-1">কোন সালের বকেয়া?</label><select id="payYear" class="w-full p-3 border rounded-lg bg-white">${opts}</select></div><div><label class="block text-sm font-medium mb-1">জমার পরিমাণ (টাকা)</label><input type="number" id="payAmount" class="w-full p-3 border rounded-lg" required></div><div class="flex gap-3"><button type="submit" class="flex-1 bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700">জমা দিন</button><button type="button" class="flex-1 bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল</button></div></form>`);
+                
                 document.getElementById('paymentForm').onsubmit = async (e) => { 
-                    e.preventDefault(); const sy = document.getElementById('payYear').value, amt = parseFloat(document.getElementById('payAmount').value); if (isNaN(amt) || amt <= 0) return showToast('সঠিক পরিমাণ দিন।'); const yd = { ...(lease.yearlyData || {}) }; if (!yd[sy]) return; yd[sy].paidAmount = (yd[sy].paidAmount || 0) + amt; yd[sy].dueAmount = (yd[sy].dueAmount || 0) - amt; const newLeaseDue = Math.max(0, (lease.dueAmount || 0) - amt); try { await updateDoc(doc(db, "leases", id), { yearlyData: yd, dueAmount: newLeaseDue, history: [...(lease.history||[]), { type:'payment', date: new Date().toLocaleDateString('bn-BD'), year: sy, amount: amt }] }); document.getElementById('modalContainer').classList.add('hidden'); showToast(`${sy} সালে ${fmt(amt)} টাকা জমা সফল!`, 'success'); } catch(err) { showToast(cleanError(err)); } 
+                    e.preventDefault(); 
+                    const sy = document.getElementById('payYear').value, amt = parseFloat(document.getElementById('payAmount').value); 
+                    if (isNaN(amt) || amt <= 0) return showToast('সঠিক পরিমাণ দিন।'); 
+                    const yd = { ...(lease.yearlyData || {}) }; 
+                    if (!yd[sy]) return; 
+                    yd[sy].paidAmount = (yd[sy].paidAmount || 0) + amt; 
+                    yd[sy].dueAmount = (yd[sy].dueAmount || 0) - amt; 
+                    
+                    // মোট বকেয়া (lease.dueAmount) থেকেও এই পরিমাণ কমাতে হবে যাতে ডাটাবেস সঠিক থাকে
+                    const newTotalDue = Math.max(0, (lease.dueAmount || 0) - amt);
+                    
+                    try { 
+                        await updateDoc(doc(db, "leases", id), { 
+                            yearlyData: yd, 
+                            dueAmount: newTotalDue,
+                            history: [...(lease.history||[]), { type:'payment', date: new Date().toLocaleDateString('bn-BD'), year: sy, amount: amt }] 
+                        }); 
+                        document.getElementById('modalContainer').classList.add('hidden'); 
+                        showToast(`${sy} সালে ${fmt(amt)} টাকা জমা সফল!`, 'success'); 
+                    } catch(err) { showToast(cleanError(err)); } 
                 };
             } else {
                 openModal(`<h3 class="text-lg font-bold mb-4">${name} - ${lease.year} সালের জমা</h3><form id="paymentForm" class="space-y-4"><div><label class="block text-sm font-medium mb-1">জমার পরিমাণ (টাকা)</label><input type="number" id="payAmount" class="w-full p-3 border rounded-lg" required></div><div class="flex gap-3"><button type="submit" class="flex-1 bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700">জমা দিন</button><button type="button" class="flex-1 bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল</button></div></form>`);
-                document.getElementById('paymentForm').onsubmit = async (e) => { e.preventDefault(); const amt = parseFloat(document.getElementById('payAmount').value); if (isNaN(amt) || amt <= 0) return showToast('সঠিক পরিমাণ দিন।'); const np = (lease.paidAmount||0)+amt, nd = Math.max(0,(lease.dueAmount||0)-amt); try { await updateDoc(doc(db,"leases",id),{paidAmount:np,dueAmount:nd,history:[...(lease.history||[]),{type:'payment',date:new Date().toLocaleDateString('bn-BD'),year:lease.year,amount:amt}]}); document.getElementById('modalContainer').classList.add('hidden'); showToast('জমা সফল!','success'); } catch(err){showToast(cleanError(err));} };
+                document.getElementById('paymentForm').onsubmit = async (e) => { 
+                    e.preventDefault(); 
+                    const amt = parseFloat(document.getElementById('payAmount').value); 
+                    if (isNaN(amt) || amt <= 0) return showToast('সঠিক পরিমাণ দিন।'); 
+                    const np = (lease.paidAmount||0)+amt, nd = Math.max(0,(lease.dueAmount||0)-amt); 
+                    try { 
+                        await updateDoc(doc(db,"leases",id),{paidAmount:np,dueAmount:nd,history:[...(lease.history||[]),{type:'payment',date:new Date().toLocaleDateString('bn-BD'),year:lease.year,amount:amt}]}); 
+                        document.getElementById('modalContainer').classList.add('hidden'); 
+                        showToast('জমা সফল!','success'); 
+                    } catch(err){showToast(cleanError(err));} 
+                };
             }
         }
 
@@ -537,20 +562,23 @@
             document.getElementById('editRateForm').onsubmit = async (e) => { e.preventDefault(); const nr = parseFloat(document.getElementById('newRate').value), lease = allLeases.find(l=>l.id===id); if(!lease)return; if(isNaN(nr)||nr<=0)return showToast('সঠিক দর দিন।'); const nt=(lease.amount/33)*nr,nd=parseFloat(Math.max(0,nt-(lease.paidAmount||0)).toFixed(2)); try{await updateDoc(doc(db,"leases",id),{ratePer33:nr,totalCost:nt,dueAmount:nd,history:[...(lease.history||[]),{type:'edit',date:new Date().toLocaleDateString('bn-BD'),oldRate:lease.ratePer33,newRate:nr}]});document.getElementById('modalContainer').classList.add('hidden');showToast('দর পরিবর্তন সফল!','success');}catch(err){showToast(cleanError(err));} };
         }
 
-        /* ===== জমা সমন্বয় — শুধু জমা টাকা এডিট ===== */
+        /* ===== জমা সমন্বয় — শুধু জমা টাকা এডিট করবে এবং বকেয়ার সাথে সমন্বয় করবে ===== */
         function openAdjustPaidModal(id, name, year, paid) {
-            openModal(`<h3 class="text-lg font-bold mb-4">${name} - জমা সমন্বয় (${year})</h3><form id="adjustForm" class="space-y-4"><div class="text-sm text-slate-600 bg-slate-50 p-2 rounded">বর্তমান জমা: <strong class="text-green-600">${fmt(paid)}</strong> টাকা</div><div><label class="block text-sm font-medium mb-1">নতুন জমার পরিমাণ (টাকা)</label><input type="number" id="newPaid" class="w-full p-3 border rounded-lg" value="${paid}" required></div><div class="flex gap-3"><button type="submit" class="flex-1 bg-purple-600 text-white p-3 rounded-lg font-bold hover:bg-purple-700">সমন্বয় করুন</button><button type="button" class="flex-1 bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল</button></div></form>`);
+            openModal(`<h3 class="text-lg font-bold mb-4">${name} - জমা সমন্বয় (${year})</h3><form id="adjustForm" class="space-y-4"><div class="text-sm text-slate-600 bg-slate-50 p-2 rounded">বর্তমান জমা: <strong class="text-green-600">${fmt(paid)}</strong> টাকা</div><div><label class="block text-sm font-medium mb-1">শুধু জমা টাকা এডিট করুন (অন্য কোন টাকা নয়)</label><input type="number" id="newPaid" class="w-full p-3 border rounded-lg" value="${paid}" required></div><div class="flex gap-3"><button type="submit" class="flex-1 bg-purple-600 text-white p-3 rounded-lg font-bold hover:bg-purple-700">সমন্বয় করুন</button><button type="button" class="flex-1 bg-slate-200 text-slate-700 p-3 rounded-lg font-bold hover:bg-slate-300" onclick="document.getElementById('modalContainer').classList.add('hidden')">বাতিল</button></div></form>`);
             document.getElementById('adjustForm').onsubmit = async (e) => {
                 e.preventDefault();
                 const newPaid = parseFloat(document.getElementById('newPaid').value);
                 if (isNaN(newPaid) || newPaid < 0) return showToast('সঠিক পরিমাণ দিন।');
+                
                 const lease = allLeases.find(l => l.id === id);
                 if (!lease) return;
                 
-                // শুধু জমা টাকা পরিবর্তন করে বকেয়া টাকা ডেল্টা (পার্থক্য) অনুযায়ী আপডেট হবে যাতে অন্য কোনো টাকা নষ্ট না হয়
                 const oldPaid = lease.paidAmount || 0;
                 const oldDue = lease.dueAmount || 0;
-                const newDue = Math.max(0, oldDue + oldPaid - newPaid);
+                
+                // জমা পরিবর্তনের পরিমাণ বকেয়া থেকে যোগ বা বিয়োগ করা হবে
+                const diff = newPaid - oldPaid;
+                const newDue = Math.max(0, oldDue - diff);
                 
                 try { 
                     await updateDoc(doc(db, "leases", id), { 
@@ -559,9 +587,7 @@
                     }); 
                     document.getElementById('modalContainer').classList.add('hidden'); 
                     showToast('জমা সমন্বয় সফল!', 'success'); 
-                } catch (err) { 
-                    showToast(cleanError(err)); 
-                }
+                } catch (err) { showToast(cleanError(err)); }
             };
         }
 
