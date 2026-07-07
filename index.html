@@ -445,7 +445,7 @@
                     const dd = getDisplayDues(lease);
 
                     /* ===== কলাপসড ভিউ (Expand না করা অবস্থা) ===== */
-                    const colDue = `নিট বকেয়া :${fmt(dd.totalDue)}`;
+                    const colDue = ` নিট বকেয়া :${fmt(dd.totalDue)}`;
 
                     /* ===== এক্সপান্ডেড ভিউ — কলাম ২: জমি/দর ===== */
                     let col2 = '';
@@ -456,14 +456,18 @@
                     /* ===== এক্সপান্ডেড ভিউ — কলাম ৩: হারি/জমা ===== */
                     let col3 = '';
                     if (!isP) {
-                        col3 = `<div class="text-xs text-slate-600 font-semibold">${lease.year} সালের হারি: ${fmt(lease.totalCost || 0)}</div><div class="text-xs text-green-600 mt-1">জমা: ${fmt(lease.paidAmount || 0)}</div>`;
+                        col3 = `<div class="text-sm font-bold text-slate-700">${lease.year} সালের হারি</div><div class="text-xs text-slate-500 mt-1">পরিমাণ: ${fmt(lease.totalCost || 0)} টাকা</div><div class="text-xs text-green-600 mt-1">জমা: ${fmt(lease.paidAmount || 0)} টাকা</div>`;
                     }
 
                     /* ===== এক্সপান্ডেড ভিউ — কলাম ৪: বকেয়া ===== */
                     let col4 = '';
                     if (dd.totalDue > 0) {
                         const ys = formatYearsList(dd.yearsWithDues);
-                        col4 = `<span class="font-bold text-red-600 text-xs leading-relaxed">${ys} সালের মোট বকেয়া: ${fmt(dd.totalDue)} টাকা</span>`;
+                        if (ys) {
+                            col4 = `<span class="font-bold text-red-600 text-xs leading-relaxed">${ys} সালের মোট বকেয়া: ${fmt(dd.totalDue)} টাকা</span>`;
+                        } else {
+                            col4 = `<span class="font-bold text-red-600 text-xs leading-relaxed">মোট বকেয়া: ${fmt(dd.totalDue)} টাকা</span>`;
+                        }
                     } else {
                         col4 = `<span class="font-bold text-green-600 text-xs">শূন্য</span>`;
                     }
